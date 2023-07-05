@@ -2,7 +2,7 @@
 
 GameFramework + FairyGUI +Luban + HybridCLR + YooAsset + UniTask
 
-实现初衷：在工作中接触到了FairyGUI与HybridCLR，真的十分好用，但git上很难找到使用FairyGUI设计的纯C#UI管理模块。在看到ALEXTANGXIAO开发的Gameframework-at-YooAsset后，决定在此基础上进行扩展（说白了就是缝合怪），以满足个人开发需求。
+实现初衷：在工作中接触到了FairyGUI与HybridCLR，真的十分好用，但git上很难找到使用FairyGUI设计的纯C#UI管理模块。在看到ALEXTANGXIAO开发的Gameframework-at-YooAsset后，决定在此基础上进行扩展（说白了就是缝合怪），以满足个人开发需求。经验有限，望指正。
 
 除UI模块外相较于Gameframework-at-YooAsset的修改：
 * 反射注册Handler，实现NetworkChannelHelper
