@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="1920,1080">
+  <displayList>
+    <text id="n1_otfk" name="title" xy="878,488" size="164,104" fontSize="80" color="#cccccc" strokeColor="#000000" strokeSize="2" shadowColor="#000000" shadowOffset="7,1" text="登录"/>
+  </displayList>
+</component>

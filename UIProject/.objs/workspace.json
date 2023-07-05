@@ -1,0 +1,42 @@
+{
+  "libview.firstColumnWidth": 283,
+  "test.device": "iPhone Xs Max",
+  "libview.iconScale": 0,
+  "backgroundColor": 6710886,
+  "auxline1": true,
+  "canvasColor": 10066329,
+  "auxline2": true,
+  "doc.activeDoc": "ui://dxow0699tvve1",
+  "libview.twoColumn": false,
+  "libview.expandedNodes": [
+    "r4vl0iul",
+    "/",
+    "r4vl0iul",
+    "/组件/",
+    "rr499cgx",
+    "/",
+    "rr499cgx",
+    "/组件/",
+    "dxow0699",
+    "/",
+    "dxow0699",
+    "/示意图/",
+    "dxow0699",
+    "/资源/",
+    "dxow0699",
+    "/组件/"
+  ],
+  "doc.openedDocs": [
+    "ui://dxow0699tvve1",
+    "ui://dxow0699nktjy",
+    "ui://dxow0699nktj19",
+    "ui://dxow0699nktj15",
+    "ui://dxow0699nktj1d",
+    "ui://dxow0699nktj13"
+  ],
+  "snapToGrid": true,
+  "test.orientation": "landscape",
+  "gridColor": 80,
+  "libview.currentGroup": "",
+  "gridSize": 30
+}

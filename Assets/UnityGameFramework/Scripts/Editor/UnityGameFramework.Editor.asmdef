@@ -1,0 +1,25 @@
+{
+    "name": "UnityGameFramework.Editor",
+    "rootNamespace": "",
+    "references": [
+        "HybridCLR.Editor",
+        "UnityGameFramework.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.textmeshpro",
+            "expression": "",
+            "define": "ENABLE_TEXTMESHPRO"
+        }
+    ],
+    "noEngineReferences": false
+}

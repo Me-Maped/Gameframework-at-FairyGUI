@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<packageDescription id="r4vl0iul">
+  <resources>
+    <component id="9l2f0" name="launch_main.xml" path="/组件/" exported="true"/>
+    <component id="nyr01" name="lauch_btn.xml" path="/组件/"/>
+    <component id="nyr02" name="launch_pop.xml" path="/组件/" exported="true"/>
+    <image id="er4u6" name="bg.png" path="/资源/"/>
+    <component id="er4u7" name="progress.xml" path="/组件/"/>
+    <component id="x7af8" name="launch_test.xml" path="/组件/" exported="true"/>
+  </resources>
+  <publish name="" genCode="true"/>
+</packageDescription>

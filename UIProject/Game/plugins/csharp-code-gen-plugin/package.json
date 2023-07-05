@@ -1,0 +1,11 @@
+{
+  "name": "csharp-code-gen-plugin",
+  "displayName": "CSharpCodeGen",
+  "description": "CSharpCodeGenerator",
+  "version": "1.0",
+  "author": {
+    "name": "maped"
+  },
+  "icon": "",
+  "main": "main.lua"
+}

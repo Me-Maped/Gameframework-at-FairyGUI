@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<packageDescription id="rr499cgx">
+  <resources>
+    <component id="otfk0" name="login_main.xml" path="/组件/" exported="true"/>
+  </resources>
+  <publish name="" genCode="true"/>
+</packageDescription>

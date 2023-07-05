@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="1920,1080">
+  <displayList>
+    <loader id="n5_er4u" name="bg" xy="0,0" size="1920,1080" url="ui://r4vl0iuler4u6" fill="scaleMatchHeight">
+      <relation target="" sidePair="width-width,height-height"/>
+    </loader>
+    <component id="n6_er4u" name="progress" src="er4u7" fileName="组件/progress.xml" xy="65,780" size="1790,65">
+      <relation target="" sidePair="width-width,center-center,bottom-bottom"/>
+      <ProgressBar value="38" max="100"/>
+    </component>
+    <text id="n7_er4u" name="desc" xy="73,689" size="196,66" fontSize="50" text="加载中...">
+      <relation target="n6_er4u" sidePair="left-left,top-bottom"/>
+    </text>
+    <text id="n8_er4u" name="tips" xy="826,917" size="249,49" fontSize="36" align="center" vAlign="middle" text="tips：贴心助手">
+      <relation target="" sidePair="center-center,bottom-bottom"/>
+    </text>
+    <text id="n9_ckrg" name="n9" xy="781,311" size="372,116" fontSize="90" color="#999999" strokeColor="#000000" strokeSize="2" text="MEngine"/>
+  </displayList>
+  <transition name="In"/>
+  <transition name="Out"/>
+</component>

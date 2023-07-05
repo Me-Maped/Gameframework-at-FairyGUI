@@ -1,0 +1,18 @@
+{
+    "name": "BattleCore.Runtime",
+    "rootNamespace": "BattleCore.Runtime",
+    "references": [
+        "GUID:d8b63aba1907145bea998dd612889d6b",
+        "GUID:a90b2d3377c5e4a4db95cc44fb82045e",
+        "GUID:17a8c79675568a54b968a9c09a815fc2"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

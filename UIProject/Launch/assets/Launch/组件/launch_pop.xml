@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="950,650">
+  <controller name="one_c" pages="0,all,1,no_cancel" selected="0"/>
+  <displayList>
+    <graph id="n6_er4u" name="model" xy="-65,-635" pivot="0.5,0.5" size="1080,1920" type="rect" fillColor="#b2000000"/>
+    <graph id="n0_nyr0" name="bg" xy="0,0" size="950,650" type="rect" lineSize="0" lineColor="#ff33ff99" fillColor="#ff66ffcc">
+      <relation target="" sidePair="width-width,height-height"/>
+    </graph>
+    <text id="n1_nyr0" name="title" xy="428,39" size="92,59" fontSize="44" align="center" vAlign="middle" text="提示" input="true">
+      <relation target="" sidePair="center-center"/>
+    </text>
+    <text id="n2_er4u" name="content" xy="102,143" size="746,306" fontSize="30" ubb="true" autoSize="none" text="这是一个测试，这是一个测试，这是一个测试，这是一个测试，这是一个测试。">
+      <relation target="" sidePair="center-center"/>
+    </text>
+    <component id="n3_er4u" name="cancel_btn" src="nyr01" fileName="组件/lauch_btn.xml" xy="128,500" size="190,50">
+      <gearDisplay controller="one_c" pages="0"/>
+      <Button title="取消" titleFontSize="27"/>
+    </component>
+    <component id="n5_er4u" name="confirm_btn" src="nyr01" fileName="组件/lauch_btn.xml" xy="600,500" size="190,50">
+      <gearXY controller="one_c" pages="1" values="380,500" default="600,500"/>
+      <Button title="确认" titleFontSize="27"/>
+    </component>
+  </displayList>
+</component>
