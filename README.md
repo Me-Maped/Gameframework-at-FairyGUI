@@ -34,6 +34,7 @@ Assets/GameMain/Scripts
 - [ ] 修改并使用GeekServer作为配套后端
 - [ ] 基于此框架完成一个小Demo
 - [ ] 尝试在此基础上使用ECS架构
+- [ ] 更新YooAsset至1.5.2
 
 
 ## <strong>特别鸣谢
