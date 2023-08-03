@@ -1,0 +1,27 @@
+#include "ProtoHelper.h"
+{{range .PbNames}}
+#include "{{.}}.pb.h"{{ end }}
+ProtoHelper ProtoHelper::Inst;
+google::protobuf::Message *ProtoHelper::GetProtoMsg(PROTO_TYPE type)
+{
+    if (pProtoMap.empty()) return Factory(type);
+    auto it = pProtoMap.find(type);
+    if(it->second == nullptr) return Factory(type);
+    return it->second;
+}
+
+google::protobuf::Message *ProtoHelper::Factory(PROTO_TYPE type)
+{
+    google::protobuf::Message *result;
+    switch (type)
+    {
+		{{ range .Infos}}
+        case PROTO_TYPE::{{.ProtocolName}}:
+            result = new pb::{{.ProtocolName}}();
+            break;
+		{{ end }}
+    }
+    if(result != nullptr)
+        pProtoMap.insert(std::pair<PROTO_TYPE,google::protobuf::Message*>(type,result));
+    return nullptr;
+}

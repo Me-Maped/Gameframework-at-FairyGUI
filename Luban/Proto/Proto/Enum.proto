@@ -1,0 +1,13 @@
+//@proto_enum
+syntax = "proto3";
+package pb;
+option csharp_namespace = "Pb";
+option go_package = "./;pb";
+enum TestEnum1{
+  TEST_0 = 0;
+  TEST_1 = 1;
+}
+enum TestEnum2{
+  TEST_3 = 0;
+  TEST_4 = 4;
+}

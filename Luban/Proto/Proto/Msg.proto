@@ -1,0 +1,50 @@
+//@proto_id=2000
+syntax = "proto3";
+package pb;
+option csharp_namespace = "Pb";
+option go_package = "./;pb";
+message SyncPid{
+  int32 Pid = 1;
+  string UserName = 2;
+}
+
+message SyncPlayers{
+  /*嵌套多个子消息类型Player的消息*/
+  repeated Player Players = 1;
+}
+
+message Player{
+  int32 Pid = 1;
+  string UserName = 2;
+  Position Pos = 3;
+}
+
+message Position{
+  float X = 1;
+  float Y = 2;
+  float Z = 3;
+  float V = 4;
+  repeated float Hp = 5;
+}
+
+message MovePackage{
+  Position Pos = 1;
+  int32 ActionData = 2;
+}
+
+message BroadCast{
+  int32 Pid = 1;
+  int32 Tp = 2;
+  string UserName = 3;
+  /*根据Tp不同BroadCast会包含聊天内容(Content) 位置信息(Pos)*/
+  oneof Data{
+    Talk Content = 4;
+    Position Pos = 5;
+    /*预留ActionData*/
+    int32 ActionData = 6;
+  }
+}
+
+message Talk{
+  string Content = 1;
+}

@@ -1,0 +1,8 @@
+// 该文件自动生成，请勿手动修改!!!
+// 生成时间: {{.GenerateTime}}	
+// - by Maped
+package pb
+
+const ({{range.Infos}}
+	Const_{{.ProtocolName}}={{.ProtocolID}}{{end}}
+)

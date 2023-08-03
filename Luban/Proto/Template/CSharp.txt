@@ -1,0 +1,36 @@
+// 该文件自动生成，请勿手动修改!!!
+// 生成时间: {{.GenerateTime}}	
+// - by Maped
+
+using System;
+using System.Collections.Generic;
+
+namespace {{.CSharpPbNs}}
+{
+	//协议号定义
+	public enum {{.FileName}}
+	{	{{ range .Infos}}
+		{{.ProtocolName}} = {{.ProtocolID}},{{ end }}
+	}
+
+	public class PbTypeHelper
+	{
+		private static Dictionary<Type, ProtoType> _protoTypeDic = new()
+		{
+			{{ range .Infos}}
+			{typeof({{.ProtocolName}}), ProtoType.{{.ProtocolName}} },{{ end }}
+		};
+
+		public static int Get<T>()
+		{
+			if (!_protoTypeDic.ContainsKey(typeof(T))) return -1;
+			return (int)_protoTypeDic[typeof(T)];
+		}
+
+		public static int Get(Type type)
+		{
+			if (!_protoTypeDic.ContainsKey(type)) return -1;
+			return (int)_protoTypeDic[type];
+		}
+	}
+}

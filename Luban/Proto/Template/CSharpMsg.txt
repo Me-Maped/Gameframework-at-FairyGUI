@@ -1,0 +1,34 @@
+using System;
+using Google.Protobuf;
+namespace {{.CSharpNs}}
+{
+	public class {{.Info.ProtocolName}}Msg : IProto
+	{
+		public override IMessage Pb
+		{
+			get => _pb ??= new {{.Info.ProtocolName}}();
+			set => _pb = value;
+		}
+
+		public {{.Info.ProtocolName}}Msg()
+		{
+			Id = (int) ProtoType.{{.Info.ProtocolName}};
+		}
+
+		public override void SetVal(params object[] o)
+		{
+			//todo set val
+		}
+
+		public override Type GetProtoType()
+		{
+			return typeof({{.Info.ProtocolName}});
+		}
+
+		public override void OnProcess(byte[] pBuffer)
+		{
+			{{.Info.ProtocolName}} p{{.Info.ProtocolName}} = {{.Info.ProtocolName}}.Parser.ParseFrom(pBuffer);
+			// process
+		}
+	}
+}

@@ -1,0 +1,19 @@
+//@proto_id=1000
+syntax = "proto3";
+package pb;
+option csharp_namespace = "Pb";
+option go_package = "./;pb";
+message ErrorAck{
+    int32  CmdId=1;
+    string Msg=2;
+}
+message PingReq{
+    int32 CmdCode = 1;
+    int32 ProtocolSwitch = 2;
+}
+message PingAck{
+    int32 Code = 1;
+}
+message TestNtf{
+    int32 Time = 1;
+}

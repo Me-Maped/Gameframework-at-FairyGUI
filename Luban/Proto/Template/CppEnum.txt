@@ -1,0 +1,10 @@
+// 该文件自动生成，请勿手动修改!!!
+// 生成时间: {{.GenerateTime}}	
+// - by Maped
+
+#pragma once
+{{range .Infos}}
+enum {{.EnumType}}
+{	{{range .Enums}}
+	{{.EnumName}} = {{.EnumId}},{{ end }}
+};{{ end }}
