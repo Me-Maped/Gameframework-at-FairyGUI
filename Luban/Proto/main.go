@@ -13,28 +13,28 @@ import (
 var (
 	ProtoDir = flag.String("protoDir", "./Proto", "proto存放目录")
 
+	TypeFileName   = flag.String("typeFileName", "ProtoType", "ProtoType文件名")
+	EnumFileName   = flag.String("enumFileName", "ProtoEnum", "ProtoEnum文件名")
+	HelperFileName = flag.String("helperFileName", "ProtoHelper", "ProtoHelper文件名")
+
 	CSharpPbNs      = flag.String("csharpPbNs", "Pb", "协议号命名空间")
 	CSharpNs        = flag.String("csharpNs", "Generate.Pb", "msg命名空间")
 	CSharpEnumNs    = flag.String("csharpEnumNs", "Generate.Enum", "enum命名空间")
 	CSharpOutput    = flag.String("csharpOutput", "./CSharp/", "csharp协议号输出目录")
 	CSharpMsgOutput = flag.String("csharpMsgOutput", "./CSharp/Msg/", "csharp自定义协议类输出目录")
+	CSharpTmp       = flag.String("csharpTmp", "./Template/CSharp.txt", "CSharp模版")
+	CSharpEnumTmp   = flag.String("csharpEnumTmp", "./Template/CSharpEnum.txt", "CSharpEnum模版")
+	CSharpMsgTmp    = flag.String("csharpMsgTmp", "./Template/CSharpMsg.txt", "CSharpMsg模版")
 
-	CppOutput      = flag.String("cppOutput", "./Cpp/", "cpp输出目录")
-	TypeFileName   = flag.String("typeFileName", "ProtoType", "ProtoType文件名")
-	EnumFileName   = flag.String("enumFileName", "ProtoEnum", "ProtoEnum文件名")
-	HelperFileName = flag.String("helperFileName", "ProtoHelper", "ProtoHelper文件名")
+	GoOutput       = flag.String("goOutput", "./Go/", "go文件输出目录")
+	GoTypeFileName = flag.String("goTypeFileName", "consts", "goProtoType文件名")
+	GoTmp          = flag.String("goTmp", "./Template/Go.txt", "Go模版")
 
-	GoOutput = flag.String("goOutput", "./Go/", "go文件输出目录")
-	GoTypeFileName  = flag.String("goTypeFileName", "consts", "goProtoType文件名")
-
-	CppEnumTmp    = flag.String("cppEnumTmp", "./Template/CppEnum.txt", "CppEnum模版")
-	CppHelperHTmp = flag.String("cppHelperHTmp", "./Template/CppHelperH.txt", "CppHelperH模版")
-	CppTmp        = flag.String("cppTmp", "./Template/Cpp.txt", "Cpp模版")
-	CppHelperTmp  = flag.String("cppHelperTmp", "./Template/CppHelper.txt", "CppHelper模版")
-	CSharpTmp     = flag.String("csharpTmp", "./Template/CSharp.txt", "CSharp模版")
-	CSharpEnumTmp = flag.String("csharpEnumTmp", "./Template/CSharpEnum.txt", "CSharpEnum模版")
-	CSharpMsgTmp  = flag.String("csharpMsgTmp", "./Template/CSharpMsg.txt", "CSharpMsg模版")
-	GoTmp         = flag.String("goTmp", "./Template/Go.txt", "Go模版")
+	// CppOutput      = flag.String("cppOutput", "./Cpp/", "cpp输出目录")
+	// CppEnumTmp    = flag.String("cppEnumTmp", "./Template/CppEnum.txt", "CppEnum模版")
+	// CppHelperHTmp = flag.String("cppHelperHTmp", "./Template/CppHelperH.txt", "CppHelperH模版")
+	// CppTmp        = flag.String("cppTmp", "./Template/Cpp.txt", "Cpp模版")
+	// CppHelperTmp  = flag.String("cppHelperTmp", "./Template/CppHelper.txt", "CppHelper模版")
 )
 
 func main() {
@@ -72,14 +72,14 @@ func main() {
 		}
 	}
 
-	saveProtoFile(&parseInfo, *CSharpOutput, "cs", *TypeFileName, utils.ParseString(*CSharpTmp))
-	saveProtoFile(&parseInfo, *CppOutput, "h", *TypeFileName, utils.ParseString(*CppTmp))
-	saveProtoFile(&parseInfo, *CppOutput, "h", *HelperFileName, utils.ParseString(*CppHelperHTmp))
-	saveProtoFile(&parseInfo, *CppOutput, "cpp", *HelperFileName, utils.ParseString(*CppHelperTmp))
 	saveProtoFile(&parseInfo, *GoOutput, "go", *GoTypeFileName, utils.ParseString(*GoTmp))
+	saveProtoFile(&parseInfo, *CSharpOutput, "cs", *TypeFileName, utils.ParseString(*CSharpTmp))
 	saveEnumFile(&parseEnumInfo, *CSharpOutput, "cs", *EnumFileName, utils.ParseString(*CSharpEnumTmp))
-	saveEnumFile(&parseEnumInfo, *CppOutput, "h", *EnumFileName, utils.ParseString(*CppEnumTmp))
-	// saveCsharMsgFile(&parseInfo, *CSharpMsgOutput,utils.ParseString(*CSharpMsgTmp))
+	// saveCsharMsgFile(&parseInfo, *CSharpMsgOutput, utils.ParseString(*CSharpMsgTmp))
+	// saveProtoFile(&parseInfo, *CppOutput, "h", *TypeFileName, utils.ParseString(*CppTmp))
+	// saveProtoFile(&parseInfo, *CppOutput, "h", *HelperFileName, utils.ParseString(*CppHelperHTmp))
+	// saveProtoFile(&parseInfo, *CppOutput, "cpp", *HelperFileName, utils.ParseString(*CppHelperTmp))
+	// saveEnumFile(&parseEnumInfo, *CppOutput, "h", *EnumFileName, utils.ParseString(*CppEnumTmp))
 }
 
 func saveProtoFile(info *utils.ParseInfo, outputPath string, fileType string, fileName string, fileTemplate string) {

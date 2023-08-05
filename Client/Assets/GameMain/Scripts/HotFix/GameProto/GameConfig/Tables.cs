@@ -14,37 +14,37 @@ namespace GameConfig
    
 public sealed class Tables
 {
-    public item.TbItem TbItem {get; private set; }
-    public Battle.TbSkill TbSkill {get; private set; }
-    public Battle.TbBuff TbBuff {get; private set; }
-    public Battle.TbBuffAttr TbBuffAttr {get; private set; }
+    public basecorps.TbCoprs TbCoprs {get; private set; }
+    public basecorpslevelexp.TbCoprsLevelExp TbCoprsLevelExp {get; private set; }
+    public basecorpsadvance.TbCoprsAdvance TbCoprsAdvance {get; private set; }
+    public basecorpsstar.TbCoprsStar TbCoprsStar {get; private set; }
 
     public Tables() { }
     
     public async Task LoadAsync(System.Func<string, Task<ByteBuf>> loader)
     {
         var tables = new System.Collections.Generic.Dictionary<string, object>();
-        TbItem = new item.TbItem(await loader("item_tbitem")); 
-        tables.Add("item.TbItem", TbItem);
-        TbSkill = new Battle.TbSkill(await loader("battle_tbskill")); 
-        tables.Add("Battle.TbSkill", TbSkill);
-        TbBuff = new Battle.TbBuff(await loader("battle_tbbuff")); 
-        tables.Add("Battle.TbBuff", TbBuff);
-        TbBuffAttr = new Battle.TbBuffAttr(await loader("battle_tbbuffattr")); 
-        tables.Add("Battle.TbBuffAttr", TbBuffAttr);
+        TbCoprs = new basecorps.TbCoprs(await loader("basecorps_tbcoprs")); 
+        tables.Add("basecorps.TbCoprs", TbCoprs);
+        TbCoprsLevelExp = new basecorpslevelexp.TbCoprsLevelExp(await loader("basecorpslevelexp_tbcoprslevelexp")); 
+        tables.Add("basecorpslevelexp.TbCoprsLevelExp", TbCoprsLevelExp);
+        TbCoprsAdvance = new basecorpsadvance.TbCoprsAdvance(await loader("basecorpsadvance_tbcoprsadvance")); 
+        tables.Add("basecorpsadvance.TbCoprsAdvance", TbCoprsAdvance);
+        TbCoprsStar = new basecorpsstar.TbCoprsStar(await loader("basecorpsstar_tbcoprsstar")); 
+        tables.Add("basecorpsstar.TbCoprsStar", TbCoprsStar);
 
-        TbItem.Resolve(tables); 
-        TbSkill.Resolve(tables); 
-        TbBuff.Resolve(tables); 
-        TbBuffAttr.Resolve(tables); 
+        TbCoprs.Resolve(tables); 
+        TbCoprsLevelExp.Resolve(tables); 
+        TbCoprsAdvance.Resolve(tables); 
+        TbCoprsStar.Resolve(tables); 
     }
 
     public void TranslateText(System.Func<string, string, string> translator)
     {
-        TbItem.TranslateText(translator); 
-        TbSkill.TranslateText(translator); 
-        TbBuff.TranslateText(translator); 
-        TbBuffAttr.TranslateText(translator); 
+        TbCoprs.TranslateText(translator); 
+        TbCoprsLevelExp.TranslateText(translator); 
+        TbCoprsAdvance.TranslateText(translator); 
+        TbCoprsStar.TranslateText(translator); 
     }
 }
 

@@ -3,6 +3,7 @@ package args
 import (
 	"os"
 	"path"
+	"path/filepath"
 	"zinx/lib/utils/commandline/uflag"
 )
 
@@ -38,7 +39,7 @@ func InitConfigFlag(defaultValue string, tips string) {
 }
 
 func FlagHandle() {
-	if path.IsAbs(Args.ConfigFile) {
+	if !filepath.IsAbs(Args.ConfigFile) {
 		Args.ConfigFile = path.Join(Args.ExeAbsDir, Args.ConfigFile)
 	}
 }

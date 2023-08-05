@@ -26,15 +26,19 @@ Assets/GameMain/Scripts
 ```
 
 ### TODO
-- [ ] Protobuf自定义代码模板工具
+- [x] Protobuf自定义代码模板工具
 - [ ] 优化UI框架，让写UI更简单
-- [ ] 支持MacOS上工具链的使用
+- [x] 支持MacOS上工具链的使用
 - [ ] 对Network模块扩展，使其支持 var ack = await Send<T>(req) 的形式
 - [ ] FiaryGUI自定义包管理
 - [ ] 修改并使用GeekServer作为配套后端
 - [ ] 基于此框架完成一个小Demo
 - [ ] 尝试在此基础上使用ECS架构
 - [ ] 更新YooAsset至1.5.2
+
+### 日志
+* 工程结构修改，将Luban分离出来，并新增Proto代码生成工具
+* 新增一个基于Zinx的简易TCP服务端框架
 
 
 ## <strong>特别鸣谢
