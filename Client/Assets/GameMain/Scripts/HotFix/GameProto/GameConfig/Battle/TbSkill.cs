@@ -9,35 +9,35 @@ using Bright.Serialization;
 using System.Collections.Generic;
 
 
-namespace GameConfig.basecorpslevelexp
+namespace GameConfig.Battle
 {
    
-public partial class TbCoprsLevelExp
+public partial class TbSkill
 {
-    private readonly Dictionary<int, basecorpslevelexp.basecorpslevelexp> _dataMap;
-    private readonly List<basecorpslevelexp.basecorpslevelexp> _dataList;
+    private readonly Dictionary<int, Battle.SkillBaseConfig> _dataMap;
+    private readonly List<Battle.SkillBaseConfig> _dataList;
     
-    public TbCoprsLevelExp(ByteBuf _buf)
+    public TbSkill(ByteBuf _buf)
     {
-        _dataMap = new Dictionary<int, basecorpslevelexp.basecorpslevelexp>();
-        _dataList = new List<basecorpslevelexp.basecorpslevelexp>();
+        _dataMap = new Dictionary<int, Battle.SkillBaseConfig>();
+        _dataList = new List<Battle.SkillBaseConfig>();
         
         for(int n = _buf.ReadSize() ; n > 0 ; --n)
         {
-            basecorpslevelexp.basecorpslevelexp _v;
-            _v = basecorpslevelexp.basecorpslevelexp.Deserializebasecorpslevelexp(_buf);
+            Battle.SkillBaseConfig _v;
+            _v = Battle.SkillBaseConfig.DeserializeSkillBaseConfig(_buf);
             _dataList.Add(_v);
             _dataMap.Add(_v.Id, _v);
         }
         PostInit();
     }
 
-    public Dictionary<int, basecorpslevelexp.basecorpslevelexp> DataMap => _dataMap;
-    public List<basecorpslevelexp.basecorpslevelexp> DataList => _dataList;
+    public Dictionary<int, Battle.SkillBaseConfig> DataMap => _dataMap;
+    public List<Battle.SkillBaseConfig> DataList => _dataList;
 
-    public basecorpslevelexp.basecorpslevelexp GetOrDefault(int key) => _dataMap.TryGetValue(key, out var v) ? v : null;
-    public basecorpslevelexp.basecorpslevelexp Get(int key) => _dataMap[key];
-    public basecorpslevelexp.basecorpslevelexp this[int key] => _dataMap[key];
+    public Battle.SkillBaseConfig GetOrDefault(int key) => _dataMap.TryGetValue(key, out var v) ? v : null;
+    public Battle.SkillBaseConfig Get(int key) => _dataMap[key];
+    public Battle.SkillBaseConfig this[int key] => _dataMap[key];
 
     public void Resolve(Dictionary<string, object> _tables)
     {

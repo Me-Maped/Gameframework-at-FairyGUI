@@ -9,35 +9,35 @@ using Bright.Serialization;
 using System.Collections.Generic;
 
 
-namespace GameConfig.basecorps
+namespace GameConfig.Battle
 {
    
-public partial class TbCoprs
+public partial class TbBuff
 {
-    private readonly Dictionary<int, basecorps.basecorps> _dataMap;
-    private readonly List<basecorps.basecorps> _dataList;
+    private readonly Dictionary<int, Battle.BuffConfig> _dataMap;
+    private readonly List<Battle.BuffConfig> _dataList;
     
-    public TbCoprs(ByteBuf _buf)
+    public TbBuff(ByteBuf _buf)
     {
-        _dataMap = new Dictionary<int, basecorps.basecorps>();
-        _dataList = new List<basecorps.basecorps>();
+        _dataMap = new Dictionary<int, Battle.BuffConfig>();
+        _dataList = new List<Battle.BuffConfig>();
         
         for(int n = _buf.ReadSize() ; n > 0 ; --n)
         {
-            basecorps.basecorps _v;
-            _v = basecorps.basecorps.Deserializebasecorps(_buf);
+            Battle.BuffConfig _v;
+            _v = Battle.BuffConfig.DeserializeBuffConfig(_buf);
             _dataList.Add(_v);
-            _dataMap.Add(_v.Id, _v);
+            _dataMap.Add(_v.BuffID, _v);
         }
         PostInit();
     }
 
-    public Dictionary<int, basecorps.basecorps> DataMap => _dataMap;
-    public List<basecorps.basecorps> DataList => _dataList;
+    public Dictionary<int, Battle.BuffConfig> DataMap => _dataMap;
+    public List<Battle.BuffConfig> DataList => _dataList;
 
-    public basecorps.basecorps GetOrDefault(int key) => _dataMap.TryGetValue(key, out var v) ? v : null;
-    public basecorps.basecorps Get(int key) => _dataMap[key];
-    public basecorps.basecorps this[int key] => _dataMap[key];
+    public Battle.BuffConfig GetOrDefault(int key) => _dataMap.TryGetValue(key, out var v) ? v : null;
+    public Battle.BuffConfig Get(int key) => _dataMap[key];
+    public Battle.BuffConfig this[int key] => _dataMap[key];
 
     public void Resolve(Dictionary<string, object> _tables)
     {

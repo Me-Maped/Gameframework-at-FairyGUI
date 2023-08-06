@@ -13,7 +13,8 @@ namespace GameLogic.Login
 
         protected override void OnOpen()
         {
-            Timers.inst.Add(3f,1, _ => { View.m_title.text = ConfigLoader.Instance.Tables.TbItem.DataList[0].Name;});
+            // 表测试
+            Timers.inst.Add(3f, 1, _ => { View.m_title.text = ConfigLoader.Instance.Tables.TbSkill.DataList[0].Name; });
         }
     }
 }
