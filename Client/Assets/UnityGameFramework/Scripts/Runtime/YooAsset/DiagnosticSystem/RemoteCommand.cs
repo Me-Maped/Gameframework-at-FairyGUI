@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace YooAsset
 {
-	internal enum ERemoteCommand
+	public enum ERemoteCommand
 	{
 		/// <summary>
 		/// 采样一次
@@ -13,7 +13,7 @@ namespace YooAsset
 	}
 
 	[Serializable]
-	internal class RemoteCommand
+	public class RemoteCommand
 	{
 		/// <summary>
 		/// 命令类型

@@ -61,13 +61,13 @@ namespace YooAsset
 			foreach (var operation in _operations)
 			{
 				if (IsBusy)
-					return;
+					break;
 
 				operation.Update();
 				if (operation.IsDone)
 				{
 					_removeList.Add(operation);
-					operation.Finish();
+					operation.SetFinish();
 				}
 			}
 
@@ -101,6 +101,7 @@ namespace YooAsset
 		public static void StartOperation(AsyncOperationBase operation)
 		{
 			_addList.Add(operation);
+			operation.SetStart();
 			operation.Start();
 		}
 	}

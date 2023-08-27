@@ -10,11 +10,13 @@ namespace YooAsset.Editor
 {
 	public class AssetBundleCollectorConfig
 	{
-		public const string ConfigVersion = "2.3";
+		public const string ConfigVersion = "2.4";
 
 		public const string XmlVersion = "Version";
 		public const string XmlCommon = "Common";
 		public const string XmlEnableAddressable = "AutoAddressable";
+		public const string XmlLocationToLower = "LocationToLower";
+		public const string XmlIncludeAssetGUID = "IncludeAssetGUID";
 		public const string XmlUniqueBundleName = "UniqueBundleName";
 		public const string XmlShowPackageView = "ShowPackageView";
 		public const string XmlShowEditorAlias = "ShowEditorAlias";
@@ -24,6 +26,7 @@ namespace YooAsset.Editor
 		public const string XmlPackageDesc = "PackageDesc";
 
 		public const string XmlGroup = "Group";
+		public const string XmlGroupActiveRule = "GroupActiveRule";
 		public const string XmlGroupName = "GroupName";
 		public const string XmlGroupDesc = "GroupDesc";
 
@@ -65,6 +68,8 @@ namespace YooAsset.Editor
 
 			// 读取公共配置
 			bool enableAddressable = false;
+			bool locationToLower = false;
+			bool includeAssetGUID = false;
 			bool uniqueBundleName = false;
 			bool showPackageView = false;
 			bool showEditorAlias = false;
@@ -72,19 +77,18 @@ namespace YooAsset.Editor
 			if (commonNodeList.Count > 0)
 			{
 				XmlElement commonElement = commonNodeList[0] as XmlElement;
-				if (commonElement.HasAttribute(XmlEnableAddressable) == false)
-					throw new Exception($"Not found attribute {XmlEnableAddressable} in {XmlCommon}");
-				if (commonElement.HasAttribute(XmlUniqueBundleName) == false)
-					throw new Exception($"Not found attribute {XmlUniqueBundleName} in {XmlCommon}");
-				if (commonElement.HasAttribute(XmlShowPackageView) == false)
-					throw new Exception($"Not found attribute {XmlShowPackageView} in {XmlCommon}");
-				if (commonElement.HasAttribute(XmlShowEditorAlias) == false)
-					throw new Exception($"Not found attribute {XmlShowEditorAlias} in {XmlCommon}");
-
-				enableAddressable = commonElement.GetAttribute(XmlEnableAddressable) == "True" ? true : false;
-				uniqueBundleName = commonElement.GetAttribute(XmlUniqueBundleName) == "True" ? true : false;
-				showPackageView = commonElement.GetAttribute(XmlShowPackageView) == "True" ? true : false;
-				showEditorAlias = commonElement.GetAttribute(XmlShowEditorAlias) == "True" ? true : false;
+				if (commonElement.HasAttribute(XmlEnableAddressable))
+					enableAddressable = commonElement.GetAttribute(XmlEnableAddressable) == "True" ? true : false;
+				if (commonElement.HasAttribute(XmlLocationToLower))
+					locationToLower = commonElement.GetAttribute(XmlLocationToLower) == "True" ? true : false;
+				if (commonElement.HasAttribute(XmlIncludeAssetGUID))
+					includeAssetGUID = commonElement.GetAttribute(XmlIncludeAssetGUID) == "True" ? true : false;
+				if (commonElement.HasAttribute(XmlUniqueBundleName))
+					uniqueBundleName = commonElement.GetAttribute(XmlUniqueBundleName) == "True" ? true : false;
+				if (commonElement.HasAttribute(XmlShowPackageView))
+					showPackageView = commonElement.GetAttribute(XmlShowPackageView) == "True" ? true : false;
+				if (commonElement.HasAttribute(XmlShowEditorAlias))
+					showEditorAlias = commonElement.GetAttribute(XmlShowEditorAlias) == "True" ? true : false;
 			}
 
 			// 读取包裹配置
@@ -108,6 +112,8 @@ namespace YooAsset.Editor
 				foreach (var groupNode in groupNodeList)
 				{
 					XmlElement groupElement = groupNode as XmlElement;
+					if (groupElement.HasAttribute(XmlGroupActiveRule) == false)
+						throw new Exception($"Not found attribute {XmlGroupActiveRule} in {XmlGroup}");
 					if (groupElement.HasAttribute(XmlGroupName) == false)
 						throw new Exception($"Not found attribute {XmlGroupName} in {XmlGroup}");
 					if (groupElement.HasAttribute(XmlGroupDesc) == false)
@@ -116,6 +122,7 @@ namespace YooAsset.Editor
 						throw new Exception($"Not found attribute {XmlAssetTags} in {XmlGroup}");
 
 					AssetBundleCollectorGroup group = new AssetBundleCollectorGroup();
+					group.ActiveRuleName = groupElement.GetAttribute(XmlGroupActiveRule);
 					group.GroupName = groupElement.GetAttribute(XmlGroupName);
 					group.GroupDesc = groupElement.GetAttribute(XmlGroupDesc);
 					group.AssetTags = groupElement.GetAttribute(XmlAssetTags);
@@ -157,9 +164,17 @@ namespace YooAsset.Editor
 				}
 			}
 
+			// 检测配置错误
+			foreach (var package in packages)
+			{
+				package.CheckConfigError();
+			}
+
 			// 保存配置数据
 			AssetBundleCollectorSettingData.ClearAll();
 			AssetBundleCollectorSettingData.Setting.EnableAddressable = enableAddressable;
+			AssetBundleCollectorSettingData.Setting.LocationToLower = locationToLower;
+			AssetBundleCollectorSettingData.Setting.IncludeAssetGUID = includeAssetGUID;
 			AssetBundleCollectorSettingData.Setting.UniqueBundleName = uniqueBundleName;
 			AssetBundleCollectorSettingData.Setting.ShowPackageView = showPackageView;
 			AssetBundleCollectorSettingData.Setting.ShowEditorAlias = showEditorAlias;
@@ -191,6 +206,8 @@ namespace YooAsset.Editor
 			// 设置公共配置
 			var commonElement = xmlDoc.CreateElement(XmlCommon);
 			commonElement.SetAttribute(XmlEnableAddressable, AssetBundleCollectorSettingData.Setting.EnableAddressable.ToString());
+			commonElement.SetAttribute(XmlLocationToLower, AssetBundleCollectorSettingData.Setting.LocationToLower.ToString());
+			commonElement.SetAttribute(XmlIncludeAssetGUID, AssetBundleCollectorSettingData.Setting.IncludeAssetGUID.ToString());
 			commonElement.SetAttribute(XmlUniqueBundleName, AssetBundleCollectorSettingData.Setting.UniqueBundleName.ToString());
 			commonElement.SetAttribute(XmlShowPackageView, AssetBundleCollectorSettingData.Setting.ShowPackageView.ToString());
 			commonElement.SetAttribute(XmlShowEditorAlias, AssetBundleCollectorSettingData.Setting.ShowEditorAlias.ToString());
@@ -208,6 +225,7 @@ namespace YooAsset.Editor
 				foreach (var group in package.Groups)
 				{
 					var groupElement = xmlDoc.CreateElement(XmlGroup);
+					groupElement.SetAttribute(XmlGroupActiveRule, group.ActiveRuleName);
 					groupElement.SetAttribute(XmlGroupName, group.GroupName);
 					groupElement.SetAttribute(XmlGroupDesc, group.GroupDesc);
 					groupElement.SetAttribute(XmlAssetTags, group.AssetTags);
@@ -344,6 +362,23 @@ namespace YooAsset.Editor
 
 				// 更新版本
 				root.SetAttribute(XmlVersion, "2.3");
+				return UpdateXmlConfig(xmlDoc);
+			}
+
+			// 2.3 -> 2.4
+			if (configVersion == "2.3")
+			{
+				// 获取所有分组元素
+				var groupNodeList = root.GetElementsByTagName(XmlGroup);
+				foreach (var groupNode in groupNodeList)
+				{
+					XmlElement groupElement = groupNode as XmlElement;
+					if (groupElement.HasAttribute(XmlGroupActiveRule) == false)
+						groupElement.SetAttribute(XmlGroupActiveRule, $"{nameof(EnableGroup)}");
+				}
+
+				// 更新版本
+				root.SetAttribute(XmlVersion, "2.4");
 				return UpdateXmlConfig(xmlDoc);
 			}
 

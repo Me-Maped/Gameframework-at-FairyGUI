@@ -12,9 +12,9 @@ namespace YooAsset.Editor
 	public class AssetBundleCollectorWindow : EditorWindow
 	{
 		[MenuItem("YooAsset/AssetBundle Collector", false, 101)]
-		public static void ShowExample()
+		public static void OpenWindow()
 		{
-			AssetBundleCollectorWindow window = GetWindow<AssetBundleCollectorWindow>("资源包收集工具", true, EditorDefine.DockedWindowTypes);
+			AssetBundleCollectorWindow window = GetWindow<AssetBundleCollectorWindow>("资源包收集工具", true, WindowsDefine.DockedWindowTypes);
 			window.minSize = new Vector2(800, 600);
 		}
 
@@ -25,8 +25,14 @@ namespace YooAsset.Editor
 		private List<RuleDisplayName> _packRuleList;
 		private List<RuleDisplayName> _filterRuleList;
 
+		private Button _settingsButton;
+		private VisualElement _helpBoxContainer;
+		private VisualElement _setting1Container;
+		private VisualElement _setting2Container;
 		private Toggle _showPackageToogle;
 		private Toggle _enableAddressableToogle;
+		private Toggle _locationToLowerToogle;
+		private Toggle _includeAssetGUIDToogle;
 		private Toggle _uniqueBundleNameToogle;
 		private Toggle _showEditorAliasToggle;
 
@@ -47,6 +53,7 @@ namespace YooAsset.Editor
 
 		private int _lastModifyPackageIndex = 0;
 		private int _lastModifyGroupIndex = 0;
+		private bool _showSettings = false;
 
 
 		public void CreateGUI()
@@ -70,13 +77,20 @@ namespace YooAsset.Editor
 				VisualElement root = this.rootVisualElement;
 
 				// 加载布局文件
-				var visualAsset = EditorHelper.LoadWindowUXML<AssetBundleCollectorWindow>();
+				var visualAsset = UxmlLoader.LoadWindowUXML<AssetBundleCollectorWindow>();
 				if (visualAsset == null)
 					return;
 
 				visualAsset.CloneTree(root);
 
+				// 警示栏
+				_helpBoxContainer = root.Q("HelpBoxContainer");
+
 				// 公共设置相关
+				_settingsButton = root.Q<Button>("SettingsButton");
+				_settingsButton.clicked += SettingsBtn_clicked;
+				_setting1Container = root.Q("PublicContainer1");
+				_setting2Container = root.Q("PublicContainer2");
 				_showPackageToogle = root.Q<Toggle>("ShowPackages");
 				_showPackageToogle.RegisterValueChangedCallback(evt =>
 				{
@@ -89,13 +103,24 @@ namespace YooAsset.Editor
 					AssetBundleCollectorSettingData.ModifyAddressable(evt.newValue);
 					RefreshWindow();
 				});
+				_locationToLowerToogle = root.Q<Toggle>("LocationToLower");
+				_locationToLowerToogle.RegisterValueChangedCallback(evt =>
+				{
+					AssetBundleCollectorSettingData.ModifyLocationToLower(evt.newValue);
+					RefreshWindow();
+				});
+				_includeAssetGUIDToogle = root.Q<Toggle>("IncludeAssetGUID");
+				_includeAssetGUIDToogle.RegisterValueChangedCallback(evt =>
+				{
+					AssetBundleCollectorSettingData.ModifyIncludeAssetGUID(evt.newValue);
+					RefreshWindow();
+				});
 				_uniqueBundleNameToogle = root.Q<Toggle>("UniqueBundleName");
 				_uniqueBundleNameToogle.RegisterValueChangedCallback(evt =>
 				{
 					AssetBundleCollectorSettingData.ModifyUniqueBundleName(evt.newValue);
 					RefreshWindow();
 				});
-
 				_showEditorAliasToggle = root.Q<Toggle>("ShowEditorAlias");
 				_showEditorAliasToggle.RegisterValueChangedCallback(evt =>
 				{
@@ -148,6 +173,7 @@ namespace YooAsset.Editor
 					{
 						selectPackage.PackageName = evt.newValue;
 						AssetBundleCollectorSettingData.ModifyPackage(selectPackage);
+						FillPackageViewData();
 					}
 				});
 
@@ -160,6 +186,7 @@ namespace YooAsset.Editor
 					{
 						selectPackage.PackageDesc = evt.newValue;
 						AssetBundleCollectorSettingData.ModifyPackage(selectPackage);
+						FillPackageViewData();
 					}
 				});
 
@@ -300,8 +327,39 @@ namespace YooAsset.Editor
 		{
 			_showPackageToogle.SetValueWithoutNotify(AssetBundleCollectorSettingData.Setting.ShowPackageView);
 			_enableAddressableToogle.SetValueWithoutNotify(AssetBundleCollectorSettingData.Setting.EnableAddressable);
+			_locationToLowerToogle.SetValueWithoutNotify(AssetBundleCollectorSettingData.Setting.LocationToLower);
+			_includeAssetGUIDToogle.SetValueWithoutNotify(AssetBundleCollectorSettingData.Setting.IncludeAssetGUID);
 			_uniqueBundleNameToogle.SetValueWithoutNotify(AssetBundleCollectorSettingData.Setting.UniqueBundleName);
 			_showEditorAliasToggle.SetValueWithoutNotify(AssetBundleCollectorSettingData.Setting.ShowEditorAlias);
+
+			// 警示框
+			_helpBoxContainer.Clear();
+			if (_enableAddressableToogle.value && _locationToLowerToogle.value)
+			{
+				var helpBox = new HelpBox("无法同时开启[Enable Addressable]选项和[Location To Lower]选项", HelpBoxMessageType.Error);
+				_helpBoxContainer.Add(helpBox);
+			}
+			if (AssetBundleCollectorSettingData.Setting.Packages.Count > 1 && _uniqueBundleNameToogle.value == false)
+			{
+				var helpBox = new HelpBox("检测到当前配置存在多个Package，建议开启[Unique Bundle Name]选项", HelpBoxMessageType.Warning);
+				_helpBoxContainer.Add(helpBox);
+			}
+			if (_helpBoxContainer.childCount > 0)
+				_helpBoxContainer.style.display = DisplayStyle.Flex;
+			else
+				_helpBoxContainer.style.display = DisplayStyle.None;
+
+			// 设置栏
+			if (_showSettings)
+			{
+				_setting1Container.style.display = DisplayStyle.Flex;
+				_setting2Container.style.display = DisplayStyle.Flex;
+			}
+			else
+			{
+				_setting1Container.style.display = DisplayStyle.None;
+				_setting2Container.style.display = DisplayStyle.None;
+			}
 
 			_groupContainer.visible = false;
 			_collectorContainer.visible = false;
@@ -333,6 +391,11 @@ namespace YooAsset.Editor
 		private void SaveBtn_clicked()
 		{
 			AssetBundleCollectorSettingData.SaveFile();
+		}
+		private void SettingsBtn_clicked()
+		{
+			_showSettings = !_showSettings;
+			RefreshWindow();
 		}
 		private string FormatListItemCallback(RuleDisplayName ruleDisplayName)
 		{
@@ -794,7 +857,8 @@ namespace YooAsset.Editor
 
 				try
 				{
-					CollectCommand command = new CollectCommand(EBuildMode.SimulateBuild, _packageNameTxt.value, _enableAddressableToogle.value, _uniqueBundleNameToogle.value);
+					CollectCommand command = new CollectCommand(EBuildMode.SimulateBuild, _packageNameTxt.value,
+						_enableAddressableToogle.value, _locationToLowerToogle.value, _includeAssetGUIDToogle.value, _uniqueBundleNameToogle.value);
 					collectAssetInfos = collector.GetAllCollectAssets(command, group);
 				}
 				catch (System.Exception e)

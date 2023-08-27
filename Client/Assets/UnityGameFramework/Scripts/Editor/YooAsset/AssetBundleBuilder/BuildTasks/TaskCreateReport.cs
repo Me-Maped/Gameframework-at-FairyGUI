@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 
 namespace YooAsset.Editor
@@ -44,8 +45,12 @@ namespace YooAsset.Editor
 				buildReport.Summary.BuildMode = buildParameters.BuildMode;
 				buildReport.Summary.BuildPackageName = buildParameters.PackageName;
 				buildReport.Summary.BuildPackageVersion = buildParameters.PackageVersion;
-				buildReport.Summary.EnableAddressable = buildMapContext.EnableAddressable;
-				buildReport.Summary.UniqueBundleName = buildMapContext.UniqueBundleName;
+				buildReport.Summary.EnableAddressable = buildMapContext.Command.EnableAddressable;
+				buildReport.Summary.LocationToLower = buildMapContext.Command.LocationToLower;
+				buildReport.Summary.IncludeAssetGUID = buildMapContext.Command.IncludeAssetGUID;
+				buildReport.Summary.UniqueBundleName = buildMapContext.Command.UniqueBundleName;
+				buildReport.Summary.SharedPackRuleClassName = buildParameters.SharedPackRule == null ?
+					"null" : buildParameters.SharedPackRule.GetType().FullName;
 				buildReport.Summary.EncryptionServicesClassName = buildParameters.EncryptionServices == null ?
 					"null" : buildParameters.EncryptionServices.GetType().FullName;
 
@@ -101,6 +106,9 @@ namespace YooAsset.Editor
 				buildReport.BundleInfos.Add(reportBundleInfo);
 			}
 
+			// 冗余资源列表
+			buildReport.RedundancyInfos = new List<ReportRedundancyInfo>(buildMapContext.RedundancyInfos);
+
 			// 序列化文件
 			string fileName = YooAssetSettingsData.GetReportFileName(buildParameters.PackageName, buildParameters.PackageVersion);
 			string filePath = $"{packageOutputDirectory}/{fileName}";
@@ -152,7 +160,7 @@ namespace YooAsset.Editor
 		}
 
 		/// <summary>
-		/// 获取该资源包内的所有资源（包括零依赖资源）
+		/// 获取该资源包内的所有资源
 		/// </summary>
 		private List<string> GetAllBuiltinAssets(BuildMapContext buildMapContext, string bundleName)
 		{

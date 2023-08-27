@@ -6,7 +6,7 @@ using System.Collections.Generic;
 namespace YooAsset
 {
 	[Serializable]
-	internal class DebugPackageData
+	public class DebugPackageData
 	{
 		/// <summary>
 		/// 包裹名称

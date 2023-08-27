@@ -34,11 +34,18 @@ namespace YooAsset.Editor
 			// 创建新补丁清单
 			PackageManifest manifest = new PackageManifest();
 			manifest.FileVersion = YooAssetSettings.ManifestFileVersion;
-			manifest.EnableAddressable = buildMapContext.EnableAddressable;
+			manifest.EnableAddressable = buildMapContext.Command.EnableAddressable;
+			manifest.LocationToLower = buildMapContext.Command.LocationToLower;
+			manifest.IncludeAssetGUID = buildMapContext.Command.IncludeAssetGUID;
 			manifest.OutputNameStyle = (int)buildParameters.OutputNameStyle;
 			manifest.PackageName = buildParameters.PackageName;
 			manifest.PackageVersion = buildParameters.PackageVersion;
+
+			// 填充资源包集合
 			manifest.BundleList = GetAllPackageBundle(context);
+			CacheBundleIDs(manifest);
+
+			// 填充主资源集合
 			manifest.AssetList = GetAllPackageAsset(context, manifest);
 
 			// 更新Unity内置资源包的引用关系
@@ -47,7 +54,7 @@ namespace YooAsset.Editor
 				if (buildParameters.BuildMode == EBuildMode.IncrementalBuild)
 				{
 					var buildResultContext = context.GetContextObject<TaskBuilding_SBP.BuildResultContext>();
-					UpdateBuiltInBundleReference(manifest, buildResultContext, buildMapContext.ShadersBundleName);
+					UpdateBuiltInBundleReference(manifest, buildResultContext, buildMapContext.Command.ShadersBundleName);
 				}
 			}
 
@@ -98,7 +105,7 @@ namespace YooAsset.Editor
 			{
 				string fileName = YooAssetSettingsData.GetPackageHashFileName(buildParameters.PackageName, buildParameters.PackageVersion);
 				string filePath = $"{packageOutputDirectory}/{fileName}";
-				FileUtility.CreateFile(filePath, packageHash);
+				FileUtility.WriteAllText(filePath, packageHash);
 				BuildLogger.Log($"创建补丁清单哈希文件：{filePath}");
 			}
 
@@ -106,7 +113,7 @@ namespace YooAsset.Editor
 			{
 				string fileName = YooAssetSettingsData.GetPackageVersionFileName(buildParameters.PackageName);
 				string filePath = $"{packageOutputDirectory}/{fileName}";
-				FileUtility.CreateFile(filePath, buildParameters.PackageVersion);
+				FileUtility.WriteAllText(filePath, buildParameters.PackageVersion);
 				BuildLogger.Log($"创建补丁清单版本文件：{filePath}");
 			}
 		}
@@ -137,17 +144,15 @@ namespace YooAsset.Editor
 			List<PackageAsset> result = new List<PackageAsset>(1000);
 			foreach (var bundleInfo in buildMapContext.Collection)
 			{
-				var assetInfos = bundleInfo.GetAllMainAssetInfos();
+				var assetInfos = bundleInfo.GetAllManifestAssetInfos();
 				foreach (var assetInfo in assetInfos)
 				{
 					PackageAsset packageAsset = new PackageAsset();
-					if (buildMapContext.EnableAddressable)
-						packageAsset.Address = assetInfo.Address;
-					else
-						packageAsset.Address = string.Empty;
+					packageAsset.Address = buildMapContext.Command.EnableAddressable ? assetInfo.Address : string.Empty;
 					packageAsset.AssetPath = assetInfo.AssetPath;
+					packageAsset.AssetGUID = buildMapContext.Command.IncludeAssetGUID ? assetInfo.AssetGUID : string.Empty;
 					packageAsset.AssetTags = assetInfo.AssetTags.ToArray();
-					packageAsset.BundleID = GetAssetBundleID(assetInfo.BundleName, manifest);
+					packageAsset.BundleID = GetCachedBundleID(assetInfo.BundleName);
 					packageAsset.DependIDs = GetAssetBundleDependIDs(packageAsset.BundleID, assetInfo, manifest);
 					result.Add(packageAsset);
 				}
@@ -156,12 +161,12 @@ namespace YooAsset.Editor
 		}
 		private int[] GetAssetBundleDependIDs(int mainBundleID, BuildAssetInfo assetInfo, PackageManifest manifest)
 		{
-			List<int> result = new List<int>();
+			HashSet<int> result = new HashSet<int>();
 			foreach (var dependAssetInfo in assetInfo.AllDependAssetInfos)
 			{
 				if (dependAssetInfo.HasBundleName())
 				{
-					int bundleID = GetAssetBundleID(dependAssetInfo.BundleName, manifest);
+					int bundleID = GetCachedBundleID(dependAssetInfo.BundleName);
 					if (mainBundleID != bundleID)
 					{
 						if (result.Contains(bundleID) == false)
@@ -170,15 +175,6 @@ namespace YooAsset.Editor
 				}
 			}
 			return result.ToArray();
-		}
-		private int GetAssetBundleID(string bundleName, PackageManifest manifest)
-		{
-			for (int index = 0; index < manifest.BundleList.Count; index++)
-			{
-				if (manifest.BundleList[index].BundleName == bundleName)
-					return index;
-			}
-			throw new Exception($"Not found bundle name : {bundleName}");
 		}
 
 		/// <summary>
@@ -205,18 +201,34 @@ namespace YooAsset.Editor
 				throw new Exception("没有发现着色器资源包！");
 
 			// 检测依赖交集并更新依赖ID
+			HashSet<string> tagTemps = new HashSet<string>();
 			foreach (var packageAsset in manifest.AssetList)
 			{
 				List<string> dependBundles = GetPackageAssetAllDependBundles(manifest, packageAsset);
 				List<string> conflictAssetPathList = dependBundles.Intersect(shaderBundleReferenceList).ToList();
 				if (conflictAssetPathList.Count > 0)
 				{
-					List<int> newDependIDs = new List<int>(packageAsset.DependIDs);
+					HashSet<int> newDependIDs = new HashSet<int>(packageAsset.DependIDs);
 					if (newDependIDs.Contains(shaderBundleId) == false)
 						newDependIDs.Add(shaderBundleId);
 					packageAsset.DependIDs = newDependIDs.ToArray();
+					foreach (var tag in packageAsset.AssetTags)
+					{
+						if (tagTemps.Contains(tag) == false)
+							tagTemps.Add(tag);
+					}
 				}
 			}
+
+			// 更新资源包标签
+			var packageBundle = manifest.BundleList[shaderBundleId];
+			HashSet<string> newTags = new HashSet<string>(packageBundle.Tags);
+			foreach (var tag in tagTemps)
+			{
+				if (newTags.Contains(tag) == false)
+					newTags.Add(tag);
+			}
+			packageBundle.Tags = newTags.ToArray();
 		}
 		private List<string> GetPackageAssetAllDependBundles(PackageManifest manifest, PackageAsset packageAsset)
 		{
@@ -234,22 +246,21 @@ namespace YooAsset.Editor
 		#region 资源包引用关系相关
 		private readonly Dictionary<string, int> _cachedBundleID = new Dictionary<string, int>(10000);
 		private readonly Dictionary<string, string[]> _cachedBundleDepends = new Dictionary<string, string[]>(10000);
+		
+		private void CacheBundleIDs(PackageManifest manifest)
+		{
+			UnityEngine.Debug.Assert(manifest.BundleList.Count != 0, "Manifest bundle list is empty !");
+			for (int index = 0; index < manifest.BundleList.Count; index++)
+			{
+				string bundleName = manifest.BundleList[index].BundleName;
+				_cachedBundleID.Add(bundleName, index);
+			}
+		}
 
 		private void UpdateScriptPipelineReference(PackageManifest manifest, TaskBuilding_SBP.BuildResultContext buildResultContext)
 		{
 			int progressValue;
 			int totalCount = manifest.BundleList.Count;
-
-			// 缓存资源包ID
-			_cachedBundleID.Clear();
-			progressValue = 0;
-			foreach (var packageBundle in manifest.BundleList)
-			{
-				int bundleID = GetAssetBundleID(packageBundle.BundleName, manifest);
-				_cachedBundleID.Add(packageBundle.BundleName, bundleID);
-				EditorTools.DisplayProgressBar("缓存资源包索引", ++progressValue, totalCount);
-			}
-			EditorTools.ClearProgressBar();
 
 			// 缓存资源包依赖
 			_cachedBundleDepends.Clear();
@@ -267,7 +278,11 @@ namespace YooAsset.Editor
 
 				var depends = buildResultContext.Results.BundleInfos[packageBundle.BundleName].Dependencies;
 				_cachedBundleDepends.Add(packageBundle.BundleName, depends);
-				EditorTools.DisplayProgressBar("缓存资源包依赖列表", ++progressValue, totalCount);
+				int pro = ++progressValue;
+				if (pro % 100 == 0)
+				{
+					EditorTools.DisplayProgressBar("缓存资源包依赖列表", pro, totalCount);
+				}
 			}
 			EditorTools.ClearProgressBar();
 
@@ -275,7 +290,11 @@ namespace YooAsset.Editor
 			foreach (var packageBundle in manifest.BundleList)
 			{
 				packageBundle.ReferenceIDs = GetBundleRefrenceIDs(manifest, packageBundle);
-				EditorTools.DisplayProgressBar("计算资源包引用关系", ++progressValue, totalCount);
+				int pro = ++progressValue;
+				if (pro % 100 == 0)
+				{
+					EditorTools.DisplayProgressBar("计算资源包引用关系", pro, totalCount);
+				}
 			}
 			EditorTools.ClearProgressBar();
 		}
@@ -284,17 +303,6 @@ namespace YooAsset.Editor
 			int progressValue;
 			int totalCount = manifest.BundleList.Count;
 
-			// 缓存资源包ID
-			_cachedBundleID.Clear();
-			progressValue = 0;
-			foreach (var packageBundle in manifest.BundleList)
-			{
-				int bundleID = GetAssetBundleID(packageBundle.BundleName, manifest);
-				_cachedBundleID.Add(packageBundle.BundleName, bundleID);
-				EditorTools.DisplayProgressBar("缓存资源包索引", ++progressValue, totalCount);
-			}
-			EditorTools.ClearProgressBar();
-
 			// 缓存资源包依赖
 			_cachedBundleDepends.Clear();
 			progressValue = 0;
@@ -302,13 +310,17 @@ namespace YooAsset.Editor
 			{
 				if (packageBundle.IsRawFile)
 				{
-					_cachedBundleDepends.Add(packageBundle.BundleName, new string[] { } );
+					_cachedBundleDepends.Add(packageBundle.BundleName, new string[] { });
 					continue;
 				}
 
 				var depends = buildResultContext.UnityManifest.GetDirectDependencies(packageBundle.BundleName);
 				_cachedBundleDepends.Add(packageBundle.BundleName, depends);
-				EditorTools.DisplayProgressBar("缓存资源包依赖列表", ++progressValue, totalCount);
+				int pro = ++progressValue;
+				if (pro % 100 == 0)
+				{
+					EditorTools.DisplayProgressBar("缓存资源包依赖列表", pro, totalCount);
+				}
 			}
 			EditorTools.ClearProgressBar();
 
@@ -317,11 +329,15 @@ namespace YooAsset.Editor
 			foreach (var packageBundle in manifest.BundleList)
 			{
 				packageBundle.ReferenceIDs = GetBundleRefrenceIDs(manifest, packageBundle);
-				EditorTools.DisplayProgressBar("计算资源包引用关系", ++progressValue, totalCount);
+				int pro = ++progressValue;
+				if (pro % 100 == 0)
+				{
+					EditorTools.DisplayProgressBar("计算资源包引用关系", ++progressValue, totalCount);
+				}
 			}
 			EditorTools.ClearProgressBar();
 		}
-		
+
 		private int[] GetBundleRefrenceIDs(PackageManifest manifest, PackageBundle targetBundle)
 		{
 			List<string> referenceList = new List<string>();
@@ -338,7 +354,7 @@ namespace YooAsset.Editor
 				}
 			}
 
-			List<int> result = new List<int>();
+			HashSet<int> result = new HashSet<int>();
 			foreach (var bundleName in referenceList)
 			{
 				int bundleID = GetCachedBundleID(bundleName);

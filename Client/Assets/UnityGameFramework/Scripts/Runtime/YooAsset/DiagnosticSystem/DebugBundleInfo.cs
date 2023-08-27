@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace YooAsset
 {
 	[Serializable]
-	internal class DebugBundleInfo : IComparer<DebugBundleInfo>, IComparable<DebugBundleInfo>
+	public class DebugBundleInfo : IComparer<DebugBundleInfo>, IComparable<DebugBundleInfo>
 	{
 		/// <summary>
 		/// 包裹名

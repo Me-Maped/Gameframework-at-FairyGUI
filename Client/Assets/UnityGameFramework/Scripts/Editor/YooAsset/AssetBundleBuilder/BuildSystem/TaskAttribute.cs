@@ -5,10 +5,14 @@ namespace YooAsset.Editor
 	[AttributeUsage(AttributeTargets.Class)]
 	public class TaskAttribute : Attribute
 	{
-		public string Desc;
-		public TaskAttribute(string desc)
+		/// <summary>
+		/// 任务说明
+		/// </summary>
+		public string TaskDesc;
+
+		public TaskAttribute(string taskDesc)
 		{
-			Desc = desc;
+			TaskDesc = taskDesc;
 		}
 	}
 }

@@ -23,8 +23,8 @@ MonoBehaviour:
       m_ServerType: 2
       m_CleanCommitPathRes: 1
       m_InnerResourceSourceUrl: http://127.0.0.1:8088
-      m_ExtraResourceSourceUrl: http://192.168.3.72:8080
-      m_FormalResourceSourceUrl: http://192.168.3.72:8080
+      m_ExtraResourceSourceUrl: http://192.168.3.165:8080
+      m_FormalResourceSourceUrl: http://192.168.3.165:8080
     m_AtlasFolder: Assets/GameMain/AssetsHotfix/UI/UIArt/Atlas
     m_ResourceVersionFileName: ResourceVersion.txt
     CheckVersionUrl: http://127.0.0.1/Resources/{0}Version.txt

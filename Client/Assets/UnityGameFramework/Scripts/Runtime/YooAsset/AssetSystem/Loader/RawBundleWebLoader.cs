@@ -47,11 +47,6 @@ namespace YooAsset
 					_steps = ESteps.Website;
 					FileLoadPath = MainBundleInfo.Bundle.CachedDataFilePath;
 				}
-				else if (MainBundleInfo.LoadMode == BundleInfo.ELoadMode.LoadFromCache)
-				{
-					_steps = ESteps.CheckFile;
-					FileLoadPath = MainBundleInfo.Bundle.CachedDataFilePath;
-				}
 				else
 				{
 					throw new System.NotImplementedException(MainBundleInfo.LoadMode.ToString());
@@ -61,8 +56,9 @@ namespace YooAsset
 			// 1. 下载远端文件
 			if (_steps == ESteps.Download)
 			{
-				int failedTryAgain = int.MaxValue;
-				_downloader = DownloadSystem.BeginDownload(MainBundleInfo, failedTryAgain);
+				int failedTryAgain = Impl.DownloadFailedTryAgain;
+				_downloader = DownloadSystem.CreateDownload(MainBundleInfo, failedTryAgain);
+				_downloader.SendRequest();
 				_steps = ESteps.CheckDownload;
 			}
 
@@ -89,9 +85,10 @@ namespace YooAsset
 			// 3. 从站点下载
 			if (_steps == ESteps.Website)
 			{
-				int failedTryAgain = 1;
-				var bundleInfo = ManifestTools.GetUnpackInfo(MainBundleInfo.Bundle);
-				_website = DownloadSystem.BeginDownload(bundleInfo, failedTryAgain);
+				int failedTryAgain = Impl.DownloadFailedTryAgain;
+				var bundleInfo = ManifestTools.ConvertToUnpackInfo(MainBundleInfo.Bundle);
+				_website = DownloadSystem.CreateDownload(bundleInfo, failedTryAgain);
+				_website.SendRequest();
 				_steps = ESteps.CheckWebsite;
 			}
 

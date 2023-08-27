@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Linq;
 using UnityEngine;
 using UnityEditor;
 
@@ -11,39 +13,63 @@ namespace YooAsset.Editor
 		private readonly BuildContext _buildContext = new BuildContext();
 
 		/// <summary>
-		/// 开始构建
+		/// 构建资源包
 		/// </summary>
-		public BuildResult Run(BuildParameters buildParameters)
+		public BuildResult Run(BuildParameters buildParameters, List<IBuildTask> buildPipeline)
 		{
-			// 清空旧数据
-			_buildContext.ClearAllContext();
-
 			// 检测构建参数是否为空
 			if (buildParameters == null)
 				throw new Exception($"{nameof(buildParameters)} is null !");
 
-			// 检测可编程构建管线参数
-			if (buildParameters.BuildPipeline == EBuildPipeline.ScriptableBuildPipeline)
-			{
-				if (buildParameters.SBPParameters == null)
-					throw new Exception($"{nameof(BuildParameters.SBPParameters)} is null !");
+			// 检测构建参数是否为空
+			if (buildPipeline.Count == 0)
+				throw new Exception($"Build pipeline is empty !");	
 
-				if (buildParameters.BuildMode == EBuildMode.DryRunBuild)
-					throw new Exception($"{nameof(EBuildPipeline.ScriptableBuildPipeline)} not support {nameof(EBuildMode.DryRunBuild)} build mode !");
-
-				if (buildParameters.BuildMode == EBuildMode.ForceRebuild)
-					throw new Exception($"{nameof(EBuildPipeline.ScriptableBuildPipeline)} not support {nameof(EBuildMode.ForceRebuild)} build mode !");
-			}
+			// 清空旧数据
+			_buildContext.ClearAllContext();
 
 			// 构建参数
 			var buildParametersContext = new BuildParametersContext(buildParameters);
 			_buildContext.SetContextObject(buildParametersContext);
 
-			// 创建构建节点
-			List<IBuildTask> pipeline;
-			if (buildParameters.BuildPipeline == EBuildPipeline.BuiltinBuildPipeline)
+			// 初始化日志
+			BuildLogger.InitLogger(buildParameters.EnableLog);
+
+			// 执行构建流程
+			var buildResult = BuildRunner.Run(buildPipeline, _buildContext);
+			if (buildResult.Success)
 			{
-				pipeline = new List<IBuildTask>
+				buildResult.OutputPackageDirectory = buildParametersContext.GetPackageOutputDirectory();
+				BuildLogger.Log($"{buildParameters.BuildMode} pipeline build succeed !");
+			}
+			else
+			{
+				BuildLogger.Warning($"{buildParameters.BuildMode} pipeline build failed !");
+				BuildLogger.Error($"Build task failed : {buildResult.FailedTask}");
+				BuildLogger.Error(buildResult.ErrorInfo);
+			}
+
+			return buildResult;
+		}
+
+		/// <summary>
+		/// 构建资源包
+		/// </summary>
+		public BuildResult Run(BuildParameters buildParameters)
+		{
+			var buildPipeline = GetDefaultBuildPipeline(buildParameters.BuildPipeline);
+			return Run(buildParameters, buildPipeline);
+		}
+
+		/// <summary>
+		/// 获取默认的构建流程
+		/// </summary>
+		private List<IBuildTask> GetDefaultBuildPipeline(EBuildPipeline buildPipeline)
+		{
+			// 获取任务节点的属性集合
+			if (buildPipeline == EBuildPipeline.BuiltinBuildPipeline)
+			{
+				List<IBuildTask> pipeline = new List<IBuildTask>
 				{
 					new TaskPrepare(), //前期准备工作
 					new TaskGetBuildMap(), //获取构建列表
@@ -57,10 +83,11 @@ namespace YooAsset.Editor
 					new TaskCreatePackage(), //制作包裹
 					new TaskCopyBuildinFiles(), //拷贝内置文件
 				};
+				return pipeline;
 			}
-			else if (buildParameters.BuildPipeline == EBuildPipeline.ScriptableBuildPipeline)
+			else if (buildPipeline == EBuildPipeline.ScriptableBuildPipeline)
 			{
-				pipeline = new List<IBuildTask>
+				List<IBuildTask> pipeline = new List<IBuildTask>
 				{
 					new TaskPrepare(), //前期准备工作
 					new TaskGetBuildMap(), //获取构建列表
@@ -74,30 +101,12 @@ namespace YooAsset.Editor
 					new TaskCreatePackage(), //制作补丁包
 					new TaskCopyBuildinFiles(), //拷贝内置文件
 				};
+				return pipeline;
 			}
 			else
 			{
 				throw new NotImplementedException();
 			}
-
-			// 初始化日志
-			BuildLogger.InitLogger(buildParameters.EnableLog);
-
-			// 执行构建流程
-			var buildResult = BuildRunner.Run(pipeline, _buildContext);
-			if (buildResult.Success)
-			{
-				buildResult.OutputPackageDirectory = buildParametersContext.GetPackageOutputDirectory();
-				BuildLogger.Log($"{buildParameters.BuildMode} pipeline build succeed !");
-			}
-			else
-			{
-				BuildLogger.Warning($"{buildParameters.BuildMode} pipeline build failed !");
-				BuildLogger.Error($"Build task failed : {buildResult.FailedTask}");
-				BuildLogger.Error($"Build task error : {buildResult.FailedInfo}");
-			}
-
-			return buildResult;
 		}
 	}
 }

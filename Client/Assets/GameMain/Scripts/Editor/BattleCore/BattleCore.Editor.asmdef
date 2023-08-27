@@ -1,0 +1,17 @@
+{
+    "name": "BattleCore.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:641632c4f8079b94f963b5284d859a12",
+        "GUID:a2d8a19598eca814496b089021d08d60"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

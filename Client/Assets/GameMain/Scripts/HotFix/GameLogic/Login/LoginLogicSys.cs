@@ -29,6 +29,7 @@ namespace GameLogic.Login
 
         public override async void OnStart()
         {
+            return;
             await OnLoginCountReq();
             UILoadMgr.Instance.SetProgress("正在连接服务器...");
             var channel = GameModule.Network.CreateNetworkChannel("TCP", ServiceType.Tcp, new NetChannelHelper());

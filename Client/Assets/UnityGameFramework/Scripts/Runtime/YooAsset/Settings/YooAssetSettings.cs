@@ -2,8 +2,8 @@
 
 namespace YooAsset
 {
-	[CreateAssetMenu(fileName = "YooAssetSettings", menuName = "YooAsset/Create Settings")]
-	internal class YooAssetSettings : ScriptableObject
+	[CreateAssetMenu(fileName = "YooAssetSettings", menuName = "YooAsset/Create YooAsset Settings")]
+	public class YooAssetSettings : ScriptableObject
 	{
 		/// <summary>
 		/// 清单文件名称
@@ -24,7 +24,7 @@ namespace YooAsset
 		/// <summary>
 		/// 清单文件格式版本
 		/// </summary>
-		public const string ManifestFileVersion = "1.4.6";
+		public const string ManifestFileVersion = "1.5.2";
 
 
 		/// <summary>
@@ -37,6 +37,31 @@ namespace YooAsset
 		/// </summary>
 		public const string CacheBundleInfoFileName = "__info";
 
+		/// <summary>
+		/// 默认的YooAsset文件夹名称
+		/// </summary>
+		public const string DefaultYooFolderName = "yoo";
+
+		/// <summary>
+		/// 缓存的资源文件的文件夹名称
+		/// </summary>
+		public const string CachedBundleFileFolder = "CacheBundleFiles";
+
+		/// <summary>
+		/// 缓存的原生文件的文件夹名称
+		/// </summary>
+		public const string CachedRawFileFolder = "CacheRawFiles";
+
+		/// <summary>
+		/// 缓存的清单文件的文件夹名称
+		/// </summary>
+		public const string ManifestFolderName = "ManifestFiles";
+
+		/// <summary>
+		/// 记录应用程序版本的文件名称
+		/// </summary>
+		public const string AppFootPrintFileName = "ApplicationFootPrint.bytes";
+
 
 		/// <summary>
 		/// 构建输出文件夹名称
@@ -47,10 +72,5 @@ namespace YooAsset
 		/// 构建输出的报告文件
 		/// </summary>
 		public const string ReportFileName = "BuildReport";
-
-		/// <summary>
-		/// 内置资源目录名称
-		/// </summary>
-		public const string StreamingAssetsBuildinFolder = "BuildinFiles";
 	}
 }

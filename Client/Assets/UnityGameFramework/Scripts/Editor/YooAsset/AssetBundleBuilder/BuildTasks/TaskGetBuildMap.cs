@@ -13,7 +13,7 @@ namespace YooAsset.Editor
 		void IBuildTask.Run(BuildContext context)
 		{
 			var buildParametersContext = context.GetContextObject<BuildParametersContext>();
-			var buildMapContext = CreateBuildMap(buildParametersContext.Parameters.BuildMode, buildParametersContext.Parameters.PackageName);
+			var buildMapContext = CreateBuildMap(buildParametersContext.Parameters);
 			context.SetContextObject(buildMapContext);
 			BuildLogger.Log("构建内容准备完毕！");
 
@@ -24,12 +24,16 @@ namespace YooAsset.Editor
 		/// <summary>
 		/// 资源构建上下文
 		/// </summary>
-		public BuildMapContext CreateBuildMap(EBuildMode buildMode, string packageName)
+		public BuildMapContext CreateBuildMap(BuildParameters buildParameters)
 		{
+			var buildMode = buildParameters.BuildMode;
+			var packageName = buildParameters.PackageName;
+			var sharedPackRule = buildParameters.SharedPackRule;
+
 			Dictionary<string, BuildAssetInfo> allBuildAssetInfoDic = new Dictionary<string, BuildAssetInfo>(1000);
 
 			// 1. 检测配置合法性
-			AssetBundleCollectorSettingData.Setting.CheckConfigError();
+			AssetBundleCollectorSettingData.Setting.CheckPackageConfigError(packageName);
 
 			// 2. 获取所有收集器收集的资源
 			var collectResult = AssetBundleCollectorSettingData.Setting.GetPackageAssets(buildMode, packageName);
@@ -93,18 +97,31 @@ namespace YooAsset.Editor
 			// 7. 记录关键信息
 			BuildMapContext context = new BuildMapContext();
 			context.AssetFileCount = allBuildAssetInfoDic.Count;
-			context.EnableAddressable = collectResult.Command.EnableAddressable;
-			context.UniqueBundleName = collectResult.Command.UniqueBundleName;
-			context.ShadersBundleName = collectResult.Command.ShadersBundleName;
+			context.Command = collectResult.Command;
 
-			// 8. 计算共享的资源包名
+			// 8. 计算共享资源的包名		
 			var command = collectResult.Command;
 			foreach (var buildAssetInfo in allBuildAssetInfoDic.Values)
 			{
-				buildAssetInfo.CalculateShareBundleName(command.UniqueBundleName, command.PackageName, command.ShadersBundleName);
+				buildAssetInfo.CalculateShareBundleName(sharedPackRule, command.UniqueBundleName, command.PackageName, command.ShadersBundleName);
 			}
 
-			// 9. 移除不参与构建的资源
+			// 9. 记录冗余资源
+			foreach (var buildAssetInfo in allBuildAssetInfoDic.Values)
+			{
+				if (buildAssetInfo.IsRedundancyAsset())
+				{
+					var redundancyInfo = new ReportRedundancyInfo();
+					redundancyInfo.AssetPath = buildAssetInfo.AssetPath;
+					redundancyInfo.AssetType = AssetDatabase.GetMainAssetTypeAtPath(buildAssetInfo.AssetPath).Name;
+					redundancyInfo.AssetGUID = AssetDatabase.AssetPathToGUID(buildAssetInfo.AssetPath);
+					redundancyInfo.FileSize = FileUtility.GetFileSize(buildAssetInfo.AssetPath);
+					redundancyInfo.Number = buildAssetInfo.GetReferenceBundleCount();
+					context.RedundancyInfos.Add(redundancyInfo);
+				}
+			}
+
+			// 10. 移除不参与构建的资源
 			List<BuildAssetInfo> removeBuildList = new List<BuildAssetInfo>();
 			foreach (var buildAssetInfo in allBuildAssetInfoDic.Values)
 			{
@@ -116,7 +133,7 @@ namespace YooAsset.Editor
 				allBuildAssetInfoDic.Remove(removeValue.AssetPath);
 			}
 
-			// 10. 构建资源包
+			// 11. 构建资源列表
 			var allPackAssets = allBuildAssetInfoDic.Values.ToList();
 			if (allPackAssets.Count == 0)
 				throw new Exception("构建的资源列表不能为空");
@@ -124,22 +141,23 @@ namespace YooAsset.Editor
 			{
 				context.PackAsset(assetInfo);
 			}
+
 			return context;
 		}
 		private void RemoveZeroReferenceAssets(List<CollectAssetInfo> allCollectAssetInfos)
 		{
 			// 1. 检测是否任何存在依赖资源
-			bool hasAnyDependAsset = false;
+			bool hasAnyDependCollector = false;
 			foreach (var collectAssetInfo in allCollectAssetInfos)
 			{
 				var collectorType = collectAssetInfo.CollectorType;
 				if (collectorType == ECollectorType.DependAssetCollector)
 				{
-					hasAnyDependAsset = true;
+					hasAnyDependCollector = true;
 					break;
 				}
 			}
-			if (hasAnyDependAsset == false)
+			if (hasAnyDependCollector == false)
 				return;
 
 			// 2. 获取所有主资源的依赖资源集合

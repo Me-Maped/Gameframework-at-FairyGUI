@@ -30,7 +30,7 @@ namespace YooAsset.Editor
 		{
 			ECopyBuildinFileOption option = buildParametersContext.Parameters.CopyBuildinFileOption;
 			string packageOutputDirectory = buildParametersContext.GetPackageOutputDirectory();
-			string streamingAssetsDirectory = AssetBundleBuilderHelper.GetStreamingAssetsFolderPath();
+			string streamingAssetsDirectory = buildParametersContext.GetStreamingAssetsDirectory();
 			string buildPackageName = buildParametersContext.Parameters.PackageName;
 			string buildPackageVersion = buildParametersContext.Parameters.PackageVersion;
 
@@ -40,7 +40,7 @@ namespace YooAsset.Editor
 			// 清空流目录
 			if (option == ECopyBuildinFileOption.ClearAndCopyAll || option == ECopyBuildinFileOption.ClearAndCopyByTags)
 			{
-				AssetBundleBuilderHelper.ClearStreamingAssetsFolder();
+				EditorTools.ClearFolder(streamingAssetsDirectory);
 			}
 
 			// 拷贝补丁清单文件
@@ -69,7 +69,7 @@ namespace YooAsset.Editor
 
 			// 拷贝文件列表（所有文件）
 			if (option == ECopyBuildinFileOption.ClearAndCopyAll || option == ECopyBuildinFileOption.OnlyCopyAll)
-			{		
+			{
 				foreach (var packageBundle in manifest.BundleList)
 				{
 					string sourcePath = $"{packageOutputDirectory}/{packageBundle.FileName}";

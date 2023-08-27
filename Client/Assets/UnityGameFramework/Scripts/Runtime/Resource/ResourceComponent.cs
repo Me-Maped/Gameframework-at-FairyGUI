@@ -344,10 +344,10 @@ namespace UnityGameFramework.Runtime
             return package.UpdatePackageVersionAsync(appendTimeTicks,timeout);
         }
 
-        public UpdatePackageManifestOperation UpdatePackageManifestAsync(string packageVersion, int timeout = 60)
+        public UpdatePackageManifestOperation UpdatePackageManifestAsync(string packageVersion,bool autoSaveManifest =true, int timeout = 60)
         {
             var package = YooAssets.GetPackage(PackageName);
-            return package.UpdatePackageManifestAsync(packageVersion,timeout);
+            return package.UpdatePackageManifestAsync(packageVersion,autoSaveManifest,timeout);
         }
         
         /// <summary>
@@ -382,11 +382,6 @@ namespace UnityGameFramework.Runtime
             {
                 m_PerformGCCollect = true;
             }
-        }
-
-        public void ClearSandbox()
-        {
-            YooAssets.ClearSandbox();
         }
 
         private void Update()

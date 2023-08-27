@@ -1,5 +1,6 @@
 ﻿using System;
 using Cysharp.Threading.Tasks;
+using FairyGUI;
 using GameFramework;
 using GameFramework.Procedure;
 using GameMain.Data;
@@ -12,17 +13,36 @@ namespace GameMain
     public class ProcedureDownloadFile:ProcedureBase
     {
         private ProcedureOwner _procedureOwner;
+
+        private float _currentDownloadTime;
+        private float CurrentSpeed =>
+            (GameModule.Resource.Downloader.TotalDownloadBytes -
+             GameModule.Resource.Downloader.CurrentDownloadBytes) / _currentDownloadTime;
+
         protected override void OnEnter(ProcedureOwner procedureOwner)
         {
             _procedureOwner = procedureOwner;
-            
+            _currentDownloadTime = 1;
+            Timers.inst.Add(1, -1, OnTimeCountDown);
+
             Log.Info("开始下载更新文件！");
             
             UILoadMgr.Instance.SetProgress("开始下载更新文件...");
             
             BeginDownload().Forget();
         }
-        
+
+        protected override void OnLeave(ProcedureOwner procedureOwner, bool isShutdown)
+        {
+            base.OnLeave(procedureOwner, isShutdown);
+            Timers.inst.Remove(OnTimeCountDown);
+        }
+
+        private void OnTimeCountDown(object o)
+        {
+            _currentDownloadTime++;
+        }
+
         private async UniTaskVoid BeginDownload()
         {
             var downloader = GameModule.Resource.Downloader;
@@ -52,23 +72,23 @@ namespace GameMain
             string totalSizeMb = (totalDownloadBytes / 1048576f).ToString("f1");
             // UILoadMgr.Show(UIDefine.UILoadUpdate,$"{currentDownloadCount}/{totalDownloadCount} {currentSizeMb}MB/{totalSizeMb}MB");
             string descriptionText = Utility.Text.Format("正在更新，已更新{0}，总更新{1}，已更新大小{2}，总更新大小{3}，更新进度{4}，当前网速{5}/s", 
-                currentDownloadCount.ToString(), 
-                totalDownloadCount.ToString(), 
+                currentSizeMb, 
+                totalSizeMb,
                 Utility.File.GetByteLengthString(currentDownloadBytes), 
                 Utility.File.GetByteLengthString(totalDownloadBytes), 
                 GameModule.Resource.Downloader.Progress, 
-                Utility.File.GetByteLengthString((int)GameModule.Resource.Downloader.CurrentSpeed));
+                Utility.File.GetByteLengthString((int)CurrentSpeed));
             UILoadMgr.Instance.SetProgress(GameModule.Resource.Downloader.Progress,descriptionText);
 
             int needTime = 0;
-            if (GameModule.Resource.Downloader.CurrentSpeed > 0)
+            if (CurrentSpeed > 0)
             {
-                needTime = (int)((totalDownloadBytes - currentDownloadBytes) / GameModule.Resource.Downloader.CurrentSpeed);
+                needTime = (int)((totalDownloadBytes - currentDownloadBytes) / CurrentSpeed);
             }
             
             TimeSpan ts = new TimeSpan(0, 0, needTime);
             string timeStr = ts.ToString(@"mm\:ss");
-            string updateProgress = Utility.Text.Format("剩余时间 {0}({1}/s)", timeStr, Utility.File.GetLengthString((int)GameModule.Resource.Downloader.CurrentSpeed));
+            string updateProgress = Utility.Text.Format("剩余时间 {0}({1}/s)", timeStr, Utility.File.GetLengthString((int)CurrentSpeed));
             Log.Info(updateProgress);
         }
     }

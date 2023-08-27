@@ -31,6 +31,11 @@ namespace YooAsset.Editor
 		public string AssetPath { private set; get; }
 
 		/// <summary>
+		/// 资源GUID
+		/// </summary>
+		public string AssetGUID { private set; get; }
+
+		/// <summary>
 		/// 是否为原生资源
 		/// </summary>
 		public bool IsRawAsset { private set; get; }
@@ -65,6 +70,7 @@ namespace YooAsset.Editor
 			AssetPath = assetPath;
 			IsRawAsset = isRawAsset;
 
+			AssetGUID = UnityEditor.AssetDatabase.AssetPathToGUID(assetPath);
 			System.Type assetType = UnityEditor.AssetDatabase.GetMainAssetTypeAtPath(assetPath);
 			if (assetType == typeof(UnityEngine.Shader) || assetType == typeof(UnityEngine.ShaderVariantCollection))
 				IsShaderAsset = true;
@@ -78,6 +84,7 @@ namespace YooAsset.Editor
 			AssetPath = assetPath;
 			IsRawAsset = false;
 
+			AssetGUID = UnityEditor.AssetDatabase.AssetPathToGUID(assetPath);
 			System.Type assetType = UnityEditor.AssetDatabase.GetMainAssetTypeAtPath(assetPath);
 			if (assetType == typeof(UnityEngine.Shader) || assetType == typeof(UnityEngine.ShaderVariantCollection))
 				IsShaderAsset = true;
@@ -157,7 +164,7 @@ namespace YooAsset.Editor
 		/// <summary>
 		/// 计算共享资源包的完整包名
 		/// </summary>
-		public void CalculateShareBundleName(bool uniqueBundleName, string packageName, string shadersBundleName)
+		public void CalculateShareBundleName(ISharedPackRule sharedPackRule, bool uniqueBundleName, string packageName, string shadersBundleName)
 		{
 			if (CollectorType != ECollectorType.None)
 				return;
@@ -173,8 +180,7 @@ namespace YooAsset.Editor
 			{
 				if (_referenceBundleNames.Count > 1)
 				{
-					IPackRule packRule = PackDirectory.StaticPackRule;
-					PackRuleResult packRuleResult = packRule.GetPackRuleResult(new PackRuleData(AssetPath));
+					PackRuleResult packRuleResult = sharedPackRule.GetPackRuleResult(AssetPath);
 					BundleName = packRuleResult.GetShareBundleName(packageName, uniqueBundleName);
 				}
 				else
@@ -183,6 +189,25 @@ namespace YooAsset.Editor
 					BundleName = string.Empty;
 				}
 			}
+		}
+
+		/// <summary>
+		/// 判断是否为冗余资源
+		/// </summary>
+		public bool IsRedundancyAsset()
+		{
+			if (HasBundleName())
+				return false;
+
+			return _referenceBundleNames.Count > 1;
+		}
+
+		/// <summary>
+		/// 获取关联资源包的数量
+		/// </summary>
+		public int GetReferenceBundleCount()
+		{
+			return _referenceBundleNames.Count;
 		}
 	}
 }

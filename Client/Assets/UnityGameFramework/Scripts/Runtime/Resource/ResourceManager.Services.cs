@@ -36,12 +36,45 @@ namespace GameFramework.Resource
         /// <summary>
         /// 内置文件查询服务类。
         /// </summary>
-        private class GameQueryServices : IQueryServices
+        private class GameBuildinQueryServices : IBuildinQueryServices
         {
-            public bool QueryStreamingAssets(string fileName)
+            public bool QueryStreamingAssets(string packageName, string fileName)
             {
-                string builtinFolderName = YooAssets.GetStreamingAssetBuildinFolderName();
-                return StreamingAssetsHelper.FileExists($"{builtinFolderName}/{fileName}");
+                return StreamingAssetsHelper.FileExists(packageName, fileName);
+            }
+        }
+        
+        private class GameDeliveryQueryServices : IDeliveryQueryServices
+        {
+            public bool QueryDeliveryFiles(string packageName, string fileName)
+            {
+                return false;
+            }
+
+            public DeliveryFileInfo GetDeliveryFileInfo(string packageName, string fileName)
+            {
+                throw new NotImplementedException();
+            }
+        }
+        
+        private class GameRemoteServices : IRemoteServices
+        {
+            private string m_RemoteServerURL;
+            private string m_RemoteFallbackServerURL;
+            public GameRemoteServices(string remoteServerURL,string remoteFallbackServerURL)
+            {
+                m_RemoteServerURL = remoteServerURL;
+                m_RemoteFallbackServerURL = remoteFallbackServerURL;
+            }
+            
+            public string GetRemoteMainURL(string fileName)
+            {
+                return Utility.Text.Format("{0}/{1}",m_RemoteServerURL,fileName);
+            }
+
+            public string GetRemoteFallbackURL(string fileName)
+            {
+                return Utility.Text.Format("{0}/{1}",m_RemoteFallbackServerURL,fileName);
             }
         }
     }

@@ -224,9 +224,9 @@ namespace GameFramework.Resource
             {
                 var createParameters = new HostPlayModeParameters();
                 createParameters.DecryptionServices = new GameDecryptionServices();
-                createParameters.QueryServices = new GameQueryServices();
-                createParameters.DefaultHostServer = HostServerURL;
-                createParameters.FallbackHostServer = HostServerURL;
+                createParameters.BuildinQueryServices = new GameBuildinQueryServices();
+                createParameters.DeliveryQueryServices = new GameDeliveryQueryServices();
+                createParameters.RemoteServices = new GameRemoteServices(HostServerURL,HostServerURL);
                 initializationOperation = package.InitializeAsync(createParameters);
             }
 
@@ -509,12 +509,10 @@ namespace GameFramework.Resource
 
         public void UnloadUnusedAssets()
         {
-            YooAssets.UnloadUnusedAssets();
         }
 
         public void ForceUnloadAllAssets()
         {
-            YooAssets.ForceUnloadAllAssets();
         }
 
         public void UnloadAsset(object asset)
@@ -588,7 +586,7 @@ namespace GameFramework.Resource
 
             float duration = Time.time;
 
-            SceneOperationHandle handle = YooAssets.LoadSceneAsync(sceneAssetName, LoadSceneMode.Single, activateOnLoad: true, priority: priority);
+            SceneOperationHandle handle = YooAssets.LoadSceneAsync(sceneAssetName, LoadSceneMode.Single, suspendLoad: false, priority: priority);
 
             await handle.ToUniTask(ResourceHelper);
 

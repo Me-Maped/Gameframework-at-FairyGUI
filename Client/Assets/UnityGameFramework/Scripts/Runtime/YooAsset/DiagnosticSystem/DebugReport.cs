@@ -10,7 +10,7 @@ namespace YooAsset
 	/// 资源系统调试信息
 	/// </summary>
 	[Serializable]
-	internal class DebugReport
+	public class DebugReport
 	{
 		/// <summary>
 		/// 游戏帧

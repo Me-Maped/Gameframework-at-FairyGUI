@@ -11,6 +11,11 @@ namespace YooAsset
 		private readonly static Dictionary<string, PackageCache> _cachedDic = new Dictionary<string, PackageCache>(1000);
 
 		/// <summary>
+		/// 禁用Unity缓存系统在WebGL平台
+		/// </summary>
+		public static bool DisableUnityCacheOnWebGL = false;
+
+		/// <summary>
 		/// 初始化时的验证级别
 		/// </summary>
 		public static EVerifyLevel InitVerifyLevel { set; get; } = EVerifyLevel.Middle;
@@ -21,6 +26,15 @@ namespace YooAsset
 		public static void ClearAll()
 		{
 			_cachedDic.Clear();
+		}
+
+		/// <summary>
+		/// 清空指定包裹的所有缓存数据
+		/// </summary>
+		public static void ClearPackage(string packageName)
+		{
+			var cache = GetOrCreateCache(packageName);
+			cache.ClearAll();
 		}
 
 		/// <summary>
@@ -79,7 +93,7 @@ namespace YooAsset
 		/// <summary>
 		/// 验证缓存文件（子线程内操作）
 		/// </summary>
-		public static EVerifyResult VerifyingCacheFile(VerifyCacheElement element)
+		public static EVerifyResult VerifyingCacheFile(VerifyCacheFileElement element)
 		{
 			try
 			{
@@ -111,11 +125,11 @@ namespace YooAsset
 		/// <summary>
 		/// 验证下载文件（子线程内操作）
 		/// </summary>
-		public static EVerifyResult VerifyingTempFile(VerifyTempElement element)
+		public static EVerifyResult VerifyingTempFile(VerifyTempFileElement element)
 		{
 			return VerifyingInternal(element.TempDataFilePath, element.FileSize, element.FileCRC, EVerifyLevel.High);
 		}
-		
+
 		/// <summary>
 		/// 验证记录文件（主线程内操作）
 		/// </summary>
@@ -148,6 +162,14 @@ namespace YooAsset
 			return result;
 		}
 
+		/// <summary>
+		/// 获取所有的缓存文件
+		/// </summary>
+		public static List<string> GetAllCacheGUIDs(ResourcePackage package)
+		{
+			var cache = GetOrCreateCache(package.PackageName);
+			return cache.GetAllKeys();
+		}
 
 		private static EVerifyResult VerifyingInternal(string filePath, long fileSize, string fileCRC, EVerifyLevel verifyLevel)
 		{

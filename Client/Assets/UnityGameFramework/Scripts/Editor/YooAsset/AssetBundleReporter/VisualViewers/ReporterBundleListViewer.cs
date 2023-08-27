@@ -42,7 +42,7 @@ namespace YooAsset.Editor
 		public void InitViewer()
 		{
 			// 加载布局文件
-			_visualAsset = EditorHelper.LoadWindowUXML<ReporterBundleListViewer>();
+			_visualAsset = UxmlLoader.LoadWindowUXML<ReporterBundleListViewer>();
 			if (_visualAsset == null)
 				return;
 
@@ -76,6 +76,10 @@ namespace YooAsset.Editor
 			_includeListView = _root.Q<ListView>("BottomListView");
 			_includeListView.makeItem = MakeIncludeListViewItem;
 			_includeListView.bindItem = BindIncludeListViewItem;
+
+#if UNITY_2020_3_OR_NEWER
+			SplitView.Adjuster(_root);
+#endif
 		}
 
 		/// <summary>
@@ -345,10 +349,24 @@ namespace YooAsset.Editor
 		private void FillIncludeListView(ReportBundleInfo bundleInfo)
 		{
 			List<ReportAssetInfo> containsList = new List<ReportAssetInfo>();
+			HashSet<string> mainAssetDic = new HashSet<string>();
 			foreach (var assetInfo in _buildReport.AssetInfos)
 			{
 				if (assetInfo.MainBundleName == bundleInfo.BundleName)
+				{
+					mainAssetDic.Add(assetInfo.AssetPath);
 					containsList.Add(assetInfo);
+				}
+			}
+			foreach (string assetPath in bundleInfo.AllBuiltinAssets)
+			{
+				if (mainAssetDic.Contains(assetPath) == false)
+				{
+					var assetInfo = new ReportAssetInfo();
+					assetInfo.AssetPath = assetPath;
+					assetInfo.AssetGUID = "--";
+					containsList.Add(assetInfo);
+				}
 			}
 
 			_includeListView.Clear();
@@ -374,6 +392,16 @@ namespace YooAsset.Editor
 
 			{
 				var label = new Label();
+				label.name = "Label3";
+				label.style.unityTextAlign = TextAnchor.MiddleLeft;
+				label.style.marginLeft = 3f;
+				//label.style.flexGrow = 1f;
+				label.style.width = 100;
+				element.Add(label);
+			}
+
+			{
+				var label = new Label();
 				label.name = "Label2";
 				label.style.unityTextAlign = TextAnchor.MiddleLeft;
 				label.style.marginLeft = 3f;
@@ -392,6 +420,10 @@ namespace YooAsset.Editor
 			// Asset Path
 			var label1 = element.Q<Label>("Label1");
 			label1.text = assetInfo.AssetPath;
+
+			// Asset Source
+			var label3 = element.Q<Label>("Label3");
+			label3.text = assetInfo.AssetGUID != "--" ? "Main Asset" : "Builtin Asset";
 
 			// GUID
 			var label2 = element.Q<Label>("Label2");

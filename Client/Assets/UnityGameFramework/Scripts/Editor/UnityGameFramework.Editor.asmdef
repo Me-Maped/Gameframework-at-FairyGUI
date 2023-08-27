@@ -3,7 +3,9 @@
     "rootNamespace": "",
     "references": [
         "HybridCLR.Editor",
-        "UnityGameFramework.Runtime"
+        "UnityGameFramework.Runtime",
+        "Unity.ScriptableBuildPipeline.Editor",
+        "Unity.ScriptableBuildPipeline"
     ],
     "includePlatforms": [
         "Editor"

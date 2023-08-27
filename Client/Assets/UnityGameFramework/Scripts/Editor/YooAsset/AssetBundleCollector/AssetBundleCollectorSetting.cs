@@ -6,17 +6,28 @@ using UnityEngine;
 
 namespace YooAsset.Editor
 {
+	[CreateAssetMenu(fileName = "AssetBundleCollectorSetting", menuName = "YooAsset/Create AssetBundle Collector Settings")]
 	public class AssetBundleCollectorSetting : ScriptableObject
 	{
 		/// <summary>
-		/// 是否显示包裹列表视图
+		/// 显示包裹列表视图
 		/// </summary>
 		public bool ShowPackageView = false;
 
 		/// <summary>
-		/// 是否启用可寻址资源定位
+		/// 启用可寻址资源定位
 		/// </summary>
 		public bool EnableAddressable = false;
+
+		/// <summary>
+		/// 资源定位地址大小写不敏感
+		/// </summary>
+		public bool LocationToLower = false;
+
+		/// <summary>
+		/// 包含资源GUID数据
+		/// </summary>
+		public bool IncludeAssetGUID = false;
 
 		/// <summary>
 		/// 资源包名唯一化
@@ -40,14 +51,28 @@ namespace YooAsset.Editor
 		/// </summary>
 		public void ClearAll()
 		{
+			ShowPackageView = false;
 			EnableAddressable = false;
+			LocationToLower = false;
+			IncludeAssetGUID = false;
+			UniqueBundleName = false;
+			ShowEditorAlias = false;
 			Packages.Clear();
 		}
 
 		/// <summary>
-		/// 检测配置错误
+		/// 检测包裹配置错误
 		/// </summary>
-		public void CheckConfigError()
+		public void CheckPackageConfigError(string packageName)
+		{
+			var package = GetPackage(packageName);
+			package.CheckConfigError();
+		}
+
+		/// <summary>
+		/// 检测所有配置错误
+		/// </summary>
+		public void CheckAllPackageConfigError()
 		{
 			foreach (var package in Packages)
 			{
@@ -56,9 +81,9 @@ namespace YooAsset.Editor
 		}
 
 		/// <summary>
-		/// 修复配置错误
+		/// 修复所有配置错误
 		/// </summary>
-		public bool FixConfigError()
+		public bool FixAllPackageConfigError()
 		{
 			bool isFixed = false;
 			foreach (var package in Packages)
@@ -76,16 +101,8 @@ namespace YooAsset.Editor
 		/// </summary>
 		public List<string> GetPackageAllTags(string packageName)
 		{
-			foreach (var package in Packages)
-			{
-				if (package.PackageName == packageName)
-				{
-					return package.GetAllTags();
-				}
-			}
-
-			Debug.LogWarning($"Not found package : {packageName}");
-			return new List<string>();
+			var package = GetPackage(packageName);
+			return package.GetAllTags();
 		}
 
 		/// <summary>
@@ -96,18 +113,25 @@ namespace YooAsset.Editor
 			if (string.IsNullOrEmpty(packageName))
 				throw new Exception("Build package name is null or mepty !");
 
+			var package = GetPackage(packageName);
+			CollectCommand command = new CollectCommand(buildMode, packageName,
+			EnableAddressable, LocationToLower, IncludeAssetGUID, UniqueBundleName);
+			CollectResult collectResult = new CollectResult(command);
+			collectResult.SetCollectAssets(package.GetAllCollectAssets(command));
+			return collectResult;
+		}
+
+		/// <summary>
+		/// 获取包裹类
+		/// </summary>
+		public AssetBundleCollectorPackage GetPackage(string packageName)
+		{
 			foreach (var package in Packages)
 			{
 				if (package.PackageName == packageName)
-				{
-					CollectCommand command = new CollectCommand(buildMode, packageName, EnableAddressable, UniqueBundleName);
-					CollectResult collectResult = new CollectResult(command);
-					collectResult.SetCollectAssets(package.GetAllCollectAssets(command));
-					return collectResult;
-				}
+					return package;
 			}
-
-			throw new Exception($"Not found collector pacakge : {packageName}");
+			throw new Exception($"Not found pacakge : {packageName}");
 		}
 	}
 }

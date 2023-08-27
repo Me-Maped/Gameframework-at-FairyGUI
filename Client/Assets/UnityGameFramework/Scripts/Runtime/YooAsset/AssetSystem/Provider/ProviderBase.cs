@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace YooAsset
 {
-	internal abstract class ProviderBase
+	public abstract class ProviderBase
 	{
 		public enum EStatus
 		{
@@ -90,6 +90,8 @@ namespace YooAsset
 		}
 
 
+		protected BundleLoaderBase OwnerBundle { private set; get; }
+		protected DependAssetBundles DependBundles { private set; get; }
 		protected bool IsWaitForAsyncComplete { private set; get; } = false;
 		private readonly List<OperationHandleBase> _handles = new List<OperationHandleBase>();
 
@@ -99,6 +101,18 @@ namespace YooAsset
 			Impl = impl;
 			ProviderGUID = providerGUID;
 			MainAssetInfo = assetInfo;
+
+			// 创建资源包加载器
+			if (impl != null)
+			{
+				OwnerBundle = impl.CreateOwnerAssetBundleLoader(assetInfo);
+				OwnerBundle.Reference();
+				OwnerBundle.AddProvider(this);
+
+				var dependList = impl.CreateDependAssetBundleLoaders(assetInfo);
+				DependBundles = new DependAssetBundles(dependList);
+				DependBundles.Reference();
+			}
 		}
 
 		/// <summary>
@@ -109,17 +123,21 @@ namespace YooAsset
 		/// <summary>
 		/// 销毁资源对象
 		/// </summary>
-		public virtual void Destroy()
+		public void Destroy()
 		{
 			IsDestroyed = true;
-		}
 
-		/// <summary>
-		/// 获取下载进度
-		/// </summary>
-		public virtual DownloadReport GetDownloadReport()
-		{
-			return DownloadReport.CreateDefaultReport();
+			// 释放资源包加载器
+			if (OwnerBundle != null)
+			{
+				OwnerBundle.Release();
+				OwnerBundle = null;
+			}
+			if (DependBundles != null)
+			{
+				DependBundles.Release();
+				DependBundles = null;
+			}
 		}
 
 		/// <summary>
@@ -159,6 +177,8 @@ namespace YooAsset
 				handle = new SceneOperationHandle(this);
 			else if (typeof(T) == typeof(SubAssetsOperationHandle))
 				handle = new SubAssetsOperationHandle(this);
+			else if (typeof(T) == typeof(AllAssetsOperationHandle))
+				handle = new AllAssetsOperationHandle(this);
 			else if (typeof(T) == typeof(RawFileOperationHandle))
 				handle = new RawFileOperationHandle(this);
 			else
@@ -201,6 +221,30 @@ namespace YooAsset
 		}
 
 		/// <summary>
+		/// 处理特殊异常
+		/// </summary>
+		protected void ProcessCacheBundleException()
+		{
+			if (OwnerBundle.IsDestroyed)
+				throw new System.Exception("Should never get here !");
+
+			if (OwnerBundle.MainBundleInfo.Bundle.IsRawFile)
+			{
+				Status = EStatus.Failed;
+				LastError = $"Cannot load asset bundle file using {nameof(ResourcePackage.LoadRawFileAsync)} method !";
+				YooLogger.Error(LastError);
+				InvokeCompletion();
+			}
+			else
+			{
+				Status = EStatus.Failed;
+				LastError = $"The bundle {OwnerBundle.MainBundleInfo.Bundle.BundleName} has been destroyed by unity bugs !";
+				YooLogger.Error(LastError);
+				InvokeCompletion();
+			}
+		}
+
+		/// <summary>
 		/// 异步操作任务
 		/// </summary>
 		public Task Task
@@ -227,6 +271,7 @@ namespace YooAsset
 			Progress = 1f;
 
 			// 注意：创建临时列表是为了防止外部逻辑在回调函数内创建或者释放资源句柄。
+			// 注意：回调方法如果发生异常，会阻断列表里的后续回调方法！
 			List<OperationHandleBase> tempers = new List<OperationHandleBase>(_handles);
 			foreach (var hande in tempers)
 			{
@@ -291,6 +336,37 @@ namespace YooAsset
 				LoadingTime = _watch.ElapsedMilliseconds;
 				_watch = null;
 			}
+		}
+
+		/// <summary>
+		/// 获取下载报告
+		/// </summary>
+		internal DownloadReport GetDownloadReport()
+		{
+			DownloadReport result = new DownloadReport();
+			result.TotalSize = (ulong)OwnerBundle.MainBundleInfo.Bundle.FileSize;
+			result.DownloadedBytes = OwnerBundle.DownloadedBytes;
+			foreach (var dependBundle in DependBundles.DependList)
+			{
+				result.TotalSize += (ulong)dependBundle.MainBundleInfo.Bundle.FileSize;
+				result.DownloadedBytes += dependBundle.DownloadedBytes;
+			}
+			result.Progress = (float)result.DownloadedBytes / result.TotalSize;
+			return result;
+		}
+
+		/// <summary>
+		/// 获取资源包的调试信息列表
+		/// </summary>
+		internal void GetBundleDebugInfos(List<DebugBundleInfo> output)
+		{
+			var bundleInfo = new DebugBundleInfo();
+			bundleInfo.BundleName = OwnerBundle.MainBundleInfo.Bundle.BundleName;
+			bundleInfo.RefCount = OwnerBundle.RefCount;
+			bundleInfo.Status = OwnerBundle.Status.ToString();
+			output.Add(bundleInfo);
+
+			DependBundles.GetBundleDebugInfos(output);
 		}
 		#endregion
 	}

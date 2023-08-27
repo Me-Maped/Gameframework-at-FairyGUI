@@ -5,7 +5,7 @@ using UnityEngine.Networking.PlayerConnection;
 
 namespace YooAsset
 {
-	internal class RemoteDebuggerInRuntime : MonoBehaviour
+	public class RemoteDebuggerInRuntime : MonoBehaviour
 	{
 #if UNITY_EDITOR
 		/// <summary>

@@ -11,25 +11,20 @@ namespace YooAsset.Editor
 		private readonly Dictionary<string, BuildBundleInfo> _bundleInfoDic = new Dictionary<string, BuildBundleInfo>(10000);
 
 		/// <summary>
+		/// 冗余的资源列表
+		/// </summary>
+		public readonly List<ReportRedundancyInfo> RedundancyInfos= new List<ReportRedundancyInfo>(1000);
+		
+		/// <summary>
 		/// 参与构建的资源总数
 		/// 说明：包括主动收集的资源以及其依赖的所有资源
 		/// </summary>
 		public int AssetFileCount;
 
 		/// <summary>
-		/// 是否启用可寻址资源定位
+		/// 收集命令
 		/// </summary>
-		public bool EnableAddressable;
-
-		/// <summary>
-		/// 资源包名唯一化
-		/// </summary>
-		public bool UniqueBundleName;
-
-		/// <summary>
-		/// 着色器统一的全名称
-		/// </summary>
-		public string ShadersBundleName;
+		public CollectCommand Command { set; get; }
 
 		/// <summary>
 		/// 资源包信息列表
