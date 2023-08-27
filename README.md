@@ -34,7 +34,7 @@ Assets/GameMain/Scripts
 - [ ] 修改并使用GeekServer作为配套后端
 - [ ] 基于此框架完成一个小Demo
 - [ ] 尝试在此基础上使用ECS架构
-- [ ] 更新YooAsset至1.5.2
+- [x] 更新YooAsset至1.5.3
 
 ### 日志
 * 工程结构修改，将Luban分离出来，并新增Proto代码生成工具
