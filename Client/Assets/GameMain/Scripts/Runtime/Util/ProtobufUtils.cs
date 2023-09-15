@@ -87,8 +87,19 @@ namespace GameMain
         public static T Deserialize<T>(byte[] dataBytes) where T : IMessage, new()
         {
             T msg = new T();
-            msg = (T)msg.Descriptor.Parser.ParseFrom(dataBytes);
-            return msg;
+            return (T)msg.Descriptor.Parser.ParseFrom(dataBytes);
+        }
+
+        /// <summary>
+        /// 反序列化protobuf
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="dataBytes"></param>
+        /// <returns></returns>
+        public static IMessage Deserialize(Type type, byte[] dataBytes)
+        {
+            IMessage msg = (IMessage)Activator.CreateInstance(type);
+            return msg.Descriptor.Parser.ParseFrom(dataBytes);
         }
 
         public static int GetHighOrder(int cmdMerge)

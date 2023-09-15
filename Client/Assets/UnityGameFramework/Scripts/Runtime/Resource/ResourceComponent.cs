@@ -38,53 +38,52 @@ namespace UnityGameFramework.Runtime
         /// <summary>
         /// 资源包名称。
         /// </summary>
+        [SerializeField]
         public string PackageName = "DefaultPackage";
         
         /// <summary>
         /// 资源系统运行模式。
         /// </summary>
+        [SerializeField]
         public EPlayMode PlayMode = EPlayMode.EditorSimulateMode;
 
         /// <summary>
         /// 下载文件校验等级。
         /// </summary>
+        [SerializeField]
         public EVerifyLevel VerifyLevel = EVerifyLevel.Middle;
         
         [SerializeField]
         private ReadWritePathType m_ReadWritePathType = ReadWritePathType.Unspecified;
+        
         /// <summary>
         /// 设置异步系统参数，每帧执行消耗的最大时间切片（单位：毫秒）
         /// </summary>
         [SerializeField]
         public long Milliseconds = 30;
 
-        public int m_DownloadingMaxNum = 2;
+        [SerializeField]
+        private int m_DownloadingMaxNum = 2;
+        
+        [SerializeField]
+        private int m_FailedTryAgain = 3;
+        
+        
         /// <summary>
         /// 获取或设置同时最大下载数目。
         /// </summary>
         public int DownloadingMaxNum
         {
-            get
-            {
-                return m_DownloadingMaxNum;
-            }
-            set
-            {
-                m_DownloadingMaxNum = value;
-            }
+            get => m_DownloadingMaxNum;
+            set => m_DownloadingMaxNum = value;
         }
-
-        public int m_FailedTryAgain = 3;
+        /// <summary>
+        /// 获取失败重试次数
+        /// </summary>
         public int FailedTryAgain
         {
-            get
-            {
-                return m_FailedTryAgain;
-            }
-            set
-            {
-                m_FailedTryAgain = value;
-            }
+            get => m_FailedTryAgain;
+            set => m_FailedTryAgain = value;
         }
         
         /// <summary>

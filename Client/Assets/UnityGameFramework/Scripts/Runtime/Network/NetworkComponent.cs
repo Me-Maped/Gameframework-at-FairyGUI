@@ -14,6 +14,8 @@ namespace UnityGameFramework.Runtime
     {
         private INetworkManager m_NetworkManager = null;
         private EventComponent m_EventComponent = null;
+        private INetworkChannel m_CurrentActiveChannel = null;
+        private string m_CurrentActiveChannelName = null;
 
         /// <summary>
         /// 获取网络频道数量。
@@ -78,6 +80,15 @@ namespace UnityGameFramework.Runtime
         }
 
         /// <summary>
+        /// 获取当前激活的网络频道
+        /// </summary>
+        /// <returns></returns>
+        public INetworkChannel GetNetworkChannel()
+        {
+            return m_CurrentActiveChannel;
+        }
+
+        /// <summary>
         /// 获取所有网络频道。
         /// </summary>
         /// <returns>所有网络频道。</returns>
@@ -98,13 +109,39 @@ namespace UnityGameFramework.Runtime
         /// <summary>
         /// 创建网络频道。
         /// </summary>
-        /// <param name="name">网络频道名称。</param>
+        /// <param name="channelName">网络频道名称。</param>
         /// <param name="serviceType">网络服务类型。</param>
         /// <param name="networkChannelHelper">网络频道辅助器。</param>
+        /// <param name="curActive">是否设置为当前激活的频道</param>
         /// <returns>要创建的网络频道。</returns>
-        public INetworkChannel CreateNetworkChannel(string name, ServiceType serviceType, INetworkChannelHelper networkChannelHelper)
+        public INetworkChannel CreateNetworkChannel(string channelName, ServiceType serviceType, INetworkChannelHelper networkChannelHelper, bool curActive = true)
         {
-            return m_NetworkManager.CreateNetworkChannel(name, serviceType, networkChannelHelper);
+            var channel = m_NetworkManager.CreateNetworkChannel(channelName, serviceType, networkChannelHelper);
+            if (curActive)
+            {
+                m_CurrentActiveChannel = channel;
+                m_CurrentActiveChannelName = channelName;
+            }
+            return channel;
+        }
+
+        /// <summary>
+        /// 发送消息
+        /// </summary>
+        /// <param name="packet">数据包</param>
+        public void Send(Packet packet)
+        {
+            m_NetworkManager.Send(m_CurrentActiveChannelName, packet);
+        }
+
+        /// <summary>
+        ///  发送消息
+        /// </summary>
+        /// <param name="channelName">频道名称</param>
+        /// <param name="packet">数据包</param>
+        public void Send(string channelName, Packet packet)
+        {
+            m_NetworkManager.Send(channelName, packet);
         }
 
         /// <summary>

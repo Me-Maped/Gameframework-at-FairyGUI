@@ -1,8 +1,7 @@
 //@proto_id=2000
 syntax = "proto3";
 package pb;
-option csharp_namespace = "Pb";
-option go_package = "./;pb";
+option csharp_namespace ="Geek.Server.Proto";
 message SyncPid{
   int32 Pid = 1;
   string UserName = 2;

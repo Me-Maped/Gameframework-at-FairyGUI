@@ -47,6 +47,9 @@ namespace UnityGameFramework.Runtime
         [SerializeField]
         private bool m_NeverSleep = true;
 
+        [SerializeField] 
+        private string m_EntryScene = "Game";
+
         /// <summary>
         /// 获取或设置编辑器语言（仅编辑器内有效）。
         /// </summary>
@@ -143,6 +146,15 @@ namespace UnityGameFramework.Runtime
                 m_NeverSleep = value;
                 Screen.sleepTimeout = value ? SleepTimeout.NeverSleep : SleepTimeout.SystemSetting;
             }
+        }
+
+        /// <summary>
+        /// 启动场景名称
+        /// </summary>
+        public string EntryScene
+        {
+            get => m_EntryScene;
+            set => m_EntryScene = value;            
         }
 
         /// <summary>

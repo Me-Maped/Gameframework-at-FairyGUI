@@ -282,6 +282,18 @@ namespace GameFramework.Network
             return false;
         }
 
+        /// <summary>
+        /// 发送数据包
+        /// </summary>
+        /// <param name="channelName">频道名称</param>
+        /// <param name="packet">数据包</param>
+        public void Send(string channelName, Packet packet)
+        {
+            var channel = GetNetworkChannel(channelName);
+            if(channel == null) GameFrameworkLog.Error("Cannot find network channel：" + channelName);
+            else channel.Send(packet);
+        }
+
         private void OnNetworkChannelConnected(NetworkChannelBase networkChannel, object userData)
         {
             if (m_NetworkConnectedEventHandler != null)

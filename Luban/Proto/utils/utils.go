@@ -210,3 +210,26 @@ func parseHead(line string) int {
 	CheckErr(err)
 	return startIndex
 }
+
+func ReplaceOriginNs(proto string, platform string, namespace string) {
+	content, err := os.ReadFile(proto)
+	CheckErr(err)
+
+	lines := strings.Split(string(content), "\n")
+
+	for i, line := range lines {
+		if strings.Contains(line, platform) {
+			idx := strings.LastIndex(line, "=")
+			if idx != -1 {
+				// 将=后面的内容替换为namespace
+				newLine := line[:idx+1] + "\"" + namespace + "\";"
+				lines[i] = newLine
+			}
+		}
+	}
+
+	// 将修改后的内容写回文件
+	newContent := strings.Join(lines, "\n")
+	err = os.WriteFile(proto, []byte(newContent), os.ModePerm)
+	CheckErr(err)
+}

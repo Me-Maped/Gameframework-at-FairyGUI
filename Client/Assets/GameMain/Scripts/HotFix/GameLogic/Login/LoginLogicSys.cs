@@ -6,6 +6,7 @@ using GameFramework.Network;
 using GameLogic.Common;
 using GameMain;
 using GameMain.Data;
+using Pb;
 using UGFExtensions.Await;
 using UnityEngine;
 using UnityGameFramework.Runtime;
@@ -29,11 +30,10 @@ namespace GameLogic.Login
 
         public override async void OnStart()
         {
-            return;
             await OnLoginCountReq();
             UILoadMgr.Instance.SetProgress("正在连接服务器...");
-            var channel = GameModule.Network.CreateNetworkChannel("TCP", ServiceType.Tcp, new NetChannelHelper());
-            channel.Connect("127.0.0.1", 8999, null);
+            var channel = GameModule.Network.CreateNetworkChannel("TCP", ServiceType.Tcp, new NetworkChannelHelper());
+            channel.Connect("127.0.0.1", 8899, null);
             GameModule.Event.Subscribe(NetworkConnectedEventArgs.EventId, OnWebSocketConnected);
             GameModule.Event.Subscribe(NetworkErrorEventArgs.EventId, OnWebSocketError);
         }
@@ -56,8 +56,17 @@ namespace GameLogic.Login
         /// <summary>
         /// 连接游戏服
         /// </summary>
-        public void OnLoginServerReq()
+        public async void OnLoginServerReq()
         {
+            var req = new ReqLogin();
+            req.SdkType = 0;
+            req.SdkToken = "555";
+            req.UserName = "maped";
+            req.Device = "123123";
+            req.Platform = "windows";
+            var ack = await GameModule.Network.SendAsync<ResLogin>(req);
+            Log.Info("Login res = " + ack);
+            await GameModule.Network.SendAsync<PingAck>(new PingReq { CmdCode = 1, ProtocolSwitch = 1 });
         }
 
         /// <summary>

@@ -13,6 +13,8 @@ namespace GameFramework.Network
             public object LocalEndPoint => m_Socket.LocalEndPoint;
             public object RemoteEndPoint => m_Socket.RemoteEndPoint;
 
+            public Socket Socket => m_Socket;
+
             public int ReceiveBufferSize
             {
                 get => m_Socket.ReceiveBufferSize;

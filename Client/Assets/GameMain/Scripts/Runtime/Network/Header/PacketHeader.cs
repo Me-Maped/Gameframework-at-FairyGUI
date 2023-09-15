@@ -5,6 +5,7 @@ namespace GameMain
 {
     public class PacketHeader : IPacketHeader,IReference
     {
+        public int UniId { get; set; }
         public int CmdId { get; set; }
         public int PacketLength { get; set; }
         public bool IsValid => CmdId > 0;
@@ -12,6 +13,7 @@ namespace GameMain
         {
             PacketLength = 0;
             CmdId = 0;
+            UniId = 0;
         }
     }
 }

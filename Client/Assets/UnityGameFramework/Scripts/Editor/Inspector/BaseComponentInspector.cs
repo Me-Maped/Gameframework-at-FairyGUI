@@ -23,6 +23,7 @@ namespace UnityGameFramework.Editor
         private SerializedProperty m_GameSpeed = null;
         private SerializedProperty m_RunInBackground = null;
         private SerializedProperty m_NeverSleep = null;
+        private SerializedProperty m_EntryScene = null;
 
         private string[] m_TextHelperTypeNames = null;
         private int m_TextHelperTypeNameIndex = 0;
@@ -150,6 +151,19 @@ namespace UnityGameFramework.Editor
                 }
             }
 
+            string entryScene = EditorGUILayout.TextField("Entry Scene", m_EntryScene.stringValue);
+            if (entryScene != m_EntryScene.stringValue)
+            {
+                if (EditorApplication.isCompiling)
+                {
+                    t.EntryScene = entryScene;
+                }
+                else
+                {
+                    m_EntryScene.stringValue = entryScene;
+                }
+            }
+
             serializedObject.ApplyModifiedProperties();
         }
 
@@ -172,6 +186,7 @@ namespace UnityGameFramework.Editor
             m_GameSpeed = serializedObject.FindProperty("m_GameSpeed");
             m_RunInBackground = serializedObject.FindProperty("m_RunInBackground");
             m_NeverSleep = serializedObject.FindProperty("m_NeverSleep");
+            m_EntryScene = serializedObject.FindProperty("m_EntryScene");
 
             RefreshTypeNames();
         }

@@ -37,6 +37,10 @@ var (
 	// CppHelperTmp  = flag.String("cppHelperTmp", "./Template/CppHelper.txt", "CppHelper模版")
 )
 
+var (
+	PB_CSharp_Ns = "csharp_namespace"
+)
+
 func main() {
 	flag.Parse()
 
@@ -59,6 +63,7 @@ func main() {
 		filePath := allProtoFiles[i]
 		eInfos := utils.ParseEnum(filePath)
 		pInfos := utils.ParseProto(filePath)
+		utils.ReplaceOriginNs(filePath, PB_CSharp_Ns, *CSharpPbNs)
 		if len(eInfos) > 0 {
 			parseEnumInfo.Infos = append(parseEnumInfo.Infos, eInfos...)
 			fmt.Println("解析Enum文件成功:" + filePath)
@@ -72,9 +77,9 @@ func main() {
 		}
 	}
 
-	saveProtoFile(&parseInfo, *GoOutput, "go", *GoTypeFileName, utils.ParseString(*GoTmp))
+	// saveProtoFile(&parseInfo, *GoOutput, "go", *GoTypeFileName, utils.ParseString(*GoTmp))
 	saveProtoFile(&parseInfo, *CSharpOutput, "cs", *TypeFileName, utils.ParseString(*CSharpTmp))
-	saveEnumFile(&parseEnumInfo, *CSharpOutput, "cs", *EnumFileName, utils.ParseString(*CSharpEnumTmp))
+	// saveEnumFile(&parseEnumInfo, *CSharpOutput, "cs", *EnumFileName, utils.ParseString(*CSharpEnumTmp))
 	// saveCsharMsgFile(&parseInfo, *CSharpMsgOutput, utils.ParseString(*CSharpMsgTmp))
 	// saveProtoFile(&parseInfo, *CppOutput, "h", *TypeFileName, utils.ParseString(*CppTmp))
 	// saveProtoFile(&parseInfo, *CppOutput, "h", *HelperFileName, utils.ParseString(*CppHelperHTmp))
@@ -83,6 +88,7 @@ func main() {
 }
 
 func saveProtoFile(info *utils.ParseInfo, outputPath string, fileType string, fileName string, fileTemplate string) {
+	outputPath += "/"
 	_, err := utils.CheckPath(outputPath)
 	utils.CheckErr(err)
 

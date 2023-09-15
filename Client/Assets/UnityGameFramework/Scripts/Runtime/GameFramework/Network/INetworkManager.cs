@@ -82,5 +82,12 @@ namespace GameFramework.Network
         /// <param name="name">网络频道名称。</param>
         /// <returns>是否销毁网络频道成功。</returns>
         bool DestroyNetworkChannel(string name);
+
+        /// <summary>
+        /// 发送数据包。
+        /// </summary>
+        /// <param name="channelName">频道名称</param>
+        /// <param name="packet">数据包</param>
+        void Send(string channelName, Packet packet);
     }
 }

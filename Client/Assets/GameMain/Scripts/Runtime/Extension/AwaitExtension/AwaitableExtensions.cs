@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
 using GameFramework;
 using GameFramework.DataTable;
 using GameFramework.Event;
 using GameFramework.Resource;
 using GameFramework.UI;
+using Google.Protobuf;
 using UnityEngine;
 using UnityGameFramework.Runtime;
 using OpenUIFormFailureEventArgs = UnityGameFramework.Runtime.OpenUIFormFailureEventArgs;
@@ -33,6 +35,10 @@ namespace UGFExtensions.Await
         private static readonly HashSet<int> s_DownloadSerialIds = new HashSet<int>();
         private static readonly List<DownLoadResult> s_DelayReleaseDownloadResult = new List<DownLoadResult>();
 
+        private static readonly Dictionary<int,TaskCompletionSource<IMessage>> s_NetMessageTcs =
+            new Dictionary<int, TaskCompletionSource<IMessage>>();
+        private static readonly Dictionary<int, Type> s_NetMessageTypes = new Dictionary<int, Type>();
+
         private static bool s_IsSubscribeEvent = false;
 
         /// <summary>
@@ -55,6 +61,8 @@ namespace UGFExtensions.Await
 
             eventComponent.Subscribe(DownloadSuccessEventArgs.EventId, OnDownloadSuccess);
             eventComponent.Subscribe(DownloadFailureEventArgs.EventId, OnDownloadFailure);
+            
+            eventComponent.Subscribe(GameMain.NetworkSuccessEventArgs.EventId, OnNetworkSuccess);
             s_IsSubscribeEvent = true;
         }
 
@@ -275,6 +283,20 @@ namespace UGFExtensions.Await
             return tsc.Task;
         }
 
+        /// <summary>
+        ///  增加Net请求任务（可等待）
+        /// </summary>
+        public static Task<IMessage> SendAsync<T>(this NetworkComponent networkComponent, int cmdId, IMessage msg) where T : IMessage
+        {
+            TipsSubscribeEvent();
+            var tsc = new TaskCompletionSource<IMessage>();
+            var packet = GameMain.CSNetPacket.Create(cmdId,msg);
+            networkComponent.Send(packet);
+            s_NetMessageTcs.Add(packet.UniId, tsc);
+            s_NetMessageTypes[packet.UniId] = typeof(T);
+            return tsc.Task;
+        }
+
         private static void OnWebRequestSuccess(object sender, GameEventArgs e)
         {
             WebRequestSuccessEventArgs ne = (WebRequestSuccessEventArgs)e;
@@ -393,6 +415,19 @@ namespace UGFExtensions.Await
 
                     s_DelayReleaseDownloadResult.Clear();
                 }
+            }
+        }
+
+        private static void OnNetworkSuccess(object sender, GameEventArgs e)
+        {
+            GameMain.NetworkSuccessEventArgs ne = (GameMain.NetworkSuccessEventArgs)e;
+            s_NetMessageTcs.TryGetValue(ne.UniId, out TaskCompletionSource<IMessage> tcs);
+            if (tcs != null)
+            {
+                Type msgType = s_NetMessageTypes[ne.UniId];
+                tcs.SetResult(ne.Packet.Deserialize(msgType));
+                s_NetMessageTcs.Remove(ne.UniId);
+                s_NetMessageTypes.Remove(ne.UniId);
             }
         }
     }

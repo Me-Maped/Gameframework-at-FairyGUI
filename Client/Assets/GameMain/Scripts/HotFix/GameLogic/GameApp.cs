@@ -1,4 +1,5 @@
 using GameFramework;
+using GameLogic.Common;
 using GameLogic.Login;
 using GameMain;
 using UGFExtensions.Await;
@@ -34,7 +35,7 @@ public partial class GameApp:Singleton<GameApp>
     {
         await ConfigLoader.Instance.Load();
         Log.Warning("======= StartGameLogic GameApp =======");
-        await GameModule.Scene.LoadSceneAsync("Assets/AssetRaw/Scenes/Login.unity");
+        await GameModule.Scene.LoadSceneAsync(ResName.GetScene(GameModule.Base.EntryScene));
         UILoadMgr.Instance.TweenHide();
         GameModule.UI.OpenForm<LoginForm>();
     }

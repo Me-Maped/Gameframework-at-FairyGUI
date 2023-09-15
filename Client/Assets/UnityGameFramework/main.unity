@@ -251,13 +251,17 @@ PrefabInstance:
       propertyPath: m_InstanceAutoReleaseInterval
       value: 5
       objectReference: {fileID: 0}
+    - target: {fileID: 11499388, guid: adb3eb1c35fcff14f89fba7b05c9d71c, type: 3}
+      propertyPath: m_EntryScene
+      value: Login
+      objectReference: {fileID: 0}
     - target: {fileID: 3293899846934753637, guid: adb3eb1c35fcff14f89fba7b05c9d71c, type: 3}
       propertyPath: m_BlockingMask.m_Bits
       value: 55
       objectReference: {fileID: 0}
     - target: {fileID: 4861881215341461167, guid: adb3eb1c35fcff14f89fba7b05c9d71c, type: 3}
       propertyPath: PlayMode
-      value: 2
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

@@ -174,7 +174,7 @@ namespace GameFramework.Network
 
             private void SendCallback(IAsyncResult ar)
             {
-                Socket socket = (Socket)ar.AsyncState;
+                Socket socket = ((SystemNetSocket)ar.AsyncState).Socket;
                 if (!socket.Connected)
                 {
                     return;

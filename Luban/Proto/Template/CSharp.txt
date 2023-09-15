@@ -8,29 +8,43 @@ using System.Collections.Generic;
 namespace {{.CSharpPbNs}}
 {
 	//协议号定义
-	public enum {{.FileName}}
+	public class CMD
 	{	{{ range .Infos}}
-		{{.ProtocolName}} = {{.ProtocolID}},{{ end }}
+		public const int {{.ProtocolName}} = {{.ProtocolID}};{{ end }}
 	}
 
-	public class PbTypeHelper
+	public class PBHelper
 	{
-		private static Dictionary<Type, ProtoType> _protoTypeDic = new()
+		public static Dictionary<Type, int> ProtoTypeDic = new()
 		{
 			{{ range .Infos}}
-			{typeof({{.ProtocolName}}), ProtoType.{{.ProtocolName}} },{{ end }}
+			{typeof({{.ProtocolName}}), CMD.{{.ProtocolName}} },{{ end }}
 		};
 
 		public static int Get<T>()
 		{
-			if (!_protoTypeDic.ContainsKey(typeof(T))) return -1;
-			return (int)_protoTypeDic[typeof(T)];
+			if (!ProtoTypeDic.ContainsKey(typeof(T))) return -1;
+			return (int)ProtoTypeDic[typeof(T)];
 		}
 
 		public static int Get(Type type)
 		{
-			if (!_protoTypeDic.ContainsKey(type)) return -1;
-			return (int)_protoTypeDic[type];
+			if (!ProtoTypeDic.ContainsKey(type)) return -1;
+			return (int)ProtoTypeDic[type];
+		}
+
+		public static Type GetType(int cmd)
+		{
+			foreach(var kv in ProtoTypeDic)
+			{
+				if(kv.Value == cmd) return kv.Key;
+			}
+			return null;
+		}
+
+		public static bool Contain(int cmd)
+		{
+			return ProtoTypeDic.ContainsValue(cmd);
 		}
 	}
 }

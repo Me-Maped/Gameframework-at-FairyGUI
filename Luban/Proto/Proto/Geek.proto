@@ -1,0 +1,97 @@
+//@proto_id=3000
+syntax = "proto3";
+package pb;
+option csharp_namespace ="Geek.Server.Proto";
+// option go_package = "./;pb";
+
+message ReqBagInfo{
+    int32 UniId = 1;
+}
+
+message ResBagInfo{
+    int32 UniId = 1;
+    map<int32,int64> ItemDic = 2;
+}
+
+message ReqComposePet{
+    int32 UniId =1;
+    int32 FragmentId = 2;
+}
+
+message ResComposePet{
+    int32 PetId = 1;
+}
+
+message ReqUseItem{
+
+}
+
+message ReqSellItem{
+
+}
+
+message ResItemChange{
+
+}
+
+message TestStruct{
+
+}
+
+message A{
+
+}
+
+message B{
+
+}
+
+message UserInfo{
+    int64 CreateTime = 1;
+    int32 Level = 2;
+    int64 RoleId = 3;
+    string RoleName = 4;
+    int32 VipLevel = 5;
+}
+
+message ReqLogin{
+    int32 UniId = 1;
+    int32 SdkType = 2;
+    string SdkToken = 3;
+    string UserName = 4;
+    string Device = 5;
+    string Platform = 6;
+}
+
+message ResLogin{
+    int32 Code = 1;
+    UserInfo UserInfo = 2;
+}
+
+message ResLevelUp{
+
+}
+
+message HeartBeat{
+
+}
+
+message ResErrorCode{
+    int32 UniId = 1;
+    int32 ErrCode = 2;
+    string Desc = 3;
+    int32 MsgID = 4;
+}
+
+message ResPrompt{
+    int32 Type = 1;
+    string Content = 2;
+}
+
+message Place{
+
+}
+
+message MoveMessage{
+
+}
