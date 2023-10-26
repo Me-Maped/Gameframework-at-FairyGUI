@@ -3,6 +3,7 @@ using GameLogic.Common;
 using GameLogic.Login;
 using GameMain;
 using UGFExtensions.Await;
+using UnityEngine;
 using UnityGameFramework.Runtime;
 
 public partial class GameApp:Singleton<GameApp>
@@ -36,6 +37,7 @@ public partial class GameApp:Singleton<GameApp>
         await ConfigLoader.Instance.Load();
         Log.Warning("======= StartGameLogic GameApp =======");
         await GameModule.Scene.LoadSceneAsync(ResName.GetScene(GameModule.Base.EntryScene));
+        GameModule.UI.UICameraAttach(Camera.main);
         UILoadMgr.Instance.TweenHide();
         GameModule.UI.OpenForm<LoginForm>();
     }

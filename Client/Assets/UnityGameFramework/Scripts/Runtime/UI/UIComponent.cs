@@ -59,6 +59,9 @@ namespace UnityGameFramework.Runtime
         private string[] m_LaunchPkgNames = {"UI/Launch"};
         
         private Vector2 m_SafeNotch=Vector2.zero;
+        private UIFitHelperBase m_FitHelperBase;
+        private UIJumpHelperBase m_JumpHelperBase;
+        private UICameraHelperBase m_CameraHelperBase;
 
         /// <summary>
         /// 异形屏顶部的安全区域
@@ -168,34 +171,34 @@ namespace UnityGameFramework.Runtime
         /// </summary>
         private void CreateHelper()
         {
-            UIFitHelperBase uiFitHelper = Helper.CreateHelper(m_UIFitHelperTypeName, m_CustomUIFitHelper);
-            if (uiFitHelper != null)
+            m_FitHelperBase = Helper.CreateHelper(m_UIFitHelperTypeName, m_CustomUIFitHelper);
+            if (m_FitHelperBase != null)
             {
-                m_UIManager.SetUIFitHelper(uiFitHelper);
-                uiFitHelper.name = "UI Fit Helper";
-                Transform formHelperTrans = uiFitHelper.transform;
+                m_UIManager.SetUIFitHelper(m_FitHelperBase);
+                m_FitHelperBase.name = "UI Fit Helper";
+                Transform formHelperTrans = m_FitHelperBase.transform;
                 formHelperTrans.SetParent(this.transform);
                 formHelperTrans.localScale = Vector3.one;
             }
             else Log.Error("Can not create UI fit helper.");
             
-            UIJumpHelperBase uiJumpHelper = Helper.CreateHelper(m_UIJumpHelperTypeName, m_CustomUIJumpHelper, UIGroupCount);
-            if (uiJumpHelper != null)
+            m_JumpHelperBase = Helper.CreateHelper(m_UIJumpHelperTypeName, m_CustomUIJumpHelper, UIGroupCount);
+            if (m_JumpHelperBase != null)
             {
-                m_UIManager.SetUIJumpHelper(uiJumpHelper);
-                uiJumpHelper.name = "UI Jump Helper";
-                Transform groupHelperTrans = uiJumpHelper.transform;
+                m_UIManager.SetUIJumpHelper(m_JumpHelperBase);
+                m_JumpHelperBase.name = "UI Jump Helper";
+                Transform groupHelperTrans = m_JumpHelperBase.transform;
                 groupHelperTrans.SetParent(this.transform);
                 groupHelperTrans.localScale = Vector3.one;
             }
             else Log.Error("Can not create UI jump helper.");
             
-            UICameraHelperBase uiCameraHelper = Helper.CreateHelper(m_UICameraHelperTypeName, m_CustomUICameraHelper, UIGroupCount);
-            if (uiCameraHelper != null)
+            m_CameraHelperBase = Helper.CreateHelper(m_UICameraHelperTypeName, m_CustomUICameraHelper, UIGroupCount);
+            if (m_CameraHelperBase != null)
             {
-                m_UIManager.SetUICameraHelper(uiCameraHelper);
-                uiCameraHelper.name = "UI Camera Helper";
-                Transform groupHelperTrans = uiCameraHelper.transform;
+                m_UIManager.SetUICameraHelper(m_CameraHelperBase);
+                m_CameraHelperBase.name = "UI Camera Helper";
+                Transform groupHelperTrans = m_CameraHelperBase.transform;
                 groupHelperTrans.SetParent(this.transform);
                 groupHelperTrans.localScale = Vector3.one;
             }
@@ -220,6 +223,8 @@ namespace UnityGameFramework.Runtime
             GRoot.inst.displayObject.gameObject.name = "UIRoot";
             //字体包
             UIConfig.defaultFont = "FZJUZXFJW";
+            //UI相机设置
+            m_CameraHelperBase.InitCamera();
         }
         #region 接口层
         /// <summary>

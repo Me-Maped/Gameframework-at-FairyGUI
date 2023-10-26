@@ -23,6 +23,7 @@
 
 # Visual Studio cache directory
 .vs/
+.vsconfig
 
 .vscode/
 .idea/
