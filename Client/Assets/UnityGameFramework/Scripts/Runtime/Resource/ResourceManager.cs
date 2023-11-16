@@ -630,18 +630,23 @@ namespace GameFramework.Resource
         /// <exception cref="GameFrameworkException"></exception>
         public async void LoadUIAssetAsync(string[] pkgNames, LoadAssetCallbacks loadAssetCallbacks, object userData)
         {
-            if(pkgNames == null|| pkgNames.Length == 0) throw new GameFrameworkException("Asset name is invalid.");
+            if (pkgNames == null || pkgNames.Length == 0) throw new GameFrameworkException("Asset name is invalid.");
             if (loadAssetCallbacks == null) throw new GameFrameworkException("Load asset callbacks is invalid.");
             float duration = Time.time;
             string rootPath = SettingsUtils.FrameworkGlobalSettings.UIResourceFolder;
-            foreach (var pkgName in pkgNames)
+            for (int i = 0; i < pkgNames.Length; i++)
             {
+                string pkgName = pkgNames[i];
                 TextAsset pkgDesc = await InternalLoadUIAsset(pkgName);
-                UIPackage.AddPackage(pkgDesc.bytes,string.Empty,  (name, extension, type, packageItem) =>
+                UIPackage.AddPackage(pkgDesc.bytes, string.Empty, (name, extension, type, packageItem) =>
                 {
-                    LoadUIExtensions(rootPath,name,extension,type,packageItem,loadAssetCallbacks,duration,userData);
+                    LoadUIExtensions(rootPath, name, extension, type, packageItem, loadAssetCallbacks, duration, userData);
                 });
-                loadAssetCallbacks.LoadAssetSuccessCallback?.Invoke(pkgName, pkgDesc, Time.time - duration, userData);
+                // 所有包加载完成后给出回调
+                if (i == pkgNames.Length - 1)
+                {
+                    loadAssetCallbacks.LoadAssetSuccessCallback?.Invoke(pkgName, pkgDesc, Time.time - duration, userData);
+                }
             }
         }
 
@@ -654,36 +659,31 @@ namespace GameFramework.Resource
         public async void LoadUIAssetAsync(string pkgName, LoadAssetCallbacks loadAssetCallbacks, object userData)
         {
             //加载包描述数据
-            if(string.IsNullOrEmpty(pkgName))
+            if (string.IsNullOrEmpty(pkgName))
             {
                 throw new GameFrameworkException("Asset name is invalid.");
             }
-            if(loadAssetCallbacks == null)
+            if (loadAssetCallbacks == null)
             {
                 throw new GameFrameworkException("Load asset callbacks is invalid.");
             }
             float duration = Time.time;
             string rootPath = SettingsUtils.FrameworkGlobalSettings.UIResourceFolder;
             TextAsset pkgDesc = await InternalLoadUIAsset(pkgName);
-            UIPackage uiPackage = UIPackage.AddPackage(pkgDesc.bytes,string.Empty,  (name, extension, type, packageItem) =>
+            UIPackage uiPackage = UIPackage.AddPackage(pkgDesc.bytes, string.Empty, (name, extension, type, packageItem) =>
             {
-                LoadUIExtensions(rootPath,name,extension,type,packageItem,loadAssetCallbacks,duration,userData);
+                LoadUIExtensions(rootPath, name, extension, type, packageItem, loadAssetCallbacks, duration, userData);
             });
-            foreach (var dic in uiPackage.dependencies)
-            {
-                if (!dic.TryGetValue("name", out string dependPkgName)) continue;
-                await InternalLoadDependUIAsync(dependPkgName);
-            }
             loadAssetCallbacks.LoadAssetSuccessCallback?.Invoke(pkgName, pkgDesc, Time.time - duration, userData);
         }
-        
+
         /// <summary>
         /// 卸载UI资源。
         /// </summary>
         /// <param name="assetName"></param>
         public void UnloadUIAsset(string assetName)
         {
-            if(m_UIAssetHandlers.TryGetValue(assetName,out var locationList))
+            if (m_UIAssetHandlers.TryGetValue(assetName, out var locationList))
             {
                 foreach (var location in locationList)
                 {
@@ -694,41 +694,25 @@ namespace GameFramework.Resource
             }
         }
 
-        private async UniTask InternalLoadDependUIAsync(string pkgName)
-        {
-            if (UIPackage.GetByName(pkgName) != null) return;
-            string rootPath = SettingsUtils.FrameworkGlobalSettings.UIResourceFolder;
-            TextAsset pkgDesc = await InternalLoadUIAsset(pkgName);
-            UIPackage uiPackage = UIPackage.AddPackage(pkgDesc.bytes,string.Empty,  (name, extension, type, packageItem) =>
-            {
-                LoadDependUIExtensions(rootPath,name,extension,type,packageItem);
-            });
-            foreach (var dic in uiPackage.dependencies)
-            {
-                if (!dic.TryGetValue("name", out string dependPkgName)) continue;
-                await InternalLoadDependUIAsync(dependPkgName);
-            }
-        }
-
         private async UniTask<TextAsset> InternalLoadUIAsset(string pkgName)
         {
             //加载包描述数据
-            if(string.IsNullOrEmpty(pkgName))
+            if (string.IsNullOrEmpty(pkgName))
             {
                 throw new GameFrameworkException("Asset name is invalid.");
             }
             string rootPath = SettingsUtils.FrameworkGlobalSettings.UIResourceFolder;
-            string resPath = Utility.Text.Format("{0}{1}/{2}_fui.bytes", rootPath,pkgName,pkgName);
+            string resPath = Utility.Text.Format("{0}{1}/{2}_fui.bytes", rootPath, pkgName, pkgName);
             TextAsset pkgDesc = await LoadAssetAsync<TextAsset>(resPath);
             if (pkgDesc == null)
             {
                 throw new GameFrameworkException(Utility.Text.Format("Asset name '{0}' is invalid.", pkgName));
             }
             m_UIAssetHandlers.TryGetValue(pkgName, out var handleList);
-            if(handleList == null)
+            if (handleList == null)
             {
                 handleList = new List<string>();
-                m_UIAssetHandlers.Add(pkgName,handleList);
+                m_UIAssetHandlers.Add(pkgName, handleList);
             }
             handleList.Add(pkgName);
             return pkgDesc;
@@ -745,20 +729,12 @@ namespace GameFramework.Resource
         /// <param name="loadAssetCallbacks"></param>
         /// <param name="duration"></param>
         /// <param name="userData"></param>
-        private async void LoadUIExtensions(string rootPath,string name,string extension,Type type,PackageItem packageItem,LoadAssetCallbacks loadAssetCallbacks,float duration,object userData)
+        private async void LoadUIExtensions(string rootPath, string name, string extension, Type type, PackageItem packageItem, LoadAssetCallbacks loadAssetCallbacks, float duration, object userData)
         {
-            string extPath = Utility.Text.Format("{0}{1}/{1}_{2}{3}", rootPath,packageItem.owner.name, name, extension);
+            string extPath = Utility.Text.Format("{0}{1}/{1}_{2}{3}", rootPath, packageItem.owner.name, name, extension);
             var targetObj = await LoadAssetAsync<Object>(extPath);
-            packageItem.owner.SetItemAsset(packageItem,targetObj,DestroyMethod.None);
+            packageItem.owner.SetItemAsset(packageItem, targetObj, DestroyMethod.None);
             loadAssetCallbacks.LoadAssetSuccessCallback?.Invoke(name, targetObj, Time.time - duration, userData);
-        }
-
-        private async void LoadDependUIExtensions(string rootPath, string name, string extension, Type type,
-            PackageItem packageItem)
-        {
-            string extPath = Utility.Text.Format("{0}{1}/{1}_{2}{3}", rootPath,packageItem.owner.name, name, extension);
-            var targetObj = await LoadAssetAsync<Object>(extPath);
-            packageItem.owner.SetItemAsset(packageItem,targetObj,DestroyMethod.None);
         }
 
         private IEnumerator UnloadSceneCo(string sceneAssetName, UnloadSceneCallbacks unloadSceneCallbacks, object userData)

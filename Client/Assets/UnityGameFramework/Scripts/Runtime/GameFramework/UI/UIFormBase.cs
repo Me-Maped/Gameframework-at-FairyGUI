@@ -372,8 +372,6 @@ namespace GameFramework.UI
             m_FormFinishCallback = null;
             OnCloseComplete();
             OnPartCloseComplete();
-            ReferencePool.Release(m_Config);
-            m_Config = null;
         }
 
         internal void Destroy()
@@ -384,6 +382,8 @@ namespace GameFramework.UI
             m_FormBg = null;
             Instance = null;
             m_IsDataReady = false;
+            ReferencePool.Release(m_Config);
+            m_Config = null;
         }
 
         public override void Wait(Action callback)

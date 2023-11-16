@@ -15,6 +15,9 @@ namespace GameLogic.Login
         {
             // 表测试
             Timers.inst.Add(3f, 1, _ => { View.m_title.text = ConfigLoader.Instance.Tables.TbSkill.DataList[0].Name; });
+
+            // 测试包卸载
+            Timers.inst.Add(6f, 1, _ => { Close(); });
         }
     }
 }
