@@ -8,7 +8,7 @@ namespace GameLogic.Login
     {
         protected override UIFormConfig CreateConfig()
         {
-            return UIFormConfig.Create(UI_login_main.PKG_NAME, UI_login_main.RES_NAME,  groupEnum:UIGroupEnum.PANEL);
+            return UIFormConfig.Create(UI_login_main.PKG_NAME, UI_login_main.RES_NAME,depends:new[]{"Base"},  groupEnum:UIGroupEnum.PANEL);
         }
 
         protected override void OnOpen()

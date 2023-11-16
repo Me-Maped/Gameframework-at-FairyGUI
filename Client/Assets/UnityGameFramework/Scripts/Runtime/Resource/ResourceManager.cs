@@ -696,6 +696,7 @@ namespace GameFramework.Resource
 
         private async UniTask InternalLoadDependUIAsync(string pkgName)
         {
+            if (UIPackage.GetByName(pkgName) != null) return;
             string rootPath = SettingsUtils.FrameworkGlobalSettings.UIResourceFolder;
             TextAsset pkgDesc = await InternalLoadUIAsset(pkgName);
             UIPackage uiPackage = UIPackage.AddPackage(pkgDesc.bytes,string.Empty,  (name, extension, type, packageItem) =>
@@ -746,7 +747,7 @@ namespace GameFramework.Resource
         /// <param name="userData"></param>
         private async void LoadUIExtensions(string rootPath,string name,string extension,Type type,PackageItem packageItem,LoadAssetCallbacks loadAssetCallbacks,float duration,object userData)
         {
-            string extPath = Utility.Text.Format("{0}{1}/{2}{3}", rootPath,packageItem.name, name, extension);
+            string extPath = Utility.Text.Format("{0}{1}/{1}_{2}{3}", rootPath,packageItem.owner.name, name, extension);
             var targetObj = await LoadAssetAsync<Object>(extPath);
             packageItem.owner.SetItemAsset(packageItem,targetObj,DestroyMethod.None);
             loadAssetCallbacks.LoadAssetSuccessCallback?.Invoke(name, targetObj, Time.time - duration, userData);
@@ -755,7 +756,7 @@ namespace GameFramework.Resource
         private async void LoadDependUIExtensions(string rootPath, string name, string extension, Type type,
             PackageItem packageItem)
         {
-            string extPath = Utility.Text.Format("{0}{1}/{2}{3}", rootPath,packageItem.name, name, extension);
+            string extPath = Utility.Text.Format("{0}{1}/{1}_{2}{3}", rootPath,packageItem.owner.name, name, extension);
             var targetObj = await LoadAssetAsync<Object>(extPath);
             packageItem.owner.SetItemAsset(packageItem,targetObj,DestroyMethod.None);
         }

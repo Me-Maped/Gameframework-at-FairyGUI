@@ -5,5 +5,6 @@
     <component id="n2_g8qu" name="n2" src="g8qu1" fileName="组件/btn_base.xml" pkg="jb6oz06w" xy="806,734" size="308,98">
       <Button title="Play" titleFontSize="40"/>
     </component>
+    <image id="n3_naes" name="n3" src="naes1" fileName="素材/play.png" xy="832,752" size="57,71" aspect="true"/>
   </displayList>
 </component>

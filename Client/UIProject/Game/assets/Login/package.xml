@@ -2,6 +2,7 @@
 <packageDescription id="rr499cgx">
   <resources>
     <component id="otfk0" name="login_main.xml" path="/组件/" exported="true"/>
+    <image id="naes1" name="play.png" path="/素材/"/>
   </resources>
   <publish name="" genCode="true"/>
 </packageDescription>
