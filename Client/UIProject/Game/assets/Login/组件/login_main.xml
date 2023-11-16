@@ -2,5 +2,8 @@
 <component size="1920,1080">
   <displayList>
     <text id="n1_otfk" name="title" xy="878,488" size="164,104" fontSize="80" color="#cccccc" strokeColor="#000000" strokeSize="2" shadowColor="#000000" shadowOffset="7,1" text="登录"/>
+    <component id="n2_g8qu" name="n2" src="g8qu1" fileName="组件/btn_base.xml" pkg="jb6oz06w" xy="806,734" size="308,98">
+      <Button title="Play" titleFontSize="40"/>
+    </component>
   </displayList>
 </component>

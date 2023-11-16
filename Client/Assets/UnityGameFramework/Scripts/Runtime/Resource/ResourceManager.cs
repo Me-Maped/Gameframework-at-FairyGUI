@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using FairyGUI;
@@ -668,10 +669,12 @@ namespace GameFramework.Resource
             {
                 LoadUIExtensions(rootPath,name,extension,type,packageItem,loadAssetCallbacks,duration,userData);
             });
-            if (uiPackage.dependencies.Length <= 0)
+            foreach (var dic in uiPackage.dependencies)
             {
-                loadAssetCallbacks.LoadAssetSuccessCallback?.Invoke(pkgName, pkgDesc, Time.time - duration, userData);
+                if (!dic.TryGetValue("name", out string dependPkgName)) continue;
+                await InternalLoadDependUIAsync(dependPkgName);
             }
+            loadAssetCallbacks.LoadAssetSuccessCallback?.Invoke(pkgName, pkgDesc, Time.time - duration, userData);
         }
         
         /// <summary>
@@ -688,6 +691,21 @@ namespace GameFramework.Resource
                 }
                 locationList.Clear();
                 m_UIAssetHandlers.Remove(assetName);
+            }
+        }
+
+        private async UniTask InternalLoadDependUIAsync(string pkgName)
+        {
+            string rootPath = SettingsUtils.FrameworkGlobalSettings.UIResourceFolder;
+            TextAsset pkgDesc = await InternalLoadUIAsset(pkgName);
+            UIPackage uiPackage = UIPackage.AddPackage(pkgDesc.bytes,string.Empty,  (name, extension, type, packageItem) =>
+            {
+                LoadDependUIExtensions(rootPath,name,extension,type,packageItem);
+            });
+            foreach (var dic in uiPackage.dependencies)
+            {
+                if (!dic.TryGetValue("name", out string dependPkgName)) continue;
+                await InternalLoadDependUIAsync(dependPkgName);
             }
         }
 
@@ -732,6 +750,14 @@ namespace GameFramework.Resource
             var targetObj = await LoadAssetAsync<Object>(extPath);
             packageItem.owner.SetItemAsset(packageItem,targetObj,DestroyMethod.None);
             loadAssetCallbacks.LoadAssetSuccessCallback?.Invoke(name, targetObj, Time.time - duration, userData);
+        }
+
+        private async void LoadDependUIExtensions(string rootPath, string name, string extension, Type type,
+            PackageItem packageItem)
+        {
+            string extPath = Utility.Text.Format("{0}{1}/{2}{3}", rootPath,packageItem.name, name, extension);
+            var targetObj = await LoadAssetAsync<Object>(extPath);
+            packageItem.owner.SetItemAsset(packageItem,targetObj,DestroyMethod.None);
         }
 
         private IEnumerator UnloadSceneCo(string sceneAssetName, UnloadSceneCallbacks unloadSceneCallbacks, object userData)
