@@ -3,6 +3,7 @@
   <resources>
     <component id="otfk0" name="login_main.xml" path="/组件/" exported="true"/>
     <image id="naes1" name="play.png" path="/素材/"/>
+    <component id="sdhg2" name="prompt_text.xml" path="/组件/" exported="true"/>
   </resources>
   <publish name="" genCode="true"/>
 </packageDescription>

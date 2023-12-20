@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="500,80">
+  <displayList>
+    <text id="n0_sdhg" name="title" xy="68,15" size="364,49" fontSize="36" align="center" vAlign="middle" text="测试文本测试文本测试">
+      <relation target="" sidePair="center-center"/>
+    </text>
+  </displayList>
+</component>

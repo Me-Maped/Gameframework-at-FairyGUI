@@ -8,7 +8,7 @@ namespace GameLogic.Login
     {
         protected override UIFormConfig CreateConfig()
         {
-            return UIFormConfig.Create(UI_login_main.PKG_NAME, UI_login_main.RES_NAME,depends:new[]{"Base"},  groupEnum:UIGroupEnum.PANEL);
+            return UIFormConfig.Create(UI_login_main.PKG_NAME, UI_login_main.RES_NAME, depends: new[] { "Base" }, groupEnum: UIGroupEnum.PANEL);
         }
 
         protected override void OnOpen()
@@ -17,7 +17,13 @@ namespace GameLogic.Login
             Timers.inst.Add(3f, 1, _ => { View.m_title.text = ConfigLoader.Instance.Tables.TbSkill.DataList[0].Name; });
 
             // 测试包卸载
-            Timers.inst.Add(6f, 1, _ => { Close(); });
+            // Timers.inst.Add(6f, 1, _ => { Close(); });
+
+            // prompt测试
+            for (int i = 0; i < 10; i++)
+            {
+                GameModule.UI.OpenForm<PromptTestForm>(userData: i);
+            }
         }
     }
 }

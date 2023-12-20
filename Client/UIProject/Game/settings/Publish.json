@@ -1,5 +1,5 @@
 {
-  "path": "..\\..\\Assets\\AssetRaw\\UI\\{publish_file_name}",
+  "path": "../../Assets/AssetRaw/UI/{publish_file_name}",
   "branchPath": "",
   "fileExtension": "bytes",
   "packageCount": 2,
@@ -9,7 +9,7 @@
   "compressPNG": false,
   "codeGeneration": {
     "allowGenCode": true,
-    "codePath": "..\\..\\Assets\\GameMain\\Scripts\\HotFix\\GameLogic\\Generate\\",
+    "codePath": "../../Assets/GameMain/Scripts/HotFix/GameLogic/Generate/",
     "classNamePrefix": "UI_",
     "memberNamePrefix": "m_",
     "packageName": "GameLogic",

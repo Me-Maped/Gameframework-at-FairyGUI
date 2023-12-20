@@ -10,24 +10,24 @@ namespace GameFramework.UI
 {
     internal sealed partial class UIManager : GameFrameworkModule, IUIManager
     {
-        public float InstanceAutoReleaseInterval 
-        { 
-            get=>m_InstancePool.AutoReleaseInterval;
+        public float InstanceAutoReleaseInterval
+        {
+            get => m_InstancePool.AutoReleaseInterval;
             set => m_InstancePool.AutoReleaseInterval = value;
         }
-        public int InstanceCapacity 
-        { 
-            get=>m_InstancePool.Capacity;
+        public int InstanceCapacity
+        {
+            get => m_InstancePool.Capacity;
             set => m_InstancePool.Capacity = value;
         }
-        public float InstanceExpireTime 
-        { 
-            get=>m_InstancePool.ExpireTime;
+        public float InstanceExpireTime
+        {
+            get => m_InstancePool.ExpireTime;
             set => m_InstancePool.ExpireTime = value;
         }
-        public int InstancePriority 
-        { 
-            get=>m_InstancePool.Priority;
+        public int InstancePriority
+        {
+            get => m_InstancePool.Priority;
             set => m_InstancePool.Priority = value;
         }
         public int UIGroupCount => m_UIGroups.Count;
@@ -38,9 +38,9 @@ namespace GameFramework.UI
         public event EventHandler<CloseFormCompleteEventArgs> CloseFormComplete;
 
         private readonly LoadAssetCallbacks m_LoadAssetCallbacks;
-        private readonly Dictionary<UIGroupEnum,IUIGroup> m_UIGroups;
-        
-        private readonly Dictionary<Type,UIFormBase> m_UIForms;
+        private readonly Dictionary<UIGroupEnum, IUIGroup> m_UIGroups;
+
+        private readonly Dictionary<Type, UIFormBase> m_UIForms;
         private Dictionary<Type, UIFormBase> m_CachedFormInst;
         private Dictionary<string, List<UIFormBase>> m_ToBeLoadFormInst;
         private Dictionary<string, int> m_PackageRefCount;
@@ -88,7 +88,7 @@ namespace GameFramework.UI
 
         public void SetObjectPoolManager(IObjectPoolManager objectPoolManager)
         {
-            if(objectPoolManager == null) throw new GameFrameworkException("ObjectPoolManager is invalid");
+            if (objectPoolManager == null) throw new GameFrameworkException("ObjectPoolManager is invalid");
             m_ObjectPoolManager = objectPoolManager;
             m_InstancePool = m_ObjectPoolManager.CreateSingleSpawnObjectPool<UIFormInstanceObject>("UI Instance Pool");
         }
@@ -98,19 +98,19 @@ namespace GameFramework.UI
             if (resourceManager == null) throw new GameFrameworkException("ResourceManager is invalid");
             m_ResourceManager = resourceManager;
         }
-        
+
         public void SetUIFitHelper(IUIFitHelper uiFitHelper)
         {
-            if(uiFitHelper == null) throw new GameFrameworkException("UIFitHelper is invalid");
+            if (uiFitHelper == null) throw new GameFrameworkException("UIFitHelper is invalid");
             m_UIFitHelper = uiFitHelper;
         }
-        
+
         public void SetUIJumpHelper(IUIJumpHelper iuiJumpHelper)
         {
             if (iuiJumpHelper == null) throw new GameFrameworkException("UIJumpHelper is invalid");
             m_UIJumpHelper = iuiJumpHelper;
         }
-        
+
         public void SetUICameraHelper(IUICameraHelper uiCameraHelper)
         {
             if (uiCameraHelper == null) throw new GameFrameworkException("UICameraHelper is invalid");
@@ -121,6 +121,7 @@ namespace GameFramework.UI
         {
             if (formType == null) throw new GameFrameworkException("FormType is invalid");
             if (m_ResourceManager == null) throw new GameFrameworkException("You must set ResourceManager first");
+            // TODO 同一类型的界面应该根据不同层级判断是否存在多个实例，如Tips层就需要同时创建多个实例，需要一个唯一id或其他方式处理
             if (m_UIForms.TryGetValue(formType, out var openedForm))
             {
                 GameFrameworkLog.Warning("{0} is already opened", formType.Name);
@@ -509,6 +510,7 @@ namespace GameFramework.UI
 
         private void OnPackageRefIncrease(string[] pkgNames)
         {
+            if (pkgNames == null) return;
             foreach (string pkgName in pkgNames)
             {
                 OnPackageRefIncrease(pkgName);

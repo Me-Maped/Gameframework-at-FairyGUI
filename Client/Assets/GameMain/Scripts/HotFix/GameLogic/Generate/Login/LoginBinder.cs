@@ -9,6 +9,7 @@ namespace GameLogic.Login
         public static void BindAll()
         {
             UIObjectFactory.SetPackageItemExtension(UI_login_main.URL, typeof(UI_login_main));
+            UIObjectFactory.SetPackageItemExtension(UI_prompt_text.URL, typeof(UI_prompt_text));
         }
     }
 }
