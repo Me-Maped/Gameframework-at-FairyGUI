@@ -22,9 +22,9 @@ MonoBehaviour:
   - BattleCore.Runtime
   - GameLogic
   preserveHotUpdateAssemblies: []
-  hotUpdateDllCompileOutputRootDir: GameMain/HybridCLRData/HotUpdateDlls
+  hotUpdateDllCompileOutputRootDir: HybridCLRData/HotUpdateDlls
   externalHotUpdateAssembliyDirs: []
-  strippedAOTDllOutputRootDir: GameMain/HybridCLRData/AssembliesPostIl2CppStrip
+  strippedAOTDllOutputRootDir: HybridCLRData/AssembliesPostIl2CppStrip
   patchAOTAssemblies:
   - mscorlib.dll
   - System.dll

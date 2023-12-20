@@ -24,7 +24,7 @@ namespace GameFramework.Resource
         /// <summary>
         /// 资源包名称。
         /// </summary>
-        public string PackageName { get; set; } = "DefaultPackage";
+        public string PackageName { get; set; } = SettingsUtils.FrameworkGlobalSettings.DefaultPkgName;
 
         /// <summary>
         /// 资源系统运行模式。

@@ -16,31 +16,31 @@ namespace UnityGameFramework.Runtime
     {
         #region Propreties
         private const int DefaultPriority = 0;
-        
+
         /// <summary>
         /// 当前最新的包裹版本。
         /// </summary>
         public string PackageVersion { set; get; }
-        
+
         private IResourceManager m_ResourceManager;
         private bool m_ForceUnloadUnusedAssets = false;
         private bool m_PreorderUnloadUnusedAssets = false;
         private bool m_PerformGCCollect = false;
         private AsyncOperation m_AsyncOperation = null;
         private float m_LastUnloadUnusedAssetsOperationElapseSeconds = 0f;
-        
+
         [SerializeField]
         private float m_MinUnloadUnusedAssetsInterval = 60f;
 
         [SerializeField]
         private float m_MaxUnloadUnusedAssetsInterval = 300f;
-        
+
         /// <summary>
         /// 资源包名称。
         /// </summary>
         [SerializeField]
-        public string PackageName = "DefaultPackage";
-        
+        public string PackageName = "MEngine";
+
         /// <summary>
         /// 资源系统运行模式。
         /// </summary>
@@ -52,10 +52,10 @@ namespace UnityGameFramework.Runtime
         /// </summary>
         [SerializeField]
         public EVerifyLevel VerifyLevel = EVerifyLevel.Middle;
-        
+
         [SerializeField]
         private ReadWritePathType m_ReadWritePathType = ReadWritePathType.Unspecified;
-        
+
         /// <summary>
         /// 设置异步系统参数，每帧执行消耗的最大时间切片（单位：毫秒）
         /// </summary>
@@ -64,11 +64,11 @@ namespace UnityGameFramework.Runtime
 
         [SerializeField]
         private int m_DownloadingMaxNum = 2;
-        
+
         [SerializeField]
         private int m_FailedTryAgain = 3;
-        
-        
+
+
         /// <summary>
         /// 获取或设置同时最大下载数目。
         /// </summary>
@@ -85,7 +85,7 @@ namespace UnityGameFramework.Runtime
             get => m_FailedTryAgain;
             set => m_FailedTryAgain = value;
         }
-        
+
         /// <summary>
         /// 获取当前资源适用的游戏版本号。
         /// </summary>
@@ -96,7 +96,7 @@ namespace UnityGameFramework.Runtime
                 return m_ResourceManager.ApplicableGameVersion;
             }
         }
-        
+
         /// <summary>
         /// 获取当前内部资源版本号。
         /// </summary>
@@ -107,7 +107,7 @@ namespace UnityGameFramework.Runtime
                 return m_ResourceManager.InternalResourceVersion;
             }
         }
-        
+
         /// <summary>
         /// 获取资源读写路径类型。
         /// </summary>
@@ -118,7 +118,7 @@ namespace UnityGameFramework.Runtime
                 return m_ReadWritePathType;
             }
         }
-        
+
         /// <summary>
         /// 获取或设置无用资源释放的最小间隔时间，以秒为单位。
         /// </summary>
@@ -148,7 +148,7 @@ namespace UnityGameFramework.Runtime
                 m_MaxUnloadUnusedAssetsInterval = value;
             }
         }
-        
+
         /// <summary>
         /// 获取无用资源释放的等待时长，以秒为单位。
         /// </summary>
@@ -159,7 +159,7 @@ namespace UnityGameFramework.Runtime
                 return m_LastUnloadUnusedAssetsOperationElapseSeconds;
             }
         }
-        
+
         /// <summary>
         /// 获取资源只读路径。
         /// </summary>
@@ -181,14 +181,14 @@ namespace UnityGameFramework.Runtime
                 return m_ResourceManager.ReadWritePath;
             }
         }
-        
+
         /// <summary>
         /// 资源下载器，用于下载当前资源版本所有的资源包文件。
         /// </summary>
         public ResourceDownloaderOperation Downloader { get; set; }
 
         #endregion
-        
+
         private void Start()
         {
             BaseComponent baseComponent = GameEntry.GetComponent<BaseComponent>();
@@ -205,14 +205,15 @@ namespace UnityGameFramework.Runtime
                 return;
             }
 
+#if UNITY_EDITOR
             if (PlayMode == EPlayMode.EditorSimulateMode)
             {
                 Log.Info("During this run, Game Framework will use editor resource files, which you should validate first.");
-#if !UNITY_EDITOR
-                PlayMode = EPlayMode.OfflinePlayMode;
-#endif
             }
-            
+#else
+            PlayMode = Define.PkgArg.YooMode;
+#endif
+
             m_ResourceManager.SetReadOnlyPath(Application.streamingAssetsPath);
             if (m_ReadWritePathType == ReadWritePathType.TemporaryCache)
             {
@@ -227,7 +228,7 @@ namespace UnityGameFramework.Runtime
 
                 m_ResourceManager.SetReadWritePath(Application.persistentDataPath);
             }
-            
+
             m_ResourceManager.PackageName = PackageName;
             m_ResourceManager.PlayMode = PlayMode;
             m_ResourceManager.VerifyLevel = VerifyLevel;
@@ -264,7 +265,7 @@ namespace UnityGameFramework.Runtime
         {
             return await m_ResourceManager.LoadAssetAsync<T>(assetName);
         }
-        
+
         /// <summary>
         /// 异步加载资源。
         /// </summary>
@@ -287,7 +288,7 @@ namespace UnityGameFramework.Runtime
         {
             LoadAssetAsync(assetName, assetType, DefaultPriority, loadAssetCallbacks, userData);
         }
-        
+
         /// <summary>
         /// 异步加载资源。
         /// </summary>
@@ -340,15 +341,15 @@ namespace UnityGameFramework.Runtime
         public UpdatePackageVersionOperation UpdatePackageVersionAsync(bool appendTimeTicks = true, int timeout = 60)
         {
             var package = YooAssets.GetPackage(PackageName);
-            return package.UpdatePackageVersionAsync(appendTimeTicks,timeout);
+            return package.UpdatePackageVersionAsync(appendTimeTicks, timeout);
         }
 
-        public UpdatePackageManifestOperation UpdatePackageManifestAsync(string packageVersion,bool autoSaveManifest =true, int timeout = 60)
+        public UpdatePackageManifestOperation UpdatePackageManifestAsync(string packageVersion, bool autoSaveManifest = true, int timeout = 60)
         {
             var package = YooAssets.GetPackage(PackageName);
-            return package.UpdatePackageManifestAsync(packageVersion,autoSaveManifest,timeout);
+            return package.UpdatePackageManifestAsync(packageVersion, autoSaveManifest, timeout);
         }
-        
+
         /// <summary>
         /// 创建资源下载器，用于下载当前资源版本所有的资源包文件
         /// </summary>
@@ -357,7 +358,7 @@ namespace UnityGameFramework.Runtime
         public ResourceDownloaderOperation CreateResourceDownloader(int downloadingMaxNumber, int failedTryAgain)
         {
             var package = YooAssets.GetPackage(PackageName);
-            Downloader = package.CreateResourceDownloader(downloadingMaxNumber,failedTryAgain);
+            Downloader = package.CreateResourceDownloader(downloadingMaxNumber, failedTryAgain);
             return Downloader;
         }
 
@@ -369,7 +370,7 @@ namespace UnityGameFramework.Runtime
             var package = YooAssets.GetPackage(PackageName);
             return package.ClearUnusedCacheFilesAsync();
         }
-       
+
         /// <summary>
         /// 强制执行释放未被使用的资源。
         /// </summary>
@@ -394,7 +395,7 @@ namespace UnityGameFramework.Runtime
                 m_LastUnloadUnusedAssetsOperationElapseSeconds = 0f;
                 m_AsyncOperation = Resources.UnloadUnusedAssets();
             }
-            
+
             if (m_AsyncOperation is { isDone: true })
             {
                 m_ResourceManager.UnloadUnusedAssets();

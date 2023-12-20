@@ -47,8 +47,13 @@ namespace UnityGameFramework.Runtime
         [SerializeField]
         private bool m_NeverSleep = true;
 
-        [SerializeField] 
-        private string m_EntryScene = "Game";
+        [SerializeField]
+        private string m_EntrySceneName = "Game";
+
+#if UNITY_EDITOR
+        [SerializeField]
+        private UnityEditor.SceneAsset m_EntrySceneAsset = null;
+#endif
 
         /// <summary>
         /// 获取或设置编辑器语言（仅编辑器内有效）。
@@ -151,11 +156,7 @@ namespace UnityGameFramework.Runtime
         /// <summary>
         /// 启动场景名称
         /// </summary>
-        public string EntryScene
-        {
-            get => m_EntryScene;
-            set => m_EntryScene = value;            
-        }
+        public string EntrySceneName => m_EntrySceneName;
 
         /// <summary>
         /// 游戏框架组件初始化。
@@ -180,7 +181,7 @@ namespace UnityGameFramework.Runtime
             {
                 Utility.Converter.ScreenDpi = DefaultDpi;
             }
-            
+
             Application.targetFrameRate = m_FrameRate;
             Time.timeScale = m_GameSpeed;
             Application.runInBackground = m_RunInBackground;

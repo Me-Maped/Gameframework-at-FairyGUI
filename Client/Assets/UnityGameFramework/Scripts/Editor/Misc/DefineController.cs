@@ -1,10 +1,10 @@
-﻿using UnityEditor;
+﻿using System.Linq;
+using UnityEditor;
 using UnityEngine;
 
 namespace UnityGameFramework.Editor
 {
-    [InitializeOnLoad]
-    public class DefineController
+    public static class DefineController
     {
         private static readonly string[] Defines = 
         {
@@ -16,7 +16,8 @@ namespace UnityGameFramework.Editor
             "CHANNEL_APPSTORE"
         };
 
-        static DefineController()
+        [InitializeOnLoadMethod]
+        private static void RefreshSelectDefine()
         {
             string curChannel = GetCurDefine();
             Menu.SetChecked("Game Framework/Define/EDITOR", curChannel.Equals("EDITOR"));
@@ -28,10 +29,12 @@ namespace UnityGameFramework.Editor
             Menu.SetChecked("Game Framework/Define/CHANNEL_APPSTORE", curChannel.Equals("CHANNEL_APPSTORE"));
             Debug.Log("当前渠道：" + curChannel);
         }
+        
         [MenuItem("Game Framework/Define/EDITOR")]
         public static void ChannelEditor()
         {
             Clear();
+            SetDefine(null);
             Debug.Log("切换EDITOR");
         }
         
@@ -83,29 +86,34 @@ namespace UnityGameFramework.Editor
             Debug.Log("切换CHANNEL_APPSTORE");
         }
         
+        public static void ChangeChannel(string channel)
+        {
+            if (!Defines.Contains(channel))
+            {
+                Debug.LogError($"{channel}宏定义不存在");
+                return;
+            }
+            Clear();
+            SetDefine(channel);
+            Debug.Log("切换" + channel);
+        }
+        
         private static void Clear()
         {
-            string[] defines = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup).Split(';');
-            for (int i = 0; i < defines.Length; i++)
+            foreach (var define in Defines)
             {
-                foreach (var originDefine in Defines)
-                {
-                    if (defines[i].Equals(originDefine))
-                    {
-                        defines[i] = string.Empty;
-                    }
-                }
+                ScriptingDefineSymbols.RemoveScriptingDefineSymbol(define);
             }
-            SetDefine(string.Join(";", defines));
             Debug.Log("清理宏定义");
         }
 
         private static void SetDefine(string define)
         {
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, define);
+            if(!string.IsNullOrEmpty(define)) ScriptingDefineSymbols.AddScriptingDefineSymbol(define);
             
             //保存
             AssetDatabase.SaveAssets();
+            AssetDatabase.RefreshSettings();
             
             // 重新编译
             EditorApplication.LockReloadAssemblies();
@@ -115,16 +123,10 @@ namespace UnityGameFramework.Editor
 
         private static string GetCurDefine()
         {
-            string[] defines = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup).Split(';');
-            foreach (var nowDefine in defines)
+            foreach (var define in Defines)
             {
-                foreach (var originDefine in Defines)
-                {
-                    if (nowDefine.Equals(originDefine))
-                    {
-                        return originDefine;
-                    }
-                }
+                if (ScriptingDefineSymbols.HasScriptingDefineSymbol(EditorUserBuildSettings.selectedBuildTargetGroup,
+                        define)) return define;
             }
             return "EDITOR"; // 默认返回Editor
         }

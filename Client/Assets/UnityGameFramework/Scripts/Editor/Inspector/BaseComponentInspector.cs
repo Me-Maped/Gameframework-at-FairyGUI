@@ -1,4 +1,5 @@
 ﻿using GameFramework;
+using GameFramework.Localization;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -24,6 +25,7 @@ namespace UnityGameFramework.Editor
         private SerializedProperty m_RunInBackground = null;
         private SerializedProperty m_NeverSleep = null;
         private SerializedProperty m_EntryScene = null;
+        private SerializedProperty m_EntrySceneName = null;
 
         private string[] m_TextHelperTypeNames = null;
         private int m_TextHelperTypeNameIndex = 0;
@@ -151,18 +153,13 @@ namespace UnityGameFramework.Editor
                 }
             }
 
-            string entryScene = EditorGUILayout.TextField("Entry Scene", m_EntryScene.stringValue);
-            if (entryScene != m_EntryScene.stringValue)
-            {
-                if (EditorApplication.isCompiling)
-                {
-                    t.EntryScene = entryScene;
-                }
-                else
-                {
-                    m_EntryScene.stringValue = entryScene;
-                }
-            }
+            SceneAsset entryScene = EditorGUILayout.ObjectField("Entry Scene", m_EntryScene.objectReferenceValue, typeof(SceneAsset), false) as SceneAsset;
+            m_EntryScene.objectReferenceValue = entryScene;
+            m_EntrySceneName.stringValue = entryScene != null ? entryScene.name : string.Empty;
+
+            Language editorLanguage = (Language)EditorGUILayout.EnumPopup("Editor Language", (Language)m_EditorLanguage.enumValueIndex);
+            m_EditorLanguage.enumValueIndex = (int)editorLanguage;
+            t.EditorLanguage = editorLanguage;
 
             serializedObject.ApplyModifiedProperties();
         }
@@ -186,7 +183,8 @@ namespace UnityGameFramework.Editor
             m_GameSpeed = serializedObject.FindProperty("m_GameSpeed");
             m_RunInBackground = serializedObject.FindProperty("m_RunInBackground");
             m_NeverSleep = serializedObject.FindProperty("m_NeverSleep");
-            m_EntryScene = serializedObject.FindProperty("m_EntryScene");
+            m_EntryScene = serializedObject.FindProperty("m_EntrySceneAsset");
+            m_EntrySceneName = serializedObject.FindProperty("m_EntrySceneName");
 
             RefreshTypeNames();
         }

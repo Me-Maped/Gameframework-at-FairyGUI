@@ -259,6 +259,14 @@ PrefabInstance:
       propertyPath: m_EntryScene
       value: Login
       objectReference: {fileID: 0}
+    - target: {fileID: 11499388, guid: adb3eb1c35fcff14f89fba7b05c9d71c, type: 3}
+      propertyPath: m_EntrySceneName
+      value: Login
+      objectReference: {fileID: 0}
+    - target: {fileID: 11499388, guid: adb3eb1c35fcff14f89fba7b05c9d71c, type: 3}
+      propertyPath: m_EntrySceneAsset
+      value: 
+      objectReference: {fileID: 102900000, guid: 84848c96572ccff4eb5b71608749d89f, type: 3}
     - target: {fileID: 3293899846934753637, guid: adb3eb1c35fcff14f89fba7b05c9d71c, type: 3}
       propertyPath: m_BlockingMask.m_Bits
       value: 55

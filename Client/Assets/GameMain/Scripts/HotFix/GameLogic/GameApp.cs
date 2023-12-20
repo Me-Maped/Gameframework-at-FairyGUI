@@ -6,7 +6,7 @@ using UGFExtensions.Await;
 using UnityEngine;
 using UnityGameFramework.Runtime;
 
-public partial class GameApp:Singleton<GameApp>
+public partial class GameApp : Singleton<GameApp>
 {
     /// <summary>
     /// 热更域App主入口。
@@ -36,7 +36,7 @@ public partial class GameApp:Singleton<GameApp>
     {
         await ConfigLoader.Instance.Load();
         Log.Warning("======= StartGameLogic GameApp =======");
-        await GameModule.Scene.LoadSceneAsync(ResName.GetScene(GameModule.Base.EntryScene));
+        await GameModule.Scene.LoadSceneAsync(ResName.GetScene(GameModule.Base.EntrySceneName));
         GameModule.UI.UICameraAttach(Camera.main);
         UILoadMgr.Instance.TweenHide();
         GameModule.UI.OpenForm<LoginForm>();
@@ -48,7 +48,7 @@ public partial class GameApp:Singleton<GameApp>
     /// <param name="shutdownType">关闭游戏框架类型。</param>
     public static void Shutdown(ShutdownType shutdownType)
     {
-        
+
         if (shutdownType == ShutdownType.None)
         {
             return;
