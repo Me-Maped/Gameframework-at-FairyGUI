@@ -16,6 +16,20 @@ namespace GameFramework
         {
             private static GameObject _entity;
             private static MainBehaviour _behaviour;
+            private static bool _quiting;
+            public static bool Quiting
+            {
+                get => _quiting;
+                set
+                {
+                    _quiting = value;
+                    if (_quiting)
+                    {
+                        _entity = null;
+                        _behaviour = null;
+                    }
+                }
+            }
 
             #region 控制协程Coroutine
 
@@ -27,7 +41,7 @@ namespace GameFramework
                 }
 
                 _MakeEntity();
-                return _behaviour.StartCoroutine(methodName);
+                return _behaviour?.StartCoroutine(methodName);
             }
 
             public static Coroutine StartCoroutine(IEnumerator routine)
@@ -38,7 +52,7 @@ namespace GameFramework
                 }
 
                 _MakeEntity();
-                return _behaviour.StartCoroutine(routine);
+                return _behaviour?.StartCoroutine(routine);
             }
 
             public static Coroutine StartCoroutine(string methodName, [DefaultValue("null")] object value)
@@ -49,7 +63,7 @@ namespace GameFramework
                 }
 
                 _MakeEntity();
-                return _behaviour.StartCoroutine(methodName, value);
+                return _behaviour?.StartCoroutine(methodName, value);
             }
 
             public static void StopCoroutine(string methodName)
@@ -61,7 +75,7 @@ namespace GameFramework
 
                 if (_entity != null)
                 {
-                    _behaviour.StopCoroutine(methodName);
+                    _behaviour?.StopCoroutine(methodName);
                 }
             }
 
@@ -74,7 +88,7 @@ namespace GameFramework
 
                 if (_entity != null)
                 {
-                    _behaviour.StopCoroutine(routine);
+                    _behaviour?.StopCoroutine(routine);
                 }
             }
 
@@ -85,7 +99,7 @@ namespace GameFramework
 
                 if (_entity != null)
                 {
-                    _behaviour.StopCoroutine(routine);
+                    _behaviour?.StopCoroutine(routine);
                     routine = null;
                 }
             }
@@ -94,7 +108,7 @@ namespace GameFramework
             {
                 if (_entity != null)
                 {
-                    _behaviour.StopAllCoroutines();
+                    _behaviour?.StopAllCoroutines();
                 }
             }
 
@@ -109,7 +123,7 @@ namespace GameFramework
             public static void AddUpdateListener(UnityAction fun)
             {
                 _MakeEntity();
-                _behaviour.AddUpdateListener(fun);
+                _behaviour?.AddUpdateListener(fun);
             }
 
             /// <summary>
@@ -119,7 +133,7 @@ namespace GameFramework
             public static void AddFixedUpdateListener(UnityAction fun)
             {
                 _MakeEntity();
-                _behaviour.AddFixedUpdateListener(fun);
+                _behaviour?.AddFixedUpdateListener(fun);
             }
 
             /// <summary>
@@ -129,7 +143,7 @@ namespace GameFramework
             public static void AddLateUpdateListener(UnityAction fun)
             {
                 _MakeEntity();
-                _behaviour.AddLateUpdateListener(fun);
+                _behaviour?.AddLateUpdateListener(fun);
             }
 
             /// <summary>
@@ -139,7 +153,7 @@ namespace GameFramework
             public static void RemoveUpdateListener(UnityAction fun)
             {
                 _MakeEntity();
-                _behaviour.RemoveUpdateListener(fun);
+                _behaviour?.RemoveUpdateListener(fun);
             }
 
             /// <summary>
@@ -149,7 +163,7 @@ namespace GameFramework
             public static void RemoveFixedUpdateListener(UnityAction fun)
             {
                 _MakeEntity();
-                _behaviour.RemoveFixedUpdateListener(fun);
+                _behaviour?.RemoveFixedUpdateListener(fun);
             }
 
             /// <summary>
@@ -159,7 +173,7 @@ namespace GameFramework
             public static void RemoveLateUpdateListener(UnityAction fun)
             {
                 _MakeEntity();
-                _behaviour.RemoveLateUpdateListener(fun);
+                _behaviour?.RemoveLateUpdateListener(fun);
             }
 
             #endregion
@@ -172,7 +186,7 @@ namespace GameFramework
             public static void AddDestroyListener(UnityAction fun)
             {
                 _MakeEntity();
-                _behaviour.AddDestroyListener(fun);
+                _behaviour?.AddDestroyListener(fun);
             }
 
             /// <summary>
@@ -182,9 +196,9 @@ namespace GameFramework
             public static void RemoveDestroyListener(UnityAction fun)
             {
                 _MakeEntity();
-                _behaviour.RemoveDestroyListener(fun);
+                _behaviour?.RemoveDestroyListener(fun);
             }
-                
+
             /// <summary>
             /// 为给外部提供的OnDrawGizmos注册事件。
             /// </summary>
@@ -192,7 +206,7 @@ namespace GameFramework
             public static void AddOnDrawGizmosListener(UnityAction fun)
             {
                 _MakeEntity();
-                _behaviour.RemoveDestroyListener(fun);
+                _behaviour?.RemoveDestroyListener(fun);
             }
 
             /// <summary>
@@ -202,9 +216,9 @@ namespace GameFramework
             public static void RemoveOnDrawGizmosListener(UnityAction fun)
             {
                 _MakeEntity();
-                _behaviour.RemoveDestroyListener(fun);
+                _behaviour?.RemoveDestroyListener(fun);
             }
-                
+
             /// <summary>
             /// 为给外部提供的OnApplicationPause注册事件。
             /// </summary>
@@ -212,7 +226,7 @@ namespace GameFramework
             public static void AddOnApplicationPauseListener(UnityAction<bool> fun)
             {
                 _MakeEntity();
-                _behaviour.AddOnApplicationPauseListener(fun);
+                _behaviour?.AddOnApplicationPauseListener(fun);
             }
 
             /// <summary>
@@ -222,38 +236,29 @@ namespace GameFramework
             public static void RemoveOnApplicationPauseListener(UnityAction<bool> fun)
             {
                 _MakeEntity();
-                _behaviour.AddOnApplicationPauseListener(fun);
+                _behaviour?.AddOnApplicationPauseListener(fun);
             }
             #endregion
-            
+
             /// <summary>
             /// 释放Behaviour生命周期。
             /// </summary>
             public static void Release()
             {
                 _MakeEntity();
-                _behaviour.Release();
+                _behaviour?.Release();
             }
 
             private static void _MakeEntity()
             {
-                if (_entity != null)
+                if (_entity != null || Quiting)
                 {
                     return;
                 }
 
-                _entity = new GameObject("__MonoUtility__")
-                {
-                    hideFlags = HideFlags.HideAndDontSave
-                };
+                _entity = new GameObject("__MonoUtility__");
                 _entity.SetActive(true);
-
-#if UNITY_EDITOR
-                if (Application.isPlaying)
-#endif
-                {
-                    Object.DontDestroyOnLoad(_entity);
-                }
+                Object.DontDestroyOnLoad(_entity);
 
                 UnityEngine.Assertions.Assert.IsFalse(_behaviour);
                 _behaviour = _entity.AddComponent<MainBehaviour>();
@@ -265,7 +270,7 @@ namespace GameFramework
                 private event UnityAction fixedUpdateEvent;
                 private event UnityAction lateUpdateEvent;
                 private event UnityAction destroyEvent;
-                private event UnityAction onDrawGizmosEvent; 
+                private event UnityAction onDrawGizmosEvent;
                 private event UnityAction<bool> onApplicationPause;
 
                 void Update()
@@ -345,7 +350,7 @@ namespace GameFramework
                 {
                     updateEvent -= fun;
                 }
-                
+
                 public void AddDestroyListener(UnityAction fun)
                 {
                     destroyEvent += fun;
@@ -355,7 +360,7 @@ namespace GameFramework
                 {
                     destroyEvent -= fun;
                 }
-                
+
                 public void AddOnDrawGizmosListener(UnityAction fun)
                 {
                     onDrawGizmosEvent += fun;
@@ -365,7 +370,7 @@ namespace GameFramework
                 {
                     onDrawGizmosEvent -= fun;
                 }
-                
+
                 public void AddOnApplicationPauseListener(UnityAction<bool> fun)
                 {
                     onApplicationPause += fun;

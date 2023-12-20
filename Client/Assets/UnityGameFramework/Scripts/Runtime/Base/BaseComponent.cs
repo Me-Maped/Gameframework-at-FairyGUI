@@ -159,6 +159,11 @@ namespace UnityGameFramework.Runtime
         public string EntrySceneName => m_EntrySceneName;
 
         /// <summary>
+        /// 退出App中
+        /// </summary>
+        public bool Quiting { get; private set; }
+
+        /// <summary>
         /// 游戏框架组件初始化。
         /// </summary>
         protected override void Awake()
@@ -206,9 +211,9 @@ namespace UnityGameFramework.Runtime
 
         private void OnApplicationQuit()
         {
-#if UNITY_5_6_OR_NEWER
+            Quiting = true;
+            Utility.Unity.Quiting = true;
             Application.lowMemory -= OnLowMemory;
-#endif
             StopAllCoroutines();
         }
 

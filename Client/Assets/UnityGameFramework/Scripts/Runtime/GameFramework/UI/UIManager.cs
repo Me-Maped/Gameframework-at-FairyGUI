@@ -41,7 +41,6 @@ namespace GameFramework.UI
         private readonly Dictionary<UIGroupEnum,IUIGroup> m_UIGroups;
         
         private readonly Dictionary<Type,UIFormBase> m_UIForms;
-        private Dictionary<Type, UIFormBase> m_LoadingFormInst;
         private Dictionary<Type, UIFormBase> m_CachedFormInst;
         private Dictionary<string, List<UIFormBase>> m_ToBeLoadFormInst;
         private Dictionary<string, int> m_PackageRefCount;
@@ -73,7 +72,6 @@ namespace GameFramework.UI
             m_UICameraHelper = null;
             m_UIGroups = new Dictionary<UIGroupEnum, IUIGroup>();
             m_UIForms = new Dictionary<Type, UIFormBase>();
-            m_LoadingFormInst = new Dictionary<Type, UIFormBase>();
             m_CachedFormInst = new Dictionary<Type, UIFormBase>();
             m_ToBeLoadFormInst = new Dictionary<string, List<UIFormBase>>();
             m_PackageRefCount = new Dictionary<string, int>();
@@ -123,11 +121,6 @@ namespace GameFramework.UI
         {
             if (formType == null) throw new GameFrameworkException("FormType is invalid");
             if (m_ResourceManager == null) throw new GameFrameworkException("You must set ResourceManager first");
-            if (m_LoadingFormInst.TryGetValue(formType, out var loadingForm))
-            {
-                GameFrameworkLog.Warning("{0} is loading", formType.Name);
-                return loadingForm;
-            }
             if (m_UIForms.TryGetValue(formType, out var openedForm))
             {
                 GameFrameworkLog.Warning("{0} is already opened", formType.Name);
@@ -153,7 +146,6 @@ namespace GameFramework.UI
                     uiForms = new List<UIFormBase> { uiForm };
                     m_ToBeLoadFormInst.Add(uiForm.Config.PkgName, uiForms);
                 }
-                m_LoadingFormInst.Add(formType, uiForm);
                 return uiForm;
             }
 
@@ -163,7 +155,6 @@ namespace GameFramework.UI
             }
             else
             {
-                m_LoadingFormInst.Add(formType, uiForm);
                 m_LoadingPkgNames.Add(uiForm.Config.PkgName);
                 if (uiForm.Config.Depends == null || uiForm.Config.Depends.Length <= 0)
                     m_ResourceManager.LoadUIAssetAsync(uiForm.Config.PkgName, m_LoadAssetCallbacks, uiForm);
@@ -370,7 +361,6 @@ namespace GameFramework.UI
             }
             m_UIGroups.Clear();
             m_UIForms.Clear();
-            m_LoadingFormInst.Clear();
             m_CachedFormInst.Clear();
             m_ToBeLoadFormInst.Clear();
             m_LoadingPkgNames.Clear();
@@ -383,8 +373,6 @@ namespace GameFramework.UI
             if (uiForm == null) throw new GameFrameworkException("Cannot create UIForm in UIFormHelper");
             try
             {
-                m_LoadingFormInst.Remove(uiForm.GetType());
-
                 var formInst = m_InstancePool.Spawn(uiForm.Config.ResName);
                 if (formInst != null) uiForm.Instance = formInst.Target as GComponent;
 
@@ -452,7 +440,6 @@ namespace GameFramework.UI
         {
             UIFormBase uiForm = userdata as UIFormBase;
             if (uiForm == null) throw new GameFrameworkException("LoadFormFailureCallback form is invalid");
-            m_LoadingFormInst.Remove(uiForm.GetType());
             m_LoadingPkgNames.Remove(pkgName);
             var resName = uiForm.Config.ResName;
             var message = Utility.Text.Format("LoadUIFormFailure, asset name={0},state={1},errorMsg={2}", resName, status.ToString(), errorMessage);
@@ -497,7 +484,6 @@ namespace GameFramework.UI
             foreach (var uiForm in uiFormList)
             {
                 uiForm.Dispose();
-                m_LoadingFormInst.Remove(uiForm.GetType());
             }
             uiFormList.Clear();
             m_ToBeLoadFormInst.Remove(pkgName);
