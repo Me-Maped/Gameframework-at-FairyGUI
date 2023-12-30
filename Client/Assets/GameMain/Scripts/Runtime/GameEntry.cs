@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 /// <summary>
@@ -8,12 +7,18 @@ public partial class GameEntry : MonoBehaviour
 {
     private void Awake()
     {
-        UnityEngine.Object.DontDestroyOnLoad(gameObject);
+        DontDestroyOnLoad(gameObject);
     }
 
     private void Start()
     {
         GameModule.Instance.Active();
-        var dt = DateTime.Now;
+        GameModule.Base.AddShutdownCall(OnFrameworkShutdown);
+    }
+
+    private void OnFrameworkShutdown()
+    {
+        GameModule.Instance.Shutdown();
+        Destroy(gameObject);
     }
 }

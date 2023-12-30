@@ -172,6 +172,8 @@ namespace GameFramework.UI
 
                 m_UIForms.Clear();
                 m_TopForm = null;
+                m_Mask.Dispose();
+                m_GroupRoot.Dispose();
             }
 
             private void ChangeMask()

@@ -56,6 +56,11 @@ namespace UnityGameFramework.Runtime
 #endif
 
         /// <summary>
+        /// 框架关闭回调
+        /// </summary>
+        private Action m_OnShutdownCall;
+
+        /// <summary>
         /// 获取或设置编辑器语言（仅编辑器内有效）。
         /// </summary>
         public Language EditorLanguage
@@ -262,8 +267,29 @@ namespace UnityGameFramework.Runtime
             GameSpeed = 1f;
         }
 
+        /// <summary>
+        /// 增加关闭框架时调用的函数。
+        /// </summary>
+        /// <param name="callback"></param>
+        public void AddShutdownCall(Action callback)
+        {
+            m_OnShutdownCall -= callback;
+            m_OnShutdownCall += callback;
+        }
+
+        /// <summary>
+        ///  移除关闭框架时调用的函数。
+        /// </summary>
+        /// <param name="callback"></param>
+        public void RemoveShutdownCall(Action callback)
+        {
+            m_OnShutdownCall -= callback;
+        }
+
         internal void Shutdown()
         {
+            m_OnShutdownCall?.Invoke();
+            m_OnShutdownCall = null;
             Destroy(gameObject);
         }
 

@@ -394,6 +394,7 @@ namespace GameFramework.UI
 
         public override void Shutdown()
         {
+            Destroy();
             m_Config = null;
             m_FormParts = null;
             m_IsDataReady = false;

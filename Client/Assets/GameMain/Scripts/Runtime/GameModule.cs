@@ -206,4 +206,10 @@ public class GameModule:AbsGameModuleMgr<GameModule>
         InitFrameWorkComponents();
         InitCustomComponents();
     }
+
+    public override void Shutdown()
+    {
+        base.Shutdown();
+        s_Components.Clear();
+    }
 }

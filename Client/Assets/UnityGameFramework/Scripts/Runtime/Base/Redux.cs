@@ -91,6 +91,16 @@ namespace GameFramework
 
         protected abstract void Init();
 
+        public virtual void Shutdown()
+        {
+            mSystems.Clear();
+            mModels.Clear();
+            OnRegisterPatch = null;
+            mInited = false;
+            mInstance = null;
+            mContainer = new IOCContainer();
+        }
+
         private IOCContainer mContainer = new IOCContainer();
 
         public void RegisterSystem<TSystem>(TSystem system) where TSystem : ISystem
