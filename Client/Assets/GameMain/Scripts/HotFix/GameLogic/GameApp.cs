@@ -39,7 +39,9 @@ public partial class GameApp : Singleton<GameApp>
         await GameModule.Scene.LoadSceneAsync(ResName.GetScene(GameModule.Base.EntrySceneName));
         GameModule.UI.UICameraAttach(Camera.main);
         UILoadMgr.Instance.TweenHide();
-        GameModule.UI.OpenForm<LoginForm>();
+        // TODO 测试打开同一个界面
+        GameModule.UI.OpenForm<LoginForm>(closeOther: true);
+        GameModule.UI.OpenForm<LoginForm>(closeOther: true);
     }
 
     /// <summary>

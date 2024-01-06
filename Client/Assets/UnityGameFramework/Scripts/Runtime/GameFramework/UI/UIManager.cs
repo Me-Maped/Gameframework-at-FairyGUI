@@ -40,8 +40,6 @@ namespace GameFramework.UI
         private readonly LoadAssetCallbacks m_LoadAssetCallbacks;
         private readonly Dictionary<UIGroupEnum, IUIGroup> m_UIGroups;
 
-        private readonly Dictionary<Type, UIFormBase> m_UIForms;
-        private Dictionary<Type, UIFormBase> m_CachedFormInst;
         private Dictionary<string, List<UIFormBase>> m_ToBeLoadFormInst;
         private Dictionary<string, int> m_PackageRefCount;
         private List<string> m_LoadingPkgNames;
@@ -71,8 +69,6 @@ namespace GameFramework.UI
             m_UIJumpHelper = null;
             m_UICameraHelper = null;
             m_UIGroups = new Dictionary<UIGroupEnum, IUIGroup>();
-            m_UIForms = new Dictionary<Type, UIFormBase>();
-            m_CachedFormInst = new Dictionary<Type, UIFormBase>();
             m_ToBeLoadFormInst = new Dictionary<string, List<UIFormBase>>();
             m_PackageRefCount = new Dictionary<string, int>();
             m_LoadingPkgNames = new List<string>();
@@ -121,18 +117,7 @@ namespace GameFramework.UI
         {
             if (formType == null) throw new GameFrameworkException("FormType is invalid");
             if (m_ResourceManager == null) throw new GameFrameworkException("You must set ResourceManager first");
-            // TODO 同一类型的界面应该根据不同层级判断是否存在多个实例，如Tips层就需要同时创建多个实例，需要一个唯一id或其他方式处理
-            if (m_UIForms.TryGetValue(formType, out var openedForm))
-            {
-                GameFrameworkLog.Warning("{0} is already opened", formType.Name);
-                openedForm.UserData = userData;
-                IUIGroup group = GetUIGroup(openedForm.Config.GroupEnum);
-                group.CloseOthers = closeOther;
-                group.OpenForm(openedForm);
-                return openedForm;
-            }
-            m_CachedFormInst.TryGetValue(formType, out UIFormBase uiForm);
-            uiForm ??= (UIFormBase)Activator.CreateInstance(formType);
+            UIFormBase uiForm = (UIFormBase)ReferencePool.Acquire(formType);
             uiForm.UserData = userData;
             GetUIGroup(uiForm.Config.GroupEnum).CloseOthers = closeOther;
 
@@ -174,23 +159,29 @@ namespace GameFramework.UI
 
         public UIFormBase GetForm<T>() where T : UIFormBase
         {
-            m_UIForms.TryGetValue(typeof(T), out UIFormBase uiForm);
-            return uiForm;
+            return GetForm(typeof(T));
         }
 
         public UIFormBase GetForm(Type formType)
         {
-            m_UIForms.TryGetValue(formType, out UIFormBase uiForm);
-            return uiForm;
+            UIFormBase uiFormBase = null;
+            foreach (var kv in m_UIGroups)
+            {
+                uiFormBase = kv.Value.GetForm(formType);
+                if (uiFormBase != null) break;
+            }
+            return uiFormBase;
         }
 
         public UIFormBase GetFormByName(string formName)
         {
-            foreach (var formInfo in m_UIForms)
+            UIFormBase uiFormBase = null;
+            foreach (var kv in m_UIGroups)
             {
-                if (formInfo.Value.Config.InstName == formName) return formInfo.Value;
+                uiFormBase = kv.Value.GetForm(formName);
+                if (uiFormBase != null) break;
             }
-            return null;
+            return uiFormBase;
         }
 
         public UIFormBase GetTopForm()
@@ -229,14 +220,12 @@ namespace GameFramework.UI
             if (uiForm == null) return;
             if (uiForm.Instance != null) m_InstancePool.Unspawn(uiForm.Instance);
             GetUIGroup(uiForm.Config.GroupEnum).CloseForm(uiForm);
-            m_UIForms.Remove(uiForm.GetType());
             if (m_CloseUIFormCompleteEventHandler != null)
             {
                 var args = CloseFormCompleteEventArgs.Create(uiForm.Config.ResName, uiForm.Config.GroupEnum);
                 m_CloseUIFormCompleteEventHandler(this, args);
                 ReferencePool.Release(args);
             }
-            m_CachedFormInst[uiForm.GetType()] = uiForm;
         }
 
         public void CloseAllForm()
@@ -245,7 +234,6 @@ namespace GameFramework.UI
             {
                 groupInfo.Value.CloseAllForm();
             }
-            m_UIForms.Clear();
         }
 
         public void CloseFormImmediately<T>() where T : UIFormBase
@@ -259,16 +247,11 @@ namespace GameFramework.UI
         {
             if (uiForm == null) return;
             GetUIGroup(uiForm.Config.GroupEnum).CloseFormImmediately(uiForm);
-            m_UIForms.Remove(uiForm.GetType());
         }
 
         public void CloseFormByGroup(UIGroupEnum groupEnum)
         {
             IUIGroup uiGroup = GetUIGroup(groupEnum);
-            foreach (var uiForm in uiGroup.UIForms)
-            {
-                m_UIForms.Remove(uiForm.GetType());
-            }
             uiGroup.CloseAllForm();
         }
 
@@ -279,7 +262,12 @@ namespace GameFramework.UI
 
         public bool HasForm(Type formType)
         {
-            return m_UIForms.ContainsKey(formType);
+            bool result = false;
+            foreach (var kv in m_UIGroups)
+            {
+                if (kv.Value.UIForms.Exists(x => x.GetType() == formType)) return true;
+            }
+            return result;
         }
 
         public IUIGroup GetUIGroup(UIGroupEnum groupEnum)
@@ -361,8 +349,6 @@ namespace GameFramework.UI
                 groupInfo.Value.Shutdown();
             }
             m_UIGroups.Clear();
-            m_UIForms.Clear();
-            m_CachedFormInst.Clear();
             m_ToBeLoadFormInst.Clear();
             m_LoadingPkgNames.Clear();
             m_NeedCloseForms.Clear();
@@ -379,7 +365,6 @@ namespace GameFramework.UI
 
                 // 记录跳转
                 if (uiForm.Config.InBackList) m_UIJumpHelper.Record(uiForm.GetType());
-                m_UIForms.Add(uiForm.GetType(), uiForm);
                 GetUIGroup(uiForm.Config.GroupEnum).OpenForm(uiForm);
                 if (m_LoadUIFormSuccessEventHandler != null)
                 {
@@ -390,10 +375,7 @@ namespace GameFramework.UI
                 if (formInst == null)
                 {
                     m_InstancePool.Register(
-                        UIFormInstanceObject.Create(uiForm.Config.ResName,
-                            uiForm.Config.PkgName, uiForm.GetType(),
-                            m_OnFormInstanceReleaseCall, uiForm.Instance),
-                        true);
+                        UIFormInstanceObject.Create(uiForm, m_OnFormInstanceReleaseCall), true);
                 }
                 OnPackageRefIncrease(uiForm.Config.PkgName);
                 OnPackageRefIncrease(uiForm.Config.Depends);
@@ -490,16 +472,13 @@ namespace GameFramework.UI
             m_ToBeLoadFormInst.Remove(pkgName);
         }
 
-        private void OnInstanceReleaseCall(Type formType, string pkgName)
+        private void OnInstanceReleaseCall(UIFormBase uiForm)
         {
-            GameFrameworkLog.Warning("UIFormHelper OnInstanceReleaseCall type = {0}", formType.Name);
-            if (m_CachedFormInst.TryGetValue(formType, out UIFormBase uiForm))
-            {
-                OnPackageRefReduce(uiForm.Config.Depends);
-                uiForm.Destroy();
-                OnPackageRefReduce(pkgName);
-            }
-            m_CachedFormInst.Remove(formType);
+            if (uiForm == null) return;
+            GameFrameworkLog.Warning("UIFormHelper OnInstanceReleaseCall type = {0}", uiForm.GetType());
+            OnPackageRefReduce(uiForm.Config.Depends);
+            ReferencePool.Release(uiForm);
+            OnPackageRefReduce(uiForm.Config.PkgName);
         }
 
         private void OnPackageRefIncrease(string pkgName)

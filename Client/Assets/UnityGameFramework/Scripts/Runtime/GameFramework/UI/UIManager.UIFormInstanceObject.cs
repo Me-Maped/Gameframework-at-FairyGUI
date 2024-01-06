@@ -1,8 +1,6 @@
 ﻿using System;
 using FairyGUI;
-using GameFramework.Event;
 using GameFramework.ObjectPool;
-using GameFramework.Resource;
 
 namespace GameFramework.UI
 {
@@ -13,23 +11,20 @@ namespace GameFramework.UI
         /// </summary>
         private sealed class UIFormInstanceObject : ObjectBase
         {
-            private string m_PkgName;
-            private Type m_FormType;
+            private UIFormBase m_Form;
             private OnFormInstanceReleaseCall m_ReleaseCall;
 
             public UIFormInstanceObject()
             {
-                m_PkgName = null;
-                m_FormType = null;
+                m_Form = null;
                 m_ReleaseCall = null;
             }
 
-            public static UIFormInstanceObject Create(string name, string pkgName,Type formType,OnFormInstanceReleaseCall releaseCall, object uiFormInstance)
+
+            internal static UIFormInstanceObject Create(UIFormBase uiForm, OnFormInstanceReleaseCall releaseCall)
             {
                 UIFormInstanceObject uiFormInstanceObject = ReferencePool.Acquire<UIFormInstanceObject>();
-                uiFormInstanceObject.Initialize(name, uiFormInstance);
-                uiFormInstanceObject.m_PkgName = pkgName;
-                uiFormInstanceObject.m_FormType = formType;
+                uiFormInstanceObject.Initialize(uiForm.Config.ResName, uiForm.Instance);
                 uiFormInstanceObject.m_ReleaseCall = releaseCall;
                 return uiFormInstanceObject;
             }
@@ -37,15 +32,14 @@ namespace GameFramework.UI
             public override void Clear()
             {
                 base.Clear();
-                m_PkgName = null;
-                m_FormType = null;
+                m_Form = null;
                 m_ReleaseCall = null;
             }
 
             protected internal override void Release(bool isShutdown)
             {
-                if(Target is GComponent component) component.Dispose();
-                m_ReleaseCall(m_FormType,m_PkgName);
+                if (Target is GComponent component) component.Dispose();
+                m_ReleaseCall(m_Form);
             }
         }
     }

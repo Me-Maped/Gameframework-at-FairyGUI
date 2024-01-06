@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using FairyGUI;
 using UnityEngine;
 
@@ -67,17 +68,7 @@ namespace GameFramework.UI
                     }
                     m_CachedList.Clear();
                 }
-                int index = m_UIForms.IndexOf(uiFormBase);
-                if (index >= 0)
-                {
-                    if (index == m_UIForms.Count - 1)
-                    {
-                        uiFormBase.Reopen();
-                        return;
-                    }
-
-                    m_UIForms.Remove(uiFormBase);
-                }
+                m_UIForms.Remove(uiFormBase);
                 m_UIForms.Add(uiFormBase);
                 uiFormBase.Open();
             }
@@ -132,6 +123,16 @@ namespace GameFramework.UI
             public virtual void AddToStage()
             {
                 ChangeMask();
+            }
+
+            public UIFormBase GetForm(Type formType)
+            {
+                return m_UIForms.Find(x => x.GetType() == formType);
+            }
+
+            public UIFormBase GetForm(string formName)
+            {
+                return m_UIForms.Find(x => x.Config.InstName.Equals(formName));
             }
 
             public virtual void RemoveFromStage(UIFormBase uiFormBase)

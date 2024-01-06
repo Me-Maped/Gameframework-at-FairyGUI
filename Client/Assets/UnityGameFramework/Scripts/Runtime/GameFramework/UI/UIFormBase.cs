@@ -10,7 +10,7 @@ namespace GameFramework.UI
         public bool IsWaitingForData { get; set; }
         public object UserData { get; set; }
         public override GComponent Instance { get; set; }
-        
+
         protected List<UIFormPartBase> FormParts => m_FormParts;
 
         private UIFormConfig m_Config;
@@ -137,7 +137,7 @@ namespace GameFramework.UI
             m_FormBg.SetVisible(true);
             m_FormBg.Load(Config.BgUrl, Config.InstName);
         }
-        
+
         /// <summary>
         /// 添加打开完成的事件
         /// </summary>
@@ -147,7 +147,7 @@ namespace GameFramework.UI
             m_OpenCompleteCallback -= callback;
             m_OpenCompleteCallback += callback;
         }
-        
+
         /// <summary>
         /// 添加完全关闭的事件
         /// </summary>
@@ -165,7 +165,7 @@ namespace GameFramework.UI
         private void CreateInstance()
         {
             Instance ??= UIPackage.CreateObject(Config.PkgName, Config.ResName).asCom;
-            if (Instance==null||Instance.isDisposed) throw new GameFrameworkException("Can not create Instance, maybe the pkg has been removed");
+            if (Instance == null || Instance.isDisposed) throw new GameFrameworkException("Can not create Instance, maybe the pkg has been removed");
             SerializeChild();
             Instance.fairyBatching = true;
             Instance.name = Config.InstName;
@@ -276,7 +276,7 @@ namespace GameFramework.UI
         /// </summary>
         private void OnPartOpen()
         {
-            if(m_FormParts == null || m_FormParts.Count <= 0) return;
+            if (m_FormParts == null || m_FormParts.Count <= 0) return;
             foreach (var part in m_FormParts)
             {
                 part.Open();
@@ -288,7 +288,7 @@ namespace GameFramework.UI
         /// </summary>
         private void OnPartOpenComplete()
         {
-            if(m_FormParts == null || m_FormParts.Count <= 0) return;
+            if (m_FormParts == null || m_FormParts.Count <= 0) return;
             foreach (var part in m_FormParts)
             {
                 part.OpenComplete();
@@ -300,7 +300,7 @@ namespace GameFramework.UI
         /// </summary>
         private void OnPartClose()
         {
-            if(m_FormParts == null || m_FormParts.Count <= 0) return;
+            if (m_FormParts == null || m_FormParts.Count <= 0) return;
             foreach (var part in m_FormParts)
             {
                 part.Close();
@@ -312,7 +312,7 @@ namespace GameFramework.UI
         /// </summary>
         private void OnPartCloseComplete()
         {
-            if(m_FormParts == null || m_FormParts.Count <= 0) return;
+            if (m_FormParts == null || m_FormParts.Count <= 0) return;
             foreach (var part in m_FormParts)
             {
                 part.CloseComplete();
@@ -324,7 +324,7 @@ namespace GameFramework.UI
         /// </summary>
         private void DestroyParts()
         {
-            if(m_FormParts == null || m_FormParts.Count <= 0) return;
+            if (m_FormParts == null || m_FormParts.Count <= 0) return;
             foreach (var part in m_FormParts)
             {
                 part.Destroy();
@@ -338,7 +338,7 @@ namespace GameFramework.UI
         /// </summary>
         protected void OpenComplete()
         {
-            if(Instance.fairyBatching) Instance.InvalidateBatchingState();
+            if (Instance.fairyBatching) Instance.InvalidateBatchingState();
             m_InAnimation?.Stop();
             m_FormBg?.Open(-1);
             m_OpenCompleteCallback?.Invoke();
@@ -406,8 +406,22 @@ namespace GameFramework.UI
             m_FormFinishCallback = null;
         }
 
+        public override void Clear()
+        {
+            Destroy();
+            m_Config = null;
+            m_FormParts = null;
+            m_IsDataReady = false;
+            m_FormBg = null;
+            m_InAnimation = null;
+            m_OutAnimation = null;
+            m_OpenCompleteCallback = null;
+            m_CloseCompleteCallback = null;
+            m_FormFinishCallback = null;
+        }
+
         #region Virtual Methods
-        
+
         /// <summary>
         /// 初始化
         /// </summary>
@@ -417,7 +431,7 @@ namespace GameFramework.UI
         /// 打开界面
         /// </summary>
         protected virtual void OnOpen() { }
-        
+
         /// <summary>
         /// 打开界面完成
         /// </summary>
@@ -427,16 +441,11 @@ namespace GameFramework.UI
         /// 关闭界面
         /// </summary>
         protected virtual void OnClose() { }
-        
+
         /// <summary>
         /// 关闭界面完成
         /// </summary>
         protected virtual void OnCloseComplete() { }
-        
-        /// <summary>
-        /// 重新打开界面, UserData数据变化
-        /// </summary>
-        public virtual void Reopen() { }
 
         /// <summary>
         /// 请求数据
@@ -455,7 +464,7 @@ namespace GameFramework.UI
             m_IsDataReady = true;
             CheckAndOpen();
         }
-        
+
         /// <summary>
         /// 播放打开动画
         /// </summary>
@@ -485,7 +494,7 @@ namespace GameFramework.UI
                 CloseComplete(null);
                 return;
             }
-            m_OutAnimation.Play(()=>{CloseComplete(null);});
+            m_OutAnimation.Play(() => { CloseComplete(null); });
             //加一层保护，避免Out动画异常
             float constTime = (m_OutAnimation.totalDuration + 0.1f) * 1.5f;
             Timers.inst.Remove(CloseComplete);
