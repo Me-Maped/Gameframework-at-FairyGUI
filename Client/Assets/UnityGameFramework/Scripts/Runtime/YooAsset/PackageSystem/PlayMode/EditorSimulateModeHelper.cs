@@ -14,7 +14,7 @@ namespace YooAsset
 		{
 			if (_classType == null)
 				_classType = Assembly.Load("UnityGameFramework.Editor").GetType("YooAsset.Editor.AssetBundleSimulateBuilder");
-			
+
 			string manifestFilePath = (string)InvokePublicStaticMethod(_classType, "SimulateBuild", packageName);
 			return manifestFilePath;
 		}

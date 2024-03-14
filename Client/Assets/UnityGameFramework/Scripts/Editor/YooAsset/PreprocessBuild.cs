@@ -12,7 +12,7 @@ namespace YooAsset.Editor
         /// </summary>
         public void OnPreprocessBuild(UnityEditor.Build.Reporting.BuildReport report)
         {
-            string saveFilePath = "Assets/Resources/BuildinFileManifest.asset";
+            string saveFilePath = "Assets/GameMain/Resources/Settings/BuildinFileManifest.asset";
             if (File.Exists(saveFilePath))
                 File.Delete(saveFilePath);
 
@@ -35,8 +35,9 @@ namespace YooAsset.Editor
                 manifest.BuildinFiles.Add(fileInfo.Name);
             }
 
-            if (Directory.Exists("Assets/Resources") == false)
-                Directory.CreateDirectory("Assets/Resources");
+            var resPath = "Assets/GameMain/Resources/Settings";
+            if (Directory.Exists(resPath) == false)
+                Directory.CreateDirectory(resPath);
             UnityEditor.AssetDatabase.CreateAsset(manifest, saveFilePath);
             UnityEditor.AssetDatabase.SaveAssets();
             UnityEditor.AssetDatabase.Refresh();
