@@ -622,41 +622,13 @@ namespace GameFramework.Resource
         }
 
         /// <summary>
-        /// 异步加载UI资源包，默认第0个为主包，其余的为扩展包
-        /// </summary>
-        /// <param name="pkgNames"></param>
-        /// <param name="loadAssetCallbacks"></param>
-        /// <param name="userData"></param>
-        /// <exception cref="GameFrameworkException"></exception>
-        public async void LoadUIAssetAsync(string[] pkgNames, LoadAssetCallbacks loadAssetCallbacks, object userData)
-        {
-            if (pkgNames == null || pkgNames.Length == 0) throw new GameFrameworkException("Asset name is invalid.");
-            if (loadAssetCallbacks == null) throw new GameFrameworkException("Load asset callbacks is invalid.");
-            float duration = Time.time;
-            string rootPath = SettingsUtils.FrameworkGlobalSettings.UIResourceFolder;
-            for (int i = 0; i < pkgNames.Length; i++)
-            {
-                string pkgName = pkgNames[i];
-                TextAsset pkgDesc = await InternalLoadUIAsset(pkgName);
-                UIPackage.AddPackage(pkgDesc.bytes, string.Empty, (name, extension, type, packageItem) =>
-                {
-                    LoadUIExtensions(rootPath, name, extension, type, packageItem, loadAssetCallbacks, duration, userData);
-                });
-                // 所有包加载完成后给出回调
-                if (i == pkgNames.Length - 1)
-                {
-                    loadAssetCallbacks.LoadAssetSuccessCallback?.Invoke(pkgName, pkgDesc, Time.time - duration, userData);
-                }
-            }
-        }
-
-        /// <summary>
-        /// 异步加载UI包。
+        /// 异步加载UI包，自动加载依赖包
         /// </summary>
         /// <param name="pkgName"></param>
         /// <param name="loadAssetCallbacks"></param>
         /// <param name="userData"></param>
-        public async void LoadUIAssetAsync(string pkgName, LoadAssetCallbacks loadAssetCallbacks, object userData)
+        /// <exception cref="GameFrameworkException"></exception>
+        public async void LoadUIPackagesAsync(string pkgName, LoadAssetCallbacks loadAssetCallbacks, object userData)
         {
             //加载包描述数据
             if (string.IsNullOrEmpty(pkgName))
@@ -674,7 +646,30 @@ namespace GameFramework.Resource
             {
                 LoadUIExtensions(rootPath, name, extension, type, packageItem, loadAssetCallbacks, duration, userData);
             });
-            loadAssetCallbacks.LoadAssetSuccessCallback?.Invoke(pkgName, pkgDesc, Time.time - duration, userData);
+            if (uiPackage.dependencies != null && uiPackage.dependencies.Length > 0)
+            {
+                List<string> depPkgNames = uiPackage.dependencies.Select(dependDic => dependDic["name"]).ToList();
+                // 这里只取一层依赖，设计UI时尽量不要出现多层包依赖
+                for (int i = 0; i < depPkgNames.Count; i++)
+                {
+                    string depPkgName = depPkgNames[i];
+                    GameFrameworkLog.Info("Main package '{0}', loading dependent package '{1}'",pkgName,depPkgName);
+                    TextAsset depPkgDesc = await InternalLoadUIAsset(depPkgName);
+                    UIPackage.AddPackage(depPkgDesc.bytes, string.Empty, (name, extension, type, packageItem) =>
+                    {
+                        LoadUIExtensions(rootPath, name, extension, type, packageItem, loadAssetCallbacks, duration, userData);
+                    });
+                    // 所有包加载完成后给出回调
+                    if (i == depPkgNames.Count - 1)
+                    {
+                        loadAssetCallbacks.LoadAssetSuccessCallback?.Invoke(pkgName, pkgDesc, Time.time - duration, userData);
+                    }
+                }
+            }
+            else
+            {
+                loadAssetCallbacks.LoadAssetSuccessCallback?.Invoke(pkgName, pkgDesc, Time.time - duration, userData);
+            }
         }
 
         /// <summary>

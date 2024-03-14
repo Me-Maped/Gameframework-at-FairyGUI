@@ -142,11 +142,7 @@ namespace GameFramework.UI
             else
             {
                 m_LoadingPkgNames.Add(uiForm.Config.PkgName);
-                if (uiForm.Config.Depends == null || uiForm.Config.Depends.Length <= 0)
-                    m_ResourceManager.LoadUIAssetAsync(uiForm.Config.PkgName, m_LoadAssetCallbacks, uiForm);
-                else
-                    m_ResourceManager.LoadUIAssetAsync(uiForm.Config.Depends.Append(uiForm.Config.PkgName).ToArray(),
-                        m_LoadAssetCallbacks, uiForm);
+                m_ResourceManager.LoadUIPackagesAsync(uiForm.Config.PkgName, m_LoadAssetCallbacks, uiForm);
             }
 
             return uiForm;
@@ -377,8 +373,17 @@ namespace GameFramework.UI
                     m_InstancePool.Register(
                         UIFormInstanceObject.Create(uiForm, m_OnFormInstanceReleaseCall), true);
                 }
-                OnPackageRefIncrease(uiForm.Config.PkgName);
-                OnPackageRefIncrease(uiForm.Config.Depends);
+
+                if (uiForm.Config.AutoRelease)
+                {
+                    // ui主包引用
+                    OnPackageRefIncrease(uiForm.Config.PkgName);
+                    // ui自定义依赖引用
+                    OnPackageRefIncrease(uiForm.Config.Depends);
+                    // ui依赖包引用
+                    OnPackageRefIncrease(GetPackageDependencies(uiForm.Config.PkgName, uiForm.Config.Depends));
+                }
+
             }
             catch (Exception e)
             {
@@ -476,9 +481,13 @@ namespace GameFramework.UI
         {
             if (uiForm == null) return;
             GameFrameworkLog.Warning("UIFormHelper OnInstanceReleaseCall type = {0}", uiForm.GetType());
-            OnPackageRefReduce(uiForm.Config.Depends);
+            if (uiForm.Config.AutoRelease)
+            {
+                OnPackageRefReduce(GetPackageDependencies(uiForm.Config.PkgName, uiForm.Config.Depends));
+                OnPackageRefReduce(uiForm.Config.Depends);
+                OnPackageRefReduce(uiForm.Config.PkgName);
+            }
             ReferencePool.Release(uiForm);
-            OnPackageRefReduce(uiForm.Config.PkgName);
         }
 
         private void OnPackageRefIncrease(string pkgName)
@@ -489,7 +498,16 @@ namespace GameFramework.UI
 
         private void OnPackageRefIncrease(string[] pkgNames)
         {
-            if (pkgNames == null) return;
+            if (pkgNames == null || pkgNames.Length == 0) return;
+            foreach (string pkgName in pkgNames)
+            {
+                OnPackageRefIncrease(pkgName);
+            }
+        }
+
+        private void OnPackageRefIncrease(List<string> pkgNames)
+        {
+            if (pkgNames == null || pkgNames.Count == 0) return;
             foreach (string pkgName in pkgNames)
             {
                 OnPackageRefIncrease(pkgName);
@@ -501,7 +519,6 @@ namespace GameFramework.UI
             m_PackageRefCount[pkgName]--;
             if (m_PackageRefCount[pkgName] <= 0)
             {
-                // TODO 后续添加自定义包管理，可以配置常驻内存的包，避免频繁卸载造成GC
                 m_ResourceManager.UnloadUIAsset(pkgName);
                 UIPackage.GetByName(pkgName)?.UnloadAssets();
                 UIPackage.RemovePackage(pkgName);
@@ -512,10 +529,38 @@ namespace GameFramework.UI
 
         private void OnPackageRefReduce(string[] pkgNames)
         {
+            if (pkgNames == null || pkgNames.Length == 0) return;
             foreach (string pkgName in pkgNames)
             {
                 OnPackageRefReduce(pkgName);
             }
+        }
+
+        private void OnPackageRefReduce(List<string> pkgNames)
+        {
+            if (pkgNames == null || pkgNames.Count == 0) return;
+            foreach (string pkgName in pkgNames)
+            {
+                OnPackageRefReduce(pkgName);
+            }
+        }
+
+        private List<string> GetPackageDependencies(string pkgName, string[] selfDepends)
+        {
+            List<string> depends = null;
+            UIPackage mainPkg = UIPackage.GetByName(pkgName);
+            if (mainPkg != null && mainPkg.dependencies != null && mainPkg.dependencies.Length > 0)
+            {
+                depends = mainPkg.dependencies.Select(depend => depend["name"]).ToList();
+                if (selfDepends != null && selfDepends.Length > 0)
+                {
+                    foreach (var dName in selfDepends)
+                    {
+                        depends.Remove(dName);
+                    }
+                }
+            }
+            return depends;
         }
     }
 }

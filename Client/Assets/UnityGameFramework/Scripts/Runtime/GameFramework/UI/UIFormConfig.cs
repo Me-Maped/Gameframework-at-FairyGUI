@@ -21,7 +21,7 @@ namespace GameFramework.UI
         /// </summary>
         public string BgUrl  { get; private set; }
         /// <summary>
-        /// 界面依赖的资源包名
+        /// 界面依赖的资源包名, 这里用于添加需要用到导出的资源包，如icon包之类的。界面的依赖会自动进行加载，无需在这里重复添加。
         /// </summary>
         public string[] Depends { get; private set; }
         /// <summary>
@@ -53,6 +53,10 @@ namespace GameFramework.UI
         /// </summary>
         public string CloseTip { get; private set; }
         /// <summary>
+        /// 关闭界面时是否自动释放包资源
+        /// </summary>
+        public bool AutoRelease { get; private set; }
+        /// <summary>
         /// 界面在界面组中的深度
         /// </summary>
         public int DepthInUIGroup { get; private set; }
@@ -75,6 +79,7 @@ namespace GameFramework.UI
             ModalLogic = false;
             InBackList = false;
             CloseTip = null;
+            AutoRelease = true;
             DepthInUIGroup = 0;
             FormParts = null;
         }
@@ -93,6 +98,7 @@ namespace GameFramework.UI
             ModalLogic = false;
             InBackList = false;
             CloseTip = null;
+            AutoRelease = true;
             DepthInUIGroup = 0;
             FormParts = null;
         }
@@ -112,6 +118,7 @@ namespace GameFramework.UI
         /// <param name="modalLogic">模态逻辑</param>
         /// <param name="inBackList">是否加入返回队列中</param>
         /// <param name="closeTip">关闭提示</param>
+        /// <param name="autoRelease">关闭界面时是否自动释放包资源</param>
         /// <param name="depthInUIGroup">界面在界面组中的深度</param>
         /// <param name="formParts">界面的子界面</param>
         /// <returns></returns>
@@ -120,7 +127,7 @@ namespace GameFramework.UI
             UIFormStyleEnum styleEnum = UIFormStyleEnum.FULL_SCREEN,
             UIGroupEnum groupEnum = UIGroupEnum.PANEL, bool isModal = false,
             float modalAlpha = 0.9f, bool modalLogic = false, bool inBackList = true, 
-            string closeTip = null, int depthInUIGroup = 0, Type[] formParts = null)
+            string closeTip = null,bool autoRelease = true, int depthInUIGroup = 0, Type[] formParts = null)
         {
             UIFormConfig uiFormConfig = ReferencePool.Acquire<UIFormConfig>();
             uiFormConfig.PkgName = pkgName;
@@ -135,6 +142,7 @@ namespace GameFramework.UI
             uiFormConfig.ModalLogic = modalLogic;
             uiFormConfig.InBackList = inBackList;
             uiFormConfig.CloseTip = closeTip;
+            uiFormConfig.AutoRelease = autoRelease;
             uiFormConfig.DepthInUIGroup = depthInUIGroup;
             uiFormConfig.FormParts = formParts;
             return uiFormConfig;
