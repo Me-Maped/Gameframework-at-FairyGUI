@@ -10,22 +10,6 @@ namespace GameFramework.Resource
     public interface IResourceManager
     {
         /// <summary>
-        /// 获取当前资源适用的游戏版本号。
-        /// </summary>
-        string ApplicableGameVersion
-        {
-            get;
-        }
-
-        /// <summary>
-        /// 获取当前内部资源版本号。
-        /// </summary>
-        int InternalResourceVersion
-        {
-            get;
-        }
-
-        /// <summary>
         /// 同时下载的最大数目。
         /// </summary>
         int DownloadingMaxNum

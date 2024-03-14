@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Reflection;
 using Cysharp.Threading.Tasks;
+using GameFramework;
 using GameFramework.Fsm;
 using GameFramework.Procedure;
+using UnityEngine;
 using UnityGameFramework.Runtime;
 
 namespace GameMain
@@ -12,6 +14,7 @@ namespace GameMain
         protected override void OnEnter(IFsm<IProcedureManager> procedureOwner)
         {
             base.OnEnter(procedureOwner);
+            SetVersion().Forget();
             StartGame().Forget();
         }
 
@@ -20,13 +23,23 @@ namespace GameMain
             base.OnLeave(procedureOwner, isShutdown);
         }
 
+        private async UniTaskVoid SetVersion()
+        {
+            TextAsset versionBytes = await GameModule.Resource.LoadAssetAsync<TextAsset>(SettingsUtils.FrameworkGlobalSettings.VersionFilePath);
+            var versionBean = Utility.Json.ToObject<VersionBean>(versionBytes.text);
+            MVersionHelper.SetVersion(versionBean);
+            GameModule.Resource.UnloadAsset(versionBytes);
+            MVersionHelper.PrintVersion();
+        }
+
+
         private async UniTaskVoid StartGame()
         {
             await UniTask.Delay(TimeSpan.FromSeconds(2f));
             RunMainLogicMethod();
-            UILoadMgr.Instance.SetProgress(100,"加载完成");
+            UILoadMgr.Instance.SetProgress(100, "加载完成");
         }
-        
+
         private void RunMainLogicMethod()
         {
             Assembly mainLogicAssembly = null;

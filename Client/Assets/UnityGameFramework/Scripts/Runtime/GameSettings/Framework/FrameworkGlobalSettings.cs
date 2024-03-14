@@ -167,12 +167,9 @@ public class FrameworkGlobalSettings
 
     [Header("Hotfix")]
     [SerializeField]
-    private string m_ResourceVersionFileName = "ResourceVersion.txt";
+    private string m_VersionFilePath = "Assets/AssetRaw/Version/Version.json";
+    public string VersionFilePath => m_VersionFilePath;
 
-    public string ResourceVersionFileName
-    {
-        get { return m_ResourceVersionFileName; }
-    }
 
     public string CheckVersionUrl = "http://127.0.0.1/Resources/{0}Version.txt";
     public string WindowsAppUrl = "http://127.0.0.1";

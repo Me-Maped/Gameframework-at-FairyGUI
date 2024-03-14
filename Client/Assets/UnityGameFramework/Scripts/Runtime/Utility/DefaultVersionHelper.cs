@@ -11,23 +11,15 @@ namespace UnityGameFramework.Runtime
         /// <summary>
         /// 获取游戏版本号。
         /// </summary>
-        public string GameVersion
-        {
-            get
-            {
-                return Application.version;
-            }
-        }
+        public string GameVersion => Application.version;
 
         /// <summary>
         /// 获取内部游戏版本号。
         /// </summary>
-        public int InternalGameVersion
-        {
-            get
-            {
-                return 0;
-            }
-        }
+        public string InternalGameVersion => "0";
+
+        public string ResourceVersion => "0.1";
+        public string CodeVersion => "0.1";
+        public string ConfigVersion => "0.1";
     }
 }

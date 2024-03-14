@@ -87,28 +87,6 @@ namespace UnityGameFramework.Runtime
         }
 
         /// <summary>
-        /// 获取当前资源适用的游戏版本号。
-        /// </summary>
-        public string ApplicableGameVersion
-        {
-            get
-            {
-                return m_ResourceManager.ApplicableGameVersion;
-            }
-        }
-
-        /// <summary>
-        /// 获取当前内部资源版本号。
-        /// </summary>
-        public int InternalResourceVersion
-        {
-            get
-            {
-                return m_ResourceManager.InternalResourceVersion;
-            }
-        }
-
-        /// <summary>
         /// 获取资源读写路径类型。
         /// </summary>
         public ReadWritePathType ReadWritePathType

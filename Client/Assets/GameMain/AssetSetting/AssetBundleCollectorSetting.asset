@@ -12,9 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 185f6993d5150494d98da50e26cb1c25, type: 3}
   m_Name: AssetBundleCollectorSetting
   m_EditorClassIdentifier: 
-  ShowPackageView: 0
+  ShowPackageView: 1
   EnableAddressable: 0
-  UniqueBundleName: 0
+  LocationToLower: 0
+  IncludeAssetGUID: 0
+  UniqueBundleName: 1
   ShowEditorAlias: 0
   Packages:
   - PackageName: MEngine
@@ -170,6 +172,19 @@ MonoBehaviour:
       Collectors:
       - CollectPath: Assets/AssetRaw/Prefabs
         CollectorGUID: 7d8d3323b47ce644a9983a1e8e5fe578
+        CollectorType: 0
+        AddressRuleName: AddressByFileName
+        PackRuleName: PackDirectory
+        FilterRuleName: CollectAll
+        AssetTags: 
+        UserData: 
+    - GroupName: Version
+      GroupDesc: "\u7248\u672C"
+      AssetTags: Version
+      ActiveRuleName: EnableGroup
+      Collectors:
+      - CollectPath: Assets/AssetRaw/Version
+        CollectorGUID: e95bb463761cd4729895c38449960b38
         CollectorType: 0
         AddressRuleName: AddressByFileName
         PackRuleName: PackDirectory

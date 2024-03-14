@@ -72,10 +72,6 @@ namespace GameFramework.Resource
         /// </summary>
         private static int _lastUpdateFrame = 0;
 
-        private string m_ApplicableGameVersion;
-
-        private int m_InternalResourceVersion;
-
         private string m_ReadOnlyPath;
         private string m_ReadWritePath;
 
@@ -98,28 +94,6 @@ namespace GameFramework.Resource
             get
             {
                 return m_ReadWritePath;
-            }
-        }
-
-        /// <summary>
-        /// 获取当前资源适用的游戏版本号。
-        /// </summary>
-        public string ApplicableGameVersion
-        {
-            get
-            {
-                return m_ApplicableGameVersion;
-            }
-        }
-
-        /// <summary>
-        /// 获取当前内部资源版本号。
-        /// </summary>
-        public int InternalResourceVersion
-        {
-            get
-            {
-                return m_InternalResourceVersion;
             }
         }
 
