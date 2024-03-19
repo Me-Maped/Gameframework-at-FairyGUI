@@ -52,7 +52,6 @@ namespace Cysharp.Threading.Tasks.Linq
             public UniTask DisposeAsync()
             {
                 TaskTracker.RemoveTracking(this);
-                writer.Dispose();
                 return default;
             }
 
@@ -128,7 +127,7 @@ namespace Cysharp.Threading.Tasks.Linq
             }
         }
 
-        sealed class AsyncWriter : IUniTaskSource, IAsyncWriter<T>, IDisposable
+        sealed class AsyncWriter : IUniTaskSource, IAsyncWriter<T>
         {
             readonly _Create enumerator;
 
@@ -138,15 +137,6 @@ namespace Cysharp.Threading.Tasks.Linq
             {
                 this.enumerator = enumerator;
             }
-            
-            public void Dispose()
-            {
-                var status = core.GetStatus(core.Version);
-                if (status == UniTaskStatus.Pending)
-                {
-                    core.TrySetCanceled();
-                }
-            }            
 
             public void GetResult(short token)
             {

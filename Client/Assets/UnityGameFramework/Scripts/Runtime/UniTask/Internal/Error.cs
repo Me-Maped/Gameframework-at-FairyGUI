@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace Cysharp.Threading.Tasks.Internal
 {
-    public static class Error
+    internal static class Error
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ThrowArgumentNullException<T>(T value, string paramName)
@@ -39,7 +39,7 @@ namespace Cysharp.Threading.Tasks.Internal
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void ThrowArgumentException(string message)
+        public static void ThrowArgumentException<T>(string message)
         {
             throw new ArgumentException(message);
         }

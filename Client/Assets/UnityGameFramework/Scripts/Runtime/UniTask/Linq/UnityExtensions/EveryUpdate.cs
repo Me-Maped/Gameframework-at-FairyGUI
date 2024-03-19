@@ -4,49 +4,37 @@ namespace Cysharp.Threading.Tasks.Linq
 {
     public static partial class UniTaskAsyncEnumerable
     {
-        public static IUniTaskAsyncEnumerable<AsyncUnit> EveryUpdate(PlayerLoopTiming updateTiming = PlayerLoopTiming.Update, bool cancelImmediately = false)
+        public static IUniTaskAsyncEnumerable<AsyncUnit> EveryUpdate(PlayerLoopTiming updateTiming = PlayerLoopTiming.Update)
         {
-            return new EveryUpdate(updateTiming, cancelImmediately);
+            return new EveryUpdate(updateTiming);
         }
     }
 
     internal class EveryUpdate : IUniTaskAsyncEnumerable<AsyncUnit>
     {
         readonly PlayerLoopTiming updateTiming;
-        readonly bool cancelImmediately;
 
-        public EveryUpdate(PlayerLoopTiming updateTiming, bool cancelImmediately)
+        public EveryUpdate(PlayerLoopTiming updateTiming)
         {
             this.updateTiming = updateTiming;
-            this.cancelImmediately = cancelImmediately;
         }
 
         public IUniTaskAsyncEnumerator<AsyncUnit> GetAsyncEnumerator(CancellationToken cancellationToken = default)
         {
-            return new _EveryUpdate(updateTiming, cancellationToken, cancelImmediately);
+            return new _EveryUpdate(updateTiming, cancellationToken);
         }
 
         class _EveryUpdate : MoveNextSource, IUniTaskAsyncEnumerator<AsyncUnit>, IPlayerLoopItem
         {
             readonly PlayerLoopTiming updateTiming;
-            readonly CancellationToken cancellationToken;
-            readonly CancellationTokenRegistration cancellationTokenRegistration;
+            CancellationToken cancellationToken;
 
             bool disposed;
 
-            public _EveryUpdate(PlayerLoopTiming updateTiming, CancellationToken cancellationToken, bool cancelImmediately)
+            public _EveryUpdate(PlayerLoopTiming updateTiming, CancellationToken cancellationToken)
             {
                 this.updateTiming = updateTiming;
                 this.cancellationToken = cancellationToken;
-
-                if (cancelImmediately && cancellationToken.CanBeCanceled)
-                {
-                    cancellationTokenRegistration = cancellationToken.RegisterWithoutCaptureExecutionContext(state =>
-                    {
-                        var source = (_EveryUpdate)state;
-                        source.completionSource.TrySetCanceled(source.cancellationToken);
-                    }, this);
-                }
 
                 TaskTracker.TrackActiveTask(this, 2);
                 PlayerLoopHelper.AddAction(updateTiming, this);
@@ -56,14 +44,10 @@ namespace Cysharp.Threading.Tasks.Linq
 
             public UniTask<bool> MoveNextAsync()
             {
-                if (disposed) return CompletedTasks.False;
-                
-                completionSource.Reset();
+                // return false instead of throw
+                if (disposed || cancellationToken.IsCancellationRequested) return CompletedTasks.False;
 
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    completionSource.TrySetCanceled(cancellationToken);
-                }
+                completionSource.Reset();
                 return new UniTask<bool>(this, completionSource.Version);
             }
 
@@ -71,7 +55,6 @@ namespace Cysharp.Threading.Tasks.Linq
             {
                 if (!disposed)
                 {
-                    cancellationTokenRegistration.Dispose();
                     disposed = true;
                     TaskTracker.RemoveTracking(this);
                 }
@@ -80,13 +63,7 @@ namespace Cysharp.Threading.Tasks.Linq
 
             public bool MoveNext()
             {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    completionSource.TrySetCanceled(cancellationToken);
-                    return false;
-                }
-                
-                if (disposed)
+                if (disposed || cancellationToken.IsCancellationRequested)
                 {
                     completionSource.TrySetResult(false);
                     return false;

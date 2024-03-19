@@ -323,7 +323,7 @@ namespace Cysharp.Threading.Tasks
         UniTask<T> OnSubmitAsync();
     }
 
-    public class TextSelectionEventConverter : UnityEvent<(string, int, int)>, IDisposable
+    internal class TextSelectionEventConverter : UnityEvent<(string, int, int)>, IDisposable
     {
         readonly UnityEvent<string, int, int> innerEvent;
         readonly UnityAction<string, int, int> invokeDelegate;

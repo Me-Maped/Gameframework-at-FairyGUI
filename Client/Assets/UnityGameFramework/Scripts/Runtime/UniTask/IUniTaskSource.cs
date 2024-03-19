@@ -1,9 +1,4 @@
 ﻿#pragma warning disable CS1591
-#pragma warning disable CS0108
-
-#if (UNITASK_NETCORE && !NETSTANDARD2_0) || UNITY_2022_3_OR_NEWER
-#define SUPPORT_VALUETASK
-#endif
 
 using System;
 using System.Runtime.CompilerServices;
@@ -24,8 +19,9 @@ namespace Cysharp.Threading.Tasks
 
     // similar as IValueTaskSource
     public interface IUniTaskSource
-#if SUPPORT_VALUETASK
+#if !UNITY_2018_3_OR_NEWER && !NETSTANDARD2_0
         : System.Threading.Tasks.Sources.IValueTaskSource
+#pragma warning disable CS0108
 #endif
     {
         UniTaskStatus GetStatus(short token);
@@ -34,7 +30,8 @@ namespace Cysharp.Threading.Tasks
 
         UniTaskStatus UnsafeGetStatus(); // only for debug use.
 
-#if SUPPORT_VALUETASK
+#if !UNITY_2018_3_OR_NEWER && !NETSTANDARD2_0
+#pragma warning restore CS0108
 
         System.Threading.Tasks.Sources.ValueTaskSourceStatus System.Threading.Tasks.Sources.IValueTaskSource.GetStatus(short token)
         {
@@ -56,13 +53,13 @@ namespace Cysharp.Threading.Tasks
     }
 
     public interface IUniTaskSource<out T> : IUniTaskSource
-#if SUPPORT_VALUETASK
+#if !UNITY_2018_3_OR_NEWER && !NETSTANDARD2_0
         , System.Threading.Tasks.Sources.IValueTaskSource<T>
 #endif
     {
         new T GetResult(short token);
 
-#if SUPPORT_VALUETASK
+#if !UNITY_2018_3_OR_NEWER && !NETSTANDARD2_0
 
         new public UniTaskStatus GetStatus(short token)
         {

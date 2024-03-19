@@ -28,7 +28,7 @@ namespace Cysharp.Threading.Tasks
                         p.TrySetCanceled();
                         break;
                     case TaskStatus.Faulted:
-                        p.TrySetException(x.Exception.InnerException ?? x.Exception);
+                        p.TrySetException(x.Exception);
                         break;
                     case TaskStatus.RanToCompletion:
                         p.TrySetResult(x.Result);
@@ -58,7 +58,7 @@ namespace Cysharp.Threading.Tasks
                         p.TrySetCanceled();
                         break;
                     case TaskStatus.Faulted:
-                        p.TrySetException(x.Exception.InnerException ?? x.Exception);
+                        p.TrySetException(x.Exception);
                         break;
                     case TaskStatus.RanToCompletion:
                         p.TrySetResult();
@@ -454,7 +454,7 @@ namespace Cysharp.Threading.Tasks
         }
 
         /// <summary>
-        /// Timeout with suppress OperationCanceledException. Returns (bool, IsCanceled).
+        /// Timeout with suppress OperationCanceledException. Returns (bool, IsCacneled).
         /// </summary>
         public static async UniTask<bool> TimeoutWithoutException(this UniTask task, TimeSpan timeout, DelayType delayType = DelayType.DeltaTime, PlayerLoopTiming timeoutCheckTiming = PlayerLoopTiming.Update, CancellationTokenSource taskCancellationTokenSource = null)
         {
