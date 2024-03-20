@@ -11,6 +11,11 @@ using UnityEngine;
 
 public class FUIEditorTool : MonoBehaviour
 {
+    private const string USING_START = "/******using脚本自动生成部分起始******/";
+    private const string USING_END = "/******using脚本自动生成部分结束******/";
+    private  const string BIND_START = "/******脚本自动生成部分起始******/";
+    private const string BIND_END = "/******脚本自动生成部分结束******/";
+    
     [MenuItem("Game Framework/FairyGUI/导出UIBinder")]
     private static void ExportUIBinder()
     {
@@ -35,12 +40,24 @@ public class FUIEditorTool : MonoBehaviour
 
         // 开始写入文件
         Debug.Log("=====开始写文件=====");
+        // 判断targetPath文件是否存在，不存在，则创建该文件
+        if (!File.Exists(targetPath))
+        {
+            File.Create(targetPath).Close();
+            string blockLeft = "{";
+            string blockRight = "}";
+            string nameSpace = "namespace GameLogic";
+            string calssName = "public static class UIBinder";
+            string methodName = "public static void BindAll()";
+            File.WriteAllText(targetPath,
+                $"{USING_START}\n\n{USING_END}\n{nameSpace}\n{blockLeft}\n\t{calssName}\n\t{blockLeft}\n\t\t{methodName}\n\t\t{blockLeft}\n\t\t\t{BIND_START}\n\n\t\t\t{BIND_END}\n\t\t{blockRight}\n\t{blockRight}\n{blockRight}",
+                Encoding.UTF8);
+        }
+
         var codeContent = File.ReadAllText(targetPath, Encoding.UTF8);
         var content = codeContent;
-        var startStr = "/******using脚本自动生成部分起始******/";
-        var endStr = "/******using脚本自动生成部分结束******/";
-        var startIndex = content.IndexOf(startStr);
-        var endIndex = content.IndexOf(endStr);
+        var startIndex = content.IndexOf(USING_START, StringComparison.Ordinal);
+        var endIndex = content.IndexOf(USING_END, StringComparison.Ordinal);
         if (startIndex == -1 || endIndex == -1)
         {
             Debug.LogError("未找到起始或结束标记");
@@ -48,15 +65,12 @@ public class FUIEditorTool : MonoBehaviour
         }
 
         var oldValue = content.Substring(startIndex, endIndex - startIndex);
-        oldValue += endStr;
-        var newValue = startStr + "\n" + usingStr + endStr;
+        oldValue += USING_END;
+        var newValue = USING_START + "\n" + usingStr + USING_END;
         content = content.Replace(oldValue, newValue);
 
-
-        startStr = "/******脚本自动生成部分起始******/";
-        endStr = "/******脚本自动生成部分结束******/";
-        startIndex = content.IndexOf(startStr);
-        endIndex = content.IndexOf(endStr);
+        startIndex = content.IndexOf(BIND_START, StringComparison.Ordinal);
+        endIndex = content.IndexOf(BIND_END, StringComparison.Ordinal);
         if (startIndex == -1 || endIndex == -1)
         {
             Debug.LogError("未找到起始或结束标记");
@@ -64,8 +78,8 @@ public class FUIEditorTool : MonoBehaviour
         }
 
         oldValue = content.Substring(startIndex, endIndex - startIndex);
-        oldValue += endStr;
-        newValue = startStr + "\n" + bindStr + "\t\t\t" + endStr;
+        oldValue += BIND_END;
+        newValue = BIND_START + "\n" + bindStr + "\t\t\t" + BIND_END;
         content = content.Replace(oldValue, newValue);
         File.WriteAllText(targetPath, content, Encoding.UTF8);
         AssetDatabase.Refresh();
