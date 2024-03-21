@@ -199,10 +199,11 @@ namespace GameFramework.Resource
         /// 异步加载UI资源包，自动加载依赖包。
         /// </summary>
         /// <param name="pkgName"></param>
+        /// <param name="dependPkgs">自定义依赖包</param>
         /// <param name="loadAssetCallbacks"></param>
         /// <param name="userData"></param>
-        void LoadUIPackagesAsync(string pkgName, LoadAssetCallbacks loadAssetCallbacks, object userData);
-        
+        void LoadUIPackagesAsync(string pkgName,string[] dependPkgs, LoadAssetCallbacks loadAssetCallbacks, object userData);
+
         /// <summary>
         /// 卸载UI资源。
         /// </summary>

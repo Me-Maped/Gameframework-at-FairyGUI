@@ -599,10 +599,11 @@ namespace GameFramework.Resource
         /// 异步加载UI包，自动加载依赖包
         /// </summary>
         /// <param name="pkgName"></param>
+        /// <param name="dependPkgs"></param>
         /// <param name="loadAssetCallbacks"></param>
         /// <param name="userData"></param>
         /// <exception cref="GameFrameworkException"></exception>
-        public async void LoadUIPackagesAsync(string pkgName, LoadAssetCallbacks loadAssetCallbacks, object userData)
+        public async void LoadUIPackagesAsync(string pkgName,string[] dependPkgs, LoadAssetCallbacks loadAssetCallbacks, object userData)
         {
             //加载包描述数据
             if (string.IsNullOrEmpty(pkgName))
@@ -620,25 +621,39 @@ namespace GameFramework.Resource
             {
                 LoadUIExtensions(rootPath, name, extension, type, packageItem, loadAssetCallbacks, duration, userData);
             });
+            List<string> depPkgNames = null;
+            if (dependPkgs != null && dependPkgs.Length > 0)
+            {
+                depPkgNames = new List<string>();
+                depPkgNames.AddRange(dependPkgs);
+            }
             if (uiPackage.dependencies != null && uiPackage.dependencies.Length > 0)
             {
-                List<string> depPkgNames = uiPackage.dependencies.Select(dependDic => dependDic["name"]).ToList();
+                depPkgNames ??= new List<string>();
+                depPkgNames.AddRange(uiPackage.dependencies.Select(dependDic => dependDic["name"]).ToList());
+            }
+            if (depPkgNames != null && depPkgNames.Count > 0)
+            {
                 // 这里只取一层依赖，设计UI时尽量不要出现多层包依赖
                 for (int i = 0; i < depPkgNames.Count; i++)
                 {
                     string depPkgName = depPkgNames[i];
-                    GameFrameworkLog.Info("Main package '{0}', loading dependent package '{1}'",pkgName,depPkgName);
                     TextAsset depPkgDesc = await InternalLoadUIAsset(depPkgName);
-                    UIPackage.AddPackage(depPkgDesc.bytes, string.Empty, (name, extension, type, packageItem) =>
-                    {
-                        LoadUIExtensions(rootPath, name, extension, type, packageItem, loadAssetCallbacks, duration, userData);
-                    });
+                    UIPackage.AddPackage(depPkgDesc.bytes, string.Empty,
+                        (name, extension, type, packageItem) =>
+                        {
+                            LoadUIExtensions(rootPath, name, extension, type, packageItem, loadAssetCallbacks, duration,
+                                userData);
+                        });
                     // 所有包加载完成后给出回调
                     if (i == depPkgNames.Count - 1)
                     {
-                        loadAssetCallbacks.LoadAssetSuccessCallback?.Invoke(pkgName, pkgDesc, Time.time - duration, userData);
+                        loadAssetCallbacks.LoadAssetSuccessCallback?.Invoke(pkgName, pkgDesc, Time.time - duration,
+                            userData);
                     }
                 }
+                GameFrameworkLog.Info("Main package '{0}', loading dependent packages '{1}'", pkgName,
+                    depPkgNames.ToString());
             }
             else
             {

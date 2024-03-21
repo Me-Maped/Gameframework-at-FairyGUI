@@ -142,7 +142,7 @@ namespace GameFramework.UI
             else
             {
                 m_LoadingPkgNames.Add(uiForm.Config.PkgName);
-                m_ResourceManager.LoadUIPackagesAsync(uiForm.Config.PkgName, m_LoadAssetCallbacks, uiForm);
+                m_ResourceManager.LoadUIPackagesAsync(uiForm.Config.PkgName,uiForm.Config.Depends, m_LoadAssetCallbacks, uiForm);
             }
 
             return uiForm;

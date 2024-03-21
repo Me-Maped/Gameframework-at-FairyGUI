@@ -6,9 +6,17 @@ namespace GameLogic.Login
 {
     public class LoginForm : UIForm<UI_login_main>
     {
+        private LoginFormCtrl _ctrl;
+        private LoginFormModel _model;
+        
         protected override UIFormConfig CreateConfig()
         {
             return UIFormConfig.Create(UI_login_main.PKG_NAME, UI_login_main.RES_NAME, groupEnum: UIGroupEnum.PANEL);
+        }
+
+        protected override void OnInit()
+        {
+            InitMVC(out _ctrl,out _model);
         }
 
         protected override void OnOpen()

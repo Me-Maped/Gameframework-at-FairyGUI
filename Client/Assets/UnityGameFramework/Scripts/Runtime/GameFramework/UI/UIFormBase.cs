@@ -90,6 +90,7 @@ namespace GameFramework.UI
             {
                 OnClose();
                 OnPartClose();
+                OnMVCClose();
             }
             catch (Exception e)
             {
@@ -112,6 +113,7 @@ namespace GameFramework.UI
             {
                 OnClose();
                 OnPartClose();
+                OnMVCClose();
             }
             catch (Exception e)
             {
@@ -171,7 +173,14 @@ namespace GameFramework.UI
             Instance.name = Config.InstName;
             Instance.displayObject.name = Config.InstName;
             RegisterCompEvents(Instance);
-            OnInit();
+            try
+            {
+                OnInit();
+            }
+            catch (Exception e)
+            {
+                throw new GameFrameworkException(e.Message);
+            }
             InitPart();
         }
 
@@ -263,6 +272,7 @@ namespace GameFramework.UI
             {
                 OnOpen();
                 OnPartOpen();
+                OnMVCOpen();
             }
             catch (Exception e)
             {
@@ -345,8 +355,15 @@ namespace GameFramework.UI
             m_OpenCompleteCallback = null;
             m_State = UIFormState.SHOW_OVER;
             Instance.touchable = true;
-            OnOpenComplete();
-            OnPartOpenComplete();
+            try
+            {
+                OnOpenComplete();
+                OnPartOpenComplete();
+            }
+            catch (Exception e)
+            {
+                throw new GameFrameworkException(e.Message);
+            }
         }
 
         /// <summary>
@@ -370,11 +387,36 @@ namespace GameFramework.UI
             m_CloseCompleteCallback = null;
             m_FormFinishCallback?.Invoke();
             m_FormFinishCallback = null;
-            OnCloseComplete();
-            OnPartCloseComplete();
+            try
+            {
+                OnCloseComplete();
+                OnPartCloseComplete();
+            }
+            catch (Exception e)
+            {
+                throw new GameFrameworkException(e.Message);
+            }
         }
 
-        internal void Destroy()
+        /// <summary>
+        /// 周期更新
+        /// </summary>
+        /// <param name="elapseSeconds"></param>
+        /// <param name="realElapseSeconds"></param>
+        public void Update(float elapseSeconds, float realElapseSeconds)
+        {
+            try
+            {
+                OnUpdate(elapseSeconds, realElapseSeconds);
+                OnMVCUpdate(elapseSeconds, realElapseSeconds);
+            }
+            catch (Exception e)
+            {
+                throw new GameFrameworkException(e.Message);
+            }
+        }
+
+        private void Destroy()
         {
             Dispose();
             DestroyParts();
@@ -384,6 +426,8 @@ namespace GameFramework.UI
             m_IsDataReady = false;
             ReferencePool.Release(m_Config);
             m_Config = null;
+            OnDestroyed();
+            OnMVCDestroyed();
         }
 
         public override void Wait(Action callback)
@@ -446,6 +490,18 @@ namespace GameFramework.UI
         /// 关闭界面完成
         /// </summary>
         protected virtual void OnCloseComplete() { }
+        
+        /// <summary>
+        /// 轮询
+        /// </summary>
+        /// <param name="elapseSeconds"></param>
+        /// <param name="realElapseSeconds"></param>
+        protected virtual void OnUpdate(float elapseSeconds, float realElapseSeconds) { }
+        
+        /// <summary>
+        /// 销毁
+        /// </summary>
+        protected  virtual void OnDestroyed() { }
 
         /// <summary>
         /// 请求数据
@@ -499,6 +555,68 @@ namespace GameFramework.UI
             float constTime = (m_OutAnimation.totalDuration + 0.1f) * 1.5f;
             Timers.inst.Remove(CloseComplete);
             Timers.inst.Add(constTime, 1, CloseComplete);
+        }
+        #endregion
+
+        #region MVC 可选
+
+        private IUIController m_UICtrl;
+        private IUIModel m_UIModel;
+        /// <summary>
+        /// 设置MVC
+        /// </summary>
+        protected void InitMVC<TCtrl,TModel>(out TCtrl ctrl, out TModel model) where TCtrl : class, IUIController, new() where TModel : class, IUIModel, new()
+        {
+            m_UICtrl = ReferencePool.Acquire<TCtrl>();
+            m_UIModel = ReferencePool.Acquire<TModel>();
+            m_UICtrl.Init(this, m_UIModel);
+            m_UIModel.Init(m_UICtrl);
+            ctrl = m_UICtrl as TCtrl;
+            model = m_UIModel as TModel;
+        }
+        
+        /// <summary>
+        /// MVC打开
+        /// </summary>
+        private void OnMVCOpen()
+        {
+            m_UICtrl?.Open();
+            m_UIModel?.Open();
+        }
+        /// <summary>
+        /// MVC关闭
+        /// </summary>
+        private void OnMVCClose()
+        {
+            m_UICtrl?.Close();
+            m_UIModel?.Close();
+        }
+        /// <summary>
+        /// MVC轮询
+        /// </summary>
+        /// <param name="elapseSeconds"></param>
+        /// <param name="realElapseSeconds"></param>
+        private void OnMVCUpdate(float elapseSeconds, float realElapseSeconds)
+        {
+            m_UICtrl?.Update(elapseSeconds, realElapseSeconds);
+            m_UIModel?.Update(elapseSeconds, realElapseSeconds);
+        }
+        /// <summary>
+        /// 销毁MVC
+        /// </summary>
+        private void OnMVCDestroyed()
+        {
+            if (m_UICtrl != null)
+            {
+                ReferencePool.Release(m_UICtrl);
+                m_UIModel = null;
+            }
+
+            if (m_UIModel != null)
+            {
+                ReferencePool.Release(m_UIModel);
+                m_UICtrl = null;
+            }
         }
         #endregion
     }
