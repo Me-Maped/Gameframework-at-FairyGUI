@@ -40,6 +40,7 @@ namespace GameFramework.UI
         private readonly LoadAssetCallbacks m_LoadAssetCallbacks;
         private readonly Dictionary<UIGroupEnum, IUIGroup> m_UIGroups;
 
+        private Dictionary<Type, UIFormBase> m_LoadedFormInst;
         private Dictionary<string, List<UIFormBase>> m_ToBeLoadFormInst;
         private Dictionary<string, int> m_PackageRefCount;
         private List<string> m_LoadingPkgNames;
@@ -69,6 +70,7 @@ namespace GameFramework.UI
             m_UIJumpHelper = null;
             m_UICameraHelper = null;
             m_UIGroups = new Dictionary<UIGroupEnum, IUIGroup>();
+            m_LoadedFormInst = new Dictionary<Type, UIFormBase>();
             m_ToBeLoadFormInst = new Dictionary<string, List<UIFormBase>>();
             m_PackageRefCount = new Dictionary<string, int>();
             m_LoadingPkgNames = new List<string>();
@@ -117,6 +119,12 @@ namespace GameFramework.UI
         {
             if (formType == null) throw new GameFrameworkException("FormType is invalid");
             if (m_ResourceManager == null) throw new GameFrameworkException("You must set ResourceManager first");
+            if (m_LoadedFormInst.TryGetValue(formType, out UIFormBase loadedForm) && loadedForm.Config.OneInst)
+            {
+                if (loadedForm.IsOpened) return loadedForm;
+                InternalOpenUIForm(loadedForm, 0);
+                return loadedForm;
+            }
             UIFormBase uiForm = (UIFormBase)ReferencePool.Acquire(formType);
             uiForm.UserData = userData;
             GetUIGroup(uiForm.Config.GroupEnum).CloseOthers = closeOther;
@@ -345,6 +353,7 @@ namespace GameFramework.UI
                 groupInfo.Value.Shutdown();
             }
             m_UIGroups.Clear();
+            m_LoadedFormInst.Clear();
             m_ToBeLoadFormInst.Clear();
             m_LoadingPkgNames.Clear();
             m_NeedCloseForms.Clear();
@@ -356,11 +365,15 @@ namespace GameFramework.UI
             if (uiForm == null) throw new GameFrameworkException("Cannot create UIForm in UIFormHelper");
             try
             {
+                Type uiFormType = uiForm.GetType();
+
+                bool isLoaded = uiForm.Instance != null;
                 var formInst = m_InstancePool.Spawn(uiForm.Config.ResName);
                 if (formInst != null) uiForm.Instance = formInst.Target as GComponent;
+                bool needRegister = !isLoaded && formInst == null;
 
                 // 记录跳转
-                if (uiForm.Config.InBackList) m_UIJumpHelper.Record(uiForm.GetType());
+                if (uiForm.Config.InBackList) m_UIJumpHelper.Record(uiFormType);
                 GetUIGroup(uiForm.Config.GroupEnum).OpenForm(uiForm);
                 if (m_LoadUIFormSuccessEventHandler != null)
                 {
@@ -368,13 +381,14 @@ namespace GameFramework.UI
                     m_LoadUIFormSuccessEventHandler(this, eventArgs);
                     ReferencePool.Release(eventArgs);
                 }
-                if (formInst == null)
+                
+                if (needRegister)
                 {
                     m_InstancePool.Register(
                         UIFormInstanceObject.Create(uiForm, m_OnFormInstanceReleaseCall), true);
                 }
-
-                if (uiForm.Config.AutoRelease)
+                
+                if (uiForm.Config.AutoRelease && !isLoaded)
                 {
                     // ui主包引用
                     OnPackageRefIncrease(uiForm.Config.PkgName);
@@ -384,6 +398,7 @@ namespace GameFramework.UI
                     OnPackageRefIncrease(GetPackageDependencies(uiForm.Config.PkgName, uiForm.Config.Depends));
                 }
 
+                if (uiForm.Config.OneInst) m_LoadedFormInst[uiFormType] = uiForm;
             }
             catch (Exception e)
             {
@@ -480,6 +495,7 @@ namespace GameFramework.UI
         private void OnInstanceReleaseCall(UIFormBase uiForm)
         {
             if (uiForm == null) return;
+            m_LoadedFormInst.Remove(uiForm.GetType());
             GameFrameworkLog.Warning("UIFormHelper OnInstanceReleaseCall type = {0}", uiForm.GetType());
             if (uiForm.Config.AutoRelease)
             {

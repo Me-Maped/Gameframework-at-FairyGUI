@@ -10,6 +10,7 @@ namespace GameFramework.UI
         public bool IsWaitingForData { get; set; }
         public object UserData { get; set; }
         public override GComponent Instance { get; set; }
+        public bool IsOpened => m_State == UIFormState.SHOW_START || m_State == UIFormState.SHOW_OVER;
 
         protected List<UIFormPartBase> FormParts => m_FormParts;
 
@@ -50,7 +51,7 @@ namespace GameFramework.UI
         {
             if (Config == null) throw new GameFrameworkException("Config is null,you must override Config property");
             m_State = UIFormState.SHOW_START;
-            CreateInstance();
+            if(Instance == null) CreateInstance();
             IsWaitingForData = true;
             OnRequestData();
         }
@@ -166,7 +167,7 @@ namespace GameFramework.UI
         /// <exception cref="GameFrameworkException"></exception>
         private void CreateInstance()
         {
-            Instance ??= UIPackage.CreateObject(Config.PkgName, Config.ResName).asCom;
+            Instance = UIPackage.CreateObject(Config.PkgName, Config.ResName).asCom;
             if (Instance == null || Instance.isDisposed) throw new GameFrameworkException("Can not create Instance, maybe the pkg has been removed");
             SerializeChild();
             Instance.fairyBatching = true;
