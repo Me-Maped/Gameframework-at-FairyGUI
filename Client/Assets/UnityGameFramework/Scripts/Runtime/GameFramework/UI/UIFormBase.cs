@@ -167,6 +167,7 @@ namespace GameFramework.UI
         /// <exception cref="GameFrameworkException"></exception>
         private void CreateInstance()
         {
+            if (Instance != null) return;
             Instance = UIPackage.CreateObject(Config.PkgName, Config.ResName).asCom;
             if (Instance == null || Instance.isDisposed) throw new GameFrameworkException("Can not create Instance, maybe the pkg has been removed");
             SerializeChild();
@@ -562,18 +563,13 @@ namespace GameFramework.UI
         #region MVC 可选
 
         private IUIController m_UICtrl;
-        private IUIModel m_UIModel;
         /// <summary>
         /// 设置MVC
         /// </summary>
-        protected void InitMVC<TCtrl,TModel>(out TCtrl ctrl, out TModel model) where TCtrl : class, IUIController, new() where TModel : class, IUIModel, new()
+        protected void InitMVC<TCtrl>(IUIModel model) where TCtrl : class, IUIController, new()
         {
             m_UICtrl = ReferencePool.Acquire<TCtrl>();
-            m_UIModel = ReferencePool.Acquire<TModel>();
-            m_UICtrl.Init(this, m_UIModel);
-            m_UIModel.Init(m_UICtrl);
-            ctrl = m_UICtrl as TCtrl;
-            model = m_UIModel as TModel;
+            m_UICtrl.Init(this, model);
         }
         
         /// <summary>
@@ -582,7 +578,6 @@ namespace GameFramework.UI
         private void OnMVCOpen()
         {
             m_UICtrl?.Open();
-            m_UIModel?.Open();
         }
         /// <summary>
         /// MVC关闭
@@ -590,7 +585,6 @@ namespace GameFramework.UI
         private void OnMVCClose()
         {
             m_UICtrl?.Close();
-            m_UIModel?.Close();
         }
         /// <summary>
         /// MVC轮询
@@ -600,7 +594,6 @@ namespace GameFramework.UI
         private void OnMVCUpdate(float elapseSeconds, float realElapseSeconds)
         {
             m_UICtrl?.Update(elapseSeconds, realElapseSeconds);
-            m_UIModel?.Update(elapseSeconds, realElapseSeconds);
         }
         /// <summary>
         /// 销毁MVC
@@ -610,12 +603,6 @@ namespace GameFramework.UI
             if (m_UICtrl != null)
             {
                 ReferencePool.Release(m_UICtrl);
-                m_UIModel = null;
-            }
-
-            if (m_UIModel != null)
-            {
-                ReferencePool.Release(m_UIModel);
                 m_UICtrl = null;
             }
         }

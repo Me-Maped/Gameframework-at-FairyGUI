@@ -2,7 +2,7 @@ namespace GameFramework.UI
 {
     public interface IUIModel : IReference
     {
-        internal void Init(IUIController controller);
+        internal void Init();
 
         internal void Open();
         

@@ -6,9 +6,6 @@ namespace GameLogic.Login
 {
     public class LoginForm : UIForm<UI_login_main>
     {
-        private LoginFormCtrl _ctrl;
-        private LoginFormModel _model;
-        
         protected override UIFormConfig CreateConfig()
         {
             return UIFormConfig.Create(UI_login_main.PKG_NAME, UI_login_main.RES_NAME, groupEnum: UIGroupEnum.PANEL);
@@ -16,7 +13,9 @@ namespace GameLogic.Login
 
         protected override void OnInit()
         {
-            InitMVC(out _ctrl,out _model);
+            InitMVC<LoginFormCtrl>(LoginFormModel.Inst);
+
+            LoginFormModel.Inst.Register<int>(nameof(LoginFormModel.TestNum), OnTestNumChange);
         }
 
         protected override void OnOpen()
@@ -36,6 +35,11 @@ namespace GameLogic.Login
             // prompt测试，可以基于Waitable接口做出队列等待效果
             var form = GameModule.UI.OpenForm<PromptTestForm>(userData: 0);
             form.Wait(() => GameModule.UI.OpenForm<PromptTestForm>(userData: 1));
+        }
+        
+        private void OnTestNumChange(int num)
+        {
+            Log.Info($"MVC Test : {num}");
         }
     }
 }

@@ -20,6 +20,7 @@ namespace UnityGameFramework.Runtime
             }
             try
             {
+                Model.Init();
                 OnInit();
             }
             catch(Exception e)
@@ -32,6 +33,7 @@ namespace UnityGameFramework.Runtime
         {
             try
             {
+                Model.Open();
                 OnOpen();
             }
             catch (Exception e)
@@ -44,6 +46,7 @@ namespace UnityGameFramework.Runtime
         {
             try
             {
+                Model.Close();
                 OnClose();
             }
             catch (Exception e)
@@ -56,6 +59,7 @@ namespace UnityGameFramework.Runtime
         {
             try
             {
+                Model.Update(elapseSeconds, realElapseSeconds);
                 OnUpdate(elapseSeconds, realElapseSeconds);
             }
             catch (Exception e)
