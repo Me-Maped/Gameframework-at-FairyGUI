@@ -177,6 +177,7 @@ namespace GameFramework.UI
             RegisterCompEvents(Instance);
             try
             {
+                OnMVCInit();
                 OnInit();
             }
             catch (Exception e)
@@ -561,15 +562,29 @@ namespace GameFramework.UI
         #endregion
 
         #region MVC 可选
-
+        
+        private IUIModel m_UIModel;
         private IUIController m_UICtrl;
-        /// <summary>
-        /// 设置MVC
-        /// </summary>
-        protected void InitMVC<TCtrl>(IUIModel model) where TCtrl : class, IUIController, new()
+
+        protected virtual IUIController GetUICtrl()
         {
-            m_UICtrl = ReferencePool.Acquire<TCtrl>();
-            m_UICtrl.Init(this, model);
+            return null;
+        }
+
+        protected virtual IUIModel GetUIModel()
+        {
+            return null;
+        }
+        
+        /// <summary>
+        /// MVC初始化
+        /// </summary>
+        private void OnMVCInit()
+        {
+            m_UICtrl = GetUICtrl();
+            m_UIModel = GetUIModel();
+            m_UIModel?.Init();
+            m_UICtrl?.Init(this, m_UIModel);
         }
         
         /// <summary>
@@ -577,6 +592,7 @@ namespace GameFramework.UI
         /// </summary>
         private void OnMVCOpen()
         {
+            m_UIModel?.Open();
             m_UICtrl?.Open();
         }
         /// <summary>
@@ -584,6 +600,7 @@ namespace GameFramework.UI
         /// </summary>
         private void OnMVCClose()
         {
+            m_UIModel?.Close();
             m_UICtrl?.Close();
         }
         /// <summary>
@@ -593,6 +610,7 @@ namespace GameFramework.UI
         /// <param name="realElapseSeconds"></param>
         private void OnMVCUpdate(float elapseSeconds, float realElapseSeconds)
         {
+            m_UIModel?.Update(elapseSeconds, realElapseSeconds);
             m_UICtrl?.Update(elapseSeconds, realElapseSeconds);
         }
         /// <summary>
@@ -605,6 +623,8 @@ namespace GameFramework.UI
                 ReferencePool.Release(m_UICtrl);
                 m_UICtrl = null;
             }
+            // model为持久化类型，不销毁，只释放引用
+            m_UIModel = null;
         }
         #endregion
     }

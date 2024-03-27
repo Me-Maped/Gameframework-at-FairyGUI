@@ -8,7 +8,11 @@ namespace UnityGameFramework.Runtime
     {
         protected TView View;
         protected TModel Model;
-        public abstract void Clear();
+        public virtual void Clear()
+        {
+            View = null;
+            Model = null;
+        }
 
         void IUIController.Init(UIFormBase uiForm, IUIModel uiModel)
         {
@@ -20,7 +24,6 @@ namespace UnityGameFramework.Runtime
             }
             try
             {
-                Model.Init();
                 OnInit();
             }
             catch(Exception e)
@@ -33,7 +36,6 @@ namespace UnityGameFramework.Runtime
         {
             try
             {
-                Model.Open();
                 OnOpen();
             }
             catch (Exception e)
@@ -46,7 +48,6 @@ namespace UnityGameFramework.Runtime
         {
             try
             {
-                Model.Close();
                 OnClose();
             }
             catch (Exception e)
@@ -59,7 +60,6 @@ namespace UnityGameFramework.Runtime
         {
             try
             {
-                Model.Update(elapseSeconds, realElapseSeconds);
                 OnUpdate(elapseSeconds, realElapseSeconds);
             }
             catch (Exception e)

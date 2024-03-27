@@ -4,7 +4,7 @@ using UnityGameFramework.Runtime;
 
 namespace GameLogic.Login
 {
-    public class LoginForm : UIForm<UI_login_main>
+    public class LoginForm : UIForm<UI_login_main,LoginFormModel, LoginFormCtrl>
     {
         protected override UIFormConfig CreateConfig()
         {
@@ -13,8 +13,6 @@ namespace GameLogic.Login
 
         protected override void OnInit()
         {
-            InitMVC<LoginFormCtrl>(LoginFormModel.Inst);
-
             LoginFormModel.Inst.Register<int>(nameof(LoginFormModel.TestNum), OnTestNumChange);
         }
 
