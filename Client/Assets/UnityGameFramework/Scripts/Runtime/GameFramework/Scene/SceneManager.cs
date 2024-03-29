@@ -1,6 +1,7 @@
 ﻿using GameFramework.Resource;
 using System;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 
 namespace GameFramework.Scene
 {
@@ -318,9 +319,10 @@ namespace GameFramework.Scene
         /// 加载场景。
         /// </summary>
         /// <param name="sceneAssetName">场景资源名称。</param>
-        public void LoadScene(string sceneAssetName)
+        /// <param name="loadSceneMode">场景加载模式</param>
+        public void LoadScene(string sceneAssetName,LoadSceneMode loadSceneMode)
         {
-            LoadScene(sceneAssetName, Constant.DefaultPriority, null);
+            LoadScene(sceneAssetName,loadSceneMode, Constant.DefaultPriority, null);
         }
 
         /// <summary>
@@ -328,9 +330,10 @@ namespace GameFramework.Scene
         /// </summary>
         /// <param name="sceneAssetName">场景资源名称。</param>
         /// <param name="priority">加载场景资源的优先级。</param>
-        public void LoadScene(string sceneAssetName, int priority)
+        /// <param name="loadSceneMode">场景加载模式</param>
+        public void LoadScene(string sceneAssetName, int priority, LoadSceneMode loadSceneMode)
         {
-            LoadScene(sceneAssetName, priority, null);
+            LoadScene(sceneAssetName,loadSceneMode, priority, null);
         }
 
         /// <summary>
@@ -338,18 +341,20 @@ namespace GameFramework.Scene
         /// </summary>
         /// <param name="sceneAssetName">场景资源名称。</param>
         /// <param name="userData">用户自定义数据。</param>
-        public void LoadScene(string sceneAssetName, object userData)
+        /// <param name="loadSceneMode">场景加载模式</param>
+        public void LoadScene(string sceneAssetName, object userData, LoadSceneMode loadSceneMode)
         {
-            LoadScene(sceneAssetName, Constant.DefaultPriority, userData);
+            LoadScene(sceneAssetName,loadSceneMode, Constant.DefaultPriority, userData);
         }
 
         /// <summary>
         /// 加载场景。
         /// </summary>
         /// <param name="sceneAssetName">场景资源名称。</param>
+        /// <param name="loadSceneMode">加载场景模式</param>
         /// <param name="priority">加载场景资源的优先级。</param>
         /// <param name="userData">用户自定义数据。</param>
-        public void LoadScene(string sceneAssetName, int priority, object userData)
+        public void LoadScene(string sceneAssetName,LoadSceneMode loadSceneMode, int priority, object userData)
         {
             if (string.IsNullOrEmpty(sceneAssetName))
             {
@@ -377,7 +382,8 @@ namespace GameFramework.Scene
             }
 
             m_LoadingSceneAssetNames.Add(sceneAssetName);
-            m_ResourceManager.LoadScene(sceneAssetName, priority, m_LoadSceneCallbacks, userData);
+            m_ResourceManager.LoadScene(sceneAssetName, loadSceneMode, priority, m_LoadSceneCallbacks, userData);
+            if(loadSceneMode == LoadSceneMode.Single) m_LoadedSceneAssetNames.Clear();
         }
 
         /// <summary>

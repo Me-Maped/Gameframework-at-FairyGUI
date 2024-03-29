@@ -17,30 +17,25 @@ namespace UnityGameFramework.Runtime
         #region Propreties
         private const int DefaultPriority = 0;
 
-        /// <summary>
-        /// 当前最新的包裹版本。
-        /// </summary>
-        public string PackageVersion { set; get; }
-
         private IResourceManager m_ResourceManager;
         private bool m_ForceUnloadUnusedAssets = false;
         private bool m_PreorderUnloadUnusedAssets = false;
         private bool m_PerformGCCollect = false;
         private AsyncOperation m_AsyncOperation = null;
         private float m_LastUnloadUnusedAssetsOperationElapseSeconds = 0f;
-
+        
         [SerializeField]
         private float m_MinUnloadUnusedAssetsInterval = 60f;
 
         [SerializeField]
         private float m_MaxUnloadUnusedAssetsInterval = 300f;
-
+        
         /// <summary>
         /// 资源包名称。
         /// </summary>
         [SerializeField]
         public string PackageName = "MEngine";
-
+        
         /// <summary>
         /// 资源系统运行模式。
         /// </summary>
@@ -52,10 +47,10 @@ namespace UnityGameFramework.Runtime
         /// </summary>
         [SerializeField]
         public EVerifyLevel VerifyLevel = EVerifyLevel.Middle;
-
+        
         [SerializeField]
         private ReadWritePathType m_ReadWritePathType = ReadWritePathType.Unspecified;
-
+        
         /// <summary>
         /// 设置异步系统参数，每帧执行消耗的最大时间切片（单位：毫秒）
         /// </summary>
@@ -64,11 +59,11 @@ namespace UnityGameFramework.Runtime
 
         [SerializeField]
         private int m_DownloadingMaxNum = 2;
-
+        
         [SerializeField]
         private int m_FailedTryAgain = 3;
-
-
+        
+        
         /// <summary>
         /// 获取或设置同时最大下载数目。
         /// </summary>
@@ -85,31 +80,19 @@ namespace UnityGameFramework.Runtime
             get => m_FailedTryAgain;
             set => m_FailedTryAgain = value;
         }
-
+        
         /// <summary>
         /// 获取资源读写路径类型。
         /// </summary>
-        public ReadWritePathType ReadWritePathType
-        {
-            get
-            {
-                return m_ReadWritePathType;
-            }
-        }
+        public ReadWritePathType ReadWritePathType => m_ReadWritePathType;
 
         /// <summary>
         /// 获取或设置无用资源释放的最小间隔时间，以秒为单位。
         /// </summary>
         public float MinUnloadUnusedAssetsInterval
         {
-            get
-            {
-                return m_MinUnloadUnusedAssetsInterval;
-            }
-            set
-            {
-                m_MinUnloadUnusedAssetsInterval = value;
-            }
+            get => m_MinUnloadUnusedAssetsInterval;
+            set => m_MinUnloadUnusedAssetsInterval = value;
         }
 
         /// <summary>
@@ -117,56 +100,41 @@ namespace UnityGameFramework.Runtime
         /// </summary>
         public float MaxUnloadUnusedAssetsInterval
         {
-            get
-            {
-                return m_MaxUnloadUnusedAssetsInterval;
-            }
-            set
-            {
-                m_MaxUnloadUnusedAssetsInterval = value;
-            }
+            get => m_MaxUnloadUnusedAssetsInterval;
+            set => m_MaxUnloadUnusedAssetsInterval = value;
         }
-
+        
         /// <summary>
         /// 获取无用资源释放的等待时长，以秒为单位。
         /// </summary>
-        public float LastUnloadUnusedAssetsOperationElapseSeconds
-        {
-            get
-            {
-                return m_LastUnloadUnusedAssetsOperationElapseSeconds;
-            }
-        }
+        public float LastUnloadUnusedAssetsOperationElapseSeconds => m_LastUnloadUnusedAssetsOperationElapseSeconds;
 
         /// <summary>
         /// 获取资源只读路径。
         /// </summary>
-        public string ReadOnlyPath
-        {
-            get
-            {
-                return m_ResourceManager.ReadOnlyPath;
-            }
-        }
+        public string ReadOnlyPath => m_ResourceManager.ReadOnlyPath;
 
         /// <summary>
         /// 获取资源读写路径。
         /// </summary>
-        public string ReadWritePath
-        {
-            get
-            {
-                return m_ResourceManager.ReadWritePath;
-            }
-        }
+        public string ReadWritePath => m_ResourceManager.ReadWritePath;
 
+        /// <summary>
+        /// 当前最新的包裹版本。
+        /// </summary>
+        public string PackageVersion 
+        {
+            set => m_ResourceManager.PackageVersion = value;
+            get => m_ResourceManager.PackageVersion;
+        }
+        
         /// <summary>
         /// 资源下载器，用于下载当前资源版本所有的资源包文件。
         /// </summary>
         public ResourceDownloaderOperation Downloader { get; set; }
 
         #endregion
-
+        
         private void Start()
         {
             BaseComponent baseComponent = GameEntry.GetComponent<BaseComponent>();
@@ -206,7 +174,7 @@ namespace UnityGameFramework.Runtime
 
                 m_ResourceManager.SetReadWritePath(Application.persistentDataPath);
             }
-
+            
             m_ResourceManager.PackageName = PackageName;
             m_ResourceManager.PlayMode = PlayMode;
             m_ResourceManager.VerifyLevel = VerifyLevel;
@@ -245,6 +213,41 @@ namespace UnityGameFramework.Runtime
         }
 
         /// <summary>
+        /// 异步加载文件资源
+        /// </summary>
+        /// <param name="assetName"></param>
+        /// <returns></returns>
+        public async UniTask<byte[]> LoadRawFileAsync(string assetName)
+        {
+            return await m_ResourceManager.LoadRawFileAsync(assetName);
+        }
+
+        /// <summary>
+        /// 异步加载文件资源
+        /// </summary>
+        /// <param name="assetName"></param>
+        /// <param name="resultCallback"></param>
+        public async UniTask LoadRawFileAsync(string assetName, Action<byte[]> resultCallback)
+        {
+            await m_ResourceManager.LoadRawFileAsync(assetName, resultCallback);
+        }
+
+        /// <summary>
+        /// 异步实例化预制体
+        /// </summary>
+        /// <param name="assetName"></param>
+        /// <param name="position"></param>
+        /// <param name="rotation"></param>
+        /// <param name="parent"></param>
+        /// <param name="worldPositionStays"></param>
+        /// <returns></returns>
+        public async UniTask<GameObject> InstantiateAsync(string assetName, Vector3 position = default,
+            Quaternion rotation = default, Transform parent = null,bool worldPositionStays = false)
+        {
+            return await m_ResourceManager.InstantiateAsync(assetName, position, rotation, parent, worldPositionStays);
+        }
+
+        /// <summary>
         /// 异步加载资源。
         /// </summary>
         /// <param name="assetName"></param>
@@ -253,6 +256,22 @@ namespace UnityGameFramework.Runtime
         public async System.Threading.Tasks.Task<T> LoadAssetTaskAsync<T>(string assetName) where T : UnityEngine.Object
         {
             return await m_ResourceManager.LoadAssetTaskAsync<T>(assetName);
+        }
+
+        /// <summary>
+        /// 异步实例化预制体
+        /// </summary>
+        /// <param name="assetName"></param>
+        /// <param name="position"></param>
+        /// <param name="rotation"></param>
+        /// <param name="parent"></param>
+        /// <param name="worldPositionStays"></param>
+        /// <returns></returns>
+        public async System.Threading.Tasks.Task<GameObject> InstantiateTaskAsync(string assetName,
+            Vector3 position = default, Quaternion rotation = default, Transform parent = null, bool worldPositionStays = false)
+        {
+            return await m_ResourceManager.InstantiateTaskAsync(assetName, position, rotation, parent,
+                worldPositionStays);
         }
 
         /// <summary>
@@ -266,7 +285,7 @@ namespace UnityGameFramework.Runtime
         {
             LoadAssetAsync(assetName, assetType, DefaultPriority, loadAssetCallbacks, userData);
         }
-
+        
         /// <summary>
         /// 异步加载资源。
         /// </summary>
@@ -285,6 +304,40 @@ namespace UnityGameFramework.Runtime
             m_ResourceManager.LoadAssetAsync(assetName, assetType, loadAssetCallbacks, userData);
         }
 
+        /// <summary>
+        /// 同步加载资源。
+        /// </summary>
+        /// <param name="assetName"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public T LoadAssetSync<T>(string assetName) where T : UnityEngine.Object
+        {
+            return m_ResourceManager.LoadAssetSync<T>(assetName);
+        }
+
+        /// <summary>
+        /// 同步实例化资源
+        /// </summary>
+        /// <param name="assetName"></param>
+        /// <param name="position"></param>
+        /// <param name="rotation"></param>
+        /// <param name="parent"></param>
+        /// <param name="worldPositionStays"></param>
+        /// <returns></returns>
+        public GameObject InstantiateSync(string assetName,Vector3 position = default,Quaternion rotation = default,Transform parent = null,bool worldPositionStays = false)
+        {
+            return m_ResourceManager.InstantiateSync(assetName, position, rotation, parent, worldPositionStays);
+        }
+        
+        /// <summary>
+        /// 同步加载文件
+        /// </summary>
+        /// <param name="assetName"></param>
+        /// <returns></returns>
+        public byte[] LoadRawFileSync(string assetName)
+        {
+            return m_ResourceManager.LoadRawFileSync(assetName);
+        }
         #endregion
 
         #region 卸载资源
@@ -296,7 +349,23 @@ namespace UnityGameFramework.Runtime
         {
             if (asset == null)
             {
-                throw new GameFrameworkException("Asset is invalid.");
+                Log.Error("Asset is invalid.");
+                return;
+            }
+            m_ResourceManager.UnloadAsset(asset);
+        }
+
+        /// <summary>
+        /// 卸载资源
+        /// </summary>
+        /// <param name="asset"></param>
+        /// <exception cref="GameFrameworkException"></exception>
+        public void UnloadAsset(UnityEngine.Object asset)
+        {
+            if (asset == null)
+            {
+                Log.Error("Asset is invalid.");
+                return;
             }
             m_ResourceManager.UnloadAsset(asset);
         }
@@ -310,36 +379,204 @@ namespace UnityGameFramework.Runtime
         {
             if (string.IsNullOrEmpty(assetPath))
             {
-                throw new GameFrameworkException("Asset path is invalid.");
+                Log.Error("Asset path is invalid.");
+                return;
             }
             m_ResourceManager.UnloadAsset(assetPath);
         }
         #endregion
 
+        #region 检查资源
+        /// <summary>
+        /// 设置默认的资源包。
+        /// </summary>
+        public void SetDefaultPackage(string packageName)
+        {
+            var package = YooAssets.GetPackage(packageName);
+            if (package == null)
+            {
+                Log.Error("Package '{0}' is not exist.");
+                return;
+            }
+            m_ResourceManager.PackageName = packageName;
+            YooAssets.SetDefaultPackage(package);
+        }
+        
+        /// <summary>
+        /// 根据单个资源路径检查是否需要从远端下载。
+        /// </summary>
+        /// <param name="location"></param>
+        /// <returns></returns>
+        public bool IsNeedDownload(string location)
+        {
+            return YooAssets.IsNeedDownloadFromRemote(location);
+        }
+
+        /// <summary>
+        /// 根据资源标签检查是否需要从远端下载。
+        /// </summary>
+        /// <param name="tagName"></param>
+        /// <returns></returns>
+        public bool IsNeedDownloadByTag(string tagName)
+        {
+            AssetInfo[] assetInfos = YooAssets.GetAssetInfos(tagName);
+            foreach (var assetInfo in assetInfos)
+            {
+                if (YooAssets.IsNeedDownloadFromRemote(assetInfo)) return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 根据资源标签检查是否需要从远端下载。
+        /// </summary>
+        /// <param name="tags"></param>
+        /// <returns></returns>
+        public bool IsNeedDownloadByTag(string[] tags)
+        {
+            AssetInfo[] assetInfos = YooAssets.GetAssetInfos(tags);
+            foreach (var assetInfo in assetInfos)
+            {
+                if (YooAssets.IsNeedDownloadFromRemote(assetInfo)) return true;
+            }
+            return false;
+        }
+        
+        /// <summary>
+        /// 检查资源定位地址是否有效。
+        /// </summary>
+        /// <param name="location">资源的定位地址</param>
+        public bool CheckLocationValid(string location)
+        {
+            return YooAssets.CheckLocationValid(location);
+        }
+        #endregion
+
+        #region 下载资源
         public UpdatePackageVersionOperation UpdatePackageVersionAsync(bool appendTimeTicks = true, int timeout = 60)
         {
             var package = YooAssets.GetPackage(PackageName);
-            return package.UpdatePackageVersionAsync(appendTimeTicks, timeout);
+            return package.UpdatePackageVersionAsync(appendTimeTicks,timeout);
         }
 
-        public UpdatePackageManifestOperation UpdatePackageManifestAsync(string packageVersion, bool autoSaveManifest = true, int timeout = 60)
+        public UpdatePackageManifestOperation UpdatePackageManifestAsync(string packageVersion,bool autoSaveManifest =true, int timeout = 60)
         {
             var package = YooAssets.GetPackage(PackageName);
-            return package.UpdatePackageManifestAsync(packageVersion, autoSaveManifest, timeout);
+            return package.UpdatePackageManifestAsync(packageVersion,autoSaveManifest,timeout);
         }
-
+        
         /// <summary>
         /// 创建资源下载器，用于下载当前资源版本所有的资源包文件
         /// </summary>
         /// <param name="downloadingMaxNumber">同时下载的最大文件数</param>
-        /// <param name="failedTryAgain">下载失败的重试次数</param>
-        public ResourceDownloaderOperation CreateResourceDownloader(int downloadingMaxNumber, int failedTryAgain)
+        /// <param name="failedTryAgain">下载失败的重试次数, -1表示使用全局设置</param>
+        public ResourceDownloaderOperation CreateResourceDownloader(int downloadingMaxNumber = -1, int failedTryAgain = -1)
         {
+            if (downloadingMaxNumber == -1) downloadingMaxNumber = DownloadingMaxNum;
+            if (failedTryAgain == -1) failedTryAgain = FailedTryAgain;
             var package = YooAssets.GetPackage(PackageName);
-            Downloader = package.CreateResourceDownloader(downloadingMaxNumber, failedTryAgain);
+            Downloader = package.CreateResourceDownloader(downloadingMaxNumber,failedTryAgain);
             return Downloader;
         }
 
+        /// <summary>
+        /// 创建资源下载器，用于下载指定资源标签的资源包文件
+        /// </summary>
+        /// <param name="resTag"></param>
+        /// <param name="downloadingMaxNumber"></param>
+        /// <param name="failedTryAgain"></param>
+        /// <returns></returns>
+        public ResourceDownloaderOperation CreateResourceDownloader(string resTag, int downloadingMaxNumber = -1,
+            int failedTryAgain = -1)
+        {
+            if (string.IsNullOrEmpty(resTag))
+            {
+                Log.Warning("CreateResourceDownloader resTag is null or empty, download full");
+                return CreateResourceDownloader(downloadingMaxNumber, failedTryAgain);
+            }
+            if (downloadingMaxNumber == -1) downloadingMaxNumber = DownloadingMaxNum;
+            if (failedTryAgain == -1) failedTryAgain = FailedTryAgain;
+            var package = YooAssets.GetPackage(PackageName);
+            Downloader = package.CreateResourceDownloader(resTag,downloadingMaxNumber,failedTryAgain);
+            return Downloader;
+        }
+
+        /// <summary>
+        /// 创建资源下载器，用于下载指定的资源包文件
+        /// </summary>
+        /// <param name="location"></param>
+        /// <param name="downloadingMaxNumber"></param>
+        /// <param name="failedTryAgain"></param>
+        /// <returns></returns>
+        public ResourceDownloaderOperation CreateBundleDownloader(string location, int downloadingMaxNumber = -1,
+            int failedTryAgain = -1)
+        {
+            if (string.IsNullOrEmpty(location))
+            {
+                Log.Error("CreateBundleDownloader location is null");
+                return null;
+            }
+            if (downloadingMaxNumber == -1) downloadingMaxNumber = DownloadingMaxNum;
+            if (failedTryAgain == -1) failedTryAgain = FailedTryAgain;
+            var package = YooAssets.GetPackage(PackageName);
+            Downloader = package.CreateBundleDownloader(location,downloadingMaxNumber,failedTryAgain);
+            return Downloader;
+        }
+
+        /// <summary>
+        /// 检查并下载资源
+        /// </summary>
+        /// <param name="location"></param>
+        /// <param name="progressAction"></param>
+        /// <returns></returns>
+        public async UniTask<bool> CheckAndDownloadResource(string location,DownloaderOperation.OnDownloadProgress progressAction = null)
+        {
+            if (!IsNeedDownload(location)) return true;
+            var downloader = YooAssets.CreateBundleDownloader(location, DownloadingMaxNum, FailedTryAgain);
+            downloader.BeginDownload();
+            if(progressAction!=null) downloader.OnDownloadProgressCallback += progressAction;
+            await downloader;
+            if(progressAction!=null) downloader.OnDownloadProgressCallback -= progressAction;
+            return downloader.Status == EOperationStatus.Succeed;
+        }
+        
+        /// <summary>
+        /// 检查并根据标签下载对应资源包
+        /// </summary>
+        /// <param name="tagName"></param>
+        /// <param name="progressAction"></param>
+        /// <returns></returns>
+        public async UniTask<bool> CheckAndDownloadResourceByTag(string tagName,DownloaderOperation.OnDownloadProgress progressAction= null)
+        {
+            if (!IsNeedDownloadByTag(tagName)) return true;
+            var downloader = YooAssets.CreateResourceDownloader(tagName, DownloadingMaxNum, FailedTryAgain);
+            downloader.BeginDownload();
+            if(progressAction!=null) downloader.OnDownloadProgressCallback += progressAction;
+            await downloader;
+            if(progressAction!=null) downloader.OnDownloadProgressCallback -= progressAction;
+            return downloader.Status == EOperationStatus.Succeed;
+        }
+
+        /// <summary>
+        /// 检查并根据标签下载对应资源包
+        /// </summary>
+        /// <param name="tags"></param>
+        /// <param name="progressAction"></param>
+        /// <returns></returns>
+        public async UniTask<bool> CheckAndDownloadResourceByTag(string[] tags,
+            DownloaderOperation.OnDownloadProgress progressAction = null)
+        {
+            if (!IsNeedDownloadByTag(tags)) return true;
+            var downloader = YooAssets.CreateResourceDownloader(tags, DownloadingMaxNum, FailedTryAgain);
+            downloader.BeginDownload();
+            if(progressAction!=null) downloader.OnDownloadProgressCallback += progressAction;
+            await downloader;
+            if(progressAction!=null) downloader.OnDownloadProgressCallback -= progressAction;
+            return downloader.Status == EOperationStatus.Succeed;
+        }
+        #endregion
+
+        #region 清理资源
         /// <summary>
         /// 清理包裹未使用的缓存文件
         /// </summary>
@@ -348,7 +585,7 @@ namespace UnityGameFramework.Runtime
             var package = YooAssets.GetPackage(PackageName);
             return package.ClearUnusedCacheFilesAsync();
         }
-
+       
         /// <summary>
         /// 强制执行释放未被使用的资源。
         /// </summary>
@@ -362,6 +599,15 @@ namespace UnityGameFramework.Runtime
             }
         }
 
+        /// <summary>
+        /// 清空包裹的沙盒目录
+        /// </summary>
+        public void ClearSandbox()
+        {
+            YooAssets.GetPackage(PackageName).ClearPackageSandbox();
+        }
+        #endregion
+
         private void Update()
         {
             m_LastUnloadUnusedAssetsOperationElapseSeconds += Time.unscaledDeltaTime;
@@ -373,7 +619,7 @@ namespace UnityGameFramework.Runtime
                 m_LastUnloadUnusedAssetsOperationElapseSeconds = 0f;
                 m_AsyncOperation = Resources.UnloadUnusedAssets();
             }
-
+            
             if (m_AsyncOperation is { isDone: true })
             {
                 m_ResourceManager.UnloadUnusedAssets();

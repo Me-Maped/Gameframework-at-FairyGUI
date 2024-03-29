@@ -237,9 +237,10 @@ namespace UnityGameFramework.Runtime
         /// 加载场景。
         /// </summary>
         /// <param name="sceneAssetName">场景资源名称。</param>
-        public void LoadScene(string sceneAssetName)
+        /// <param name="loadSceneMode">场景加载模式</param>
+        public void LoadScene(string sceneAssetName,LoadSceneMode loadSceneMode)
         {
-            LoadScene(sceneAssetName, DefaultPriority, null);
+            LoadScene(sceneAssetName,loadSceneMode, DefaultPriority, null);
         }
 
         /// <summary>
@@ -247,9 +248,10 @@ namespace UnityGameFramework.Runtime
         /// </summary>
         /// <param name="sceneAssetName">场景资源名称。</param>
         /// <param name="priority">加载场景资源的优先级。</param>
-        public void LoadScene(string sceneAssetName, int priority)
+        /// <param name="loadSceneMode">场景加载模式</param>
+        public void LoadScene(string sceneAssetName, int priority, LoadSceneMode loadSceneMode)
         {
-            LoadScene(sceneAssetName, priority, null);
+            LoadScene(sceneAssetName,loadSceneMode, priority, null);
         }
 
         /// <summary>
@@ -257,18 +259,20 @@ namespace UnityGameFramework.Runtime
         /// </summary>
         /// <param name="sceneAssetName">场景资源名称。</param>
         /// <param name="userData">用户自定义数据。</param>
-        public void LoadScene(string sceneAssetName, object userData)
+        /// <param name="loadSceneMode">场景加载模式</param>
+        public void LoadScene(string sceneAssetName, object userData, LoadSceneMode loadSceneMode)
         {
-            LoadScene(sceneAssetName, DefaultPriority, userData);
+            LoadScene(sceneAssetName,loadSceneMode, DefaultPriority, userData);
         }
 
         /// <summary>
         /// 加载场景。
         /// </summary>
         /// <param name="sceneAssetName">场景资源名称。</param>
+        /// <param name="loadSceneMode">场景加载模式</param>
         /// <param name="priority">加载场景资源的优先级。</param>
         /// <param name="userData">用户自定义数据。</param>
-        public void LoadScene(string sceneAssetName, int priority, object userData)
+        public void LoadScene(string sceneAssetName,LoadSceneMode loadSceneMode, int priority, object userData)
         {
             if (string.IsNullOrEmpty(sceneAssetName))
             {
@@ -282,7 +286,8 @@ namespace UnityGameFramework.Runtime
                 return;
             }
 
-            m_SceneManager.LoadScene(sceneAssetName, priority, userData);
+            m_SceneManager.LoadScene(sceneAssetName,loadSceneMode, priority, userData);
+            if (loadSceneMode == LoadSceneMode.Single) m_SceneOrder.Clear();
         }
 
         /// <summary>

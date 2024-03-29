@@ -2,13 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using GameFramework;
 using GameFramework.DataTable;
 using GameFramework.Event;
 using GameFramework.Resource;
 using GameFramework.UI;
+using GameMain;
 using Google.Protobuf;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityGameFramework.Runtime;
 using OpenUIFormFailureEventArgs = UnityGameFramework.Runtime.OpenUIFormFailureEventArgs;
 using OpenUIFormSuccessEventArgs = UnityGameFramework.Runtime.OpenUIFormSuccessEventArgs;
@@ -19,9 +22,12 @@ namespace UGFExtensions.Await
     {
         private static readonly Dictionary<string, TaskCompletionSource<UIFormBase>> s_UIFormTcs =
             new Dictionary<string, TaskCompletionSource<UIFormBase>>();
-
+        
         private static readonly Dictionary<int, TaskCompletionSource<Entity>> s_EntityTcs =
             new Dictionary<int, TaskCompletionSource<Entity>>();
+
+        private static readonly Dictionary<int, TaskCompletionSource<EntityLogic>> s_EntityLogicTcs =
+            new Dictionary<int, TaskCompletionSource<EntityLogic>>();
 
         private static readonly Dictionary<string, TaskCompletionSource<bool>> s_DataTableTcs =
             new Dictionary<string, TaskCompletionSource<bool>>();
@@ -49,9 +55,11 @@ namespace UGFExtensions.Await
             EventComponent eventComponent = UnityGameFramework.Runtime.GameEntry.GetComponent<EventComponent>();
             eventComponent.Subscribe(OpenUIFormSuccessEventArgs.EventId, OnOpenUIFormSuccess);
             eventComponent.Subscribe(OpenUIFormFailureEventArgs.EventId, OnOpenUIFormFailure);
-
+            
             eventComponent.Subscribe(ShowEntitySuccessEventArgs.EventId, OnShowEntitySuccess);
+            eventComponent.Subscribe(ShowEntitySuccessEventArgs.EventId, OnShowEntityLogicSuccess);
             eventComponent.Subscribe(ShowEntityFailureEventArgs.EventId, OnShowEntityFailure);
+            eventComponent.Subscribe(ShowEntityFailureEventArgs.EventId, OnShowEntityLogicFailure);
 
             eventComponent.Subscribe(LoadSceneSuccessEventArgs.EventId, OnLoadSceneSuccess);
             eventComponent.Subscribe(LoadSceneFailureEventArgs.EventId, OnLoadSceneFailure);
@@ -73,7 +81,7 @@ namespace UGFExtensions.Await
                 throw new Exception("Use await/async extensions must to subscribe event!");
             }
         }
-
+        
         /// <summary>
         /// 打开界面（可等待）
         /// </summary>
@@ -121,17 +129,36 @@ namespace UGFExtensions.Await
             return tcs.Task;
         }
 
+        /// <summary>
+        /// 显示实体
+        /// </summary>
+        /// <param name="entityComponent"></param>
+        /// <param name="entityId"></param>
+        /// <param name="entityAssetName"></param>
+        /// <param name="entityGroupName"></param>
+        /// <param name="priority"></param>
+        /// <param name="userData"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public static Task<EntityLogic> ShowEntityAsync<T>(this EntityComponent entityComponent, int entityId,
+            string entityAssetName, string entityGroupName, int priority = 0, object userData = null) where T : EntityLogic
+        {
+            TipsSubscribeEvent();
+            var tcs = new TaskCompletionSource<EntityLogic>();
+            s_EntityLogicTcs.Add(entityId, tcs);
+            entityComponent.ShowEntity<T>(entityId, entityAssetName, entityGroupName, priority, userData);
+            return tcs.Task;
+        }
 
         private static void OnShowEntitySuccess(object sender, GameEventArgs e)
         {
             ShowEntitySuccessEventArgs ne = (ShowEntitySuccessEventArgs)e;
-/*            EntityData data = (EntityData)ne.UserData;
-            s_EntityTcs.TryGetValue(data.Id, out var tcs);
+            s_EntityTcs.TryGetValue(ne.Entity.Id, out var tcs);
             if (tcs != null)
             {
                 tcs.SetResult(ne.Entity);
-                s_EntityTcs.Remove(data.Id);
-            }*/
+                s_EntityTcs.Remove(ne.Entity.Id);
+            }
         }
 
         private static void OnShowEntityFailure(object sender, GameEventArgs e)
@@ -144,17 +171,39 @@ namespace UGFExtensions.Await
                 s_EntityTcs.Remove(ne.EntityId);
             }
         }
+        
+        private static void OnShowEntityLogicSuccess(object sender, GameEventArgs e)
+        {
+            ShowEntitySuccessEventArgs ne = (ShowEntitySuccessEventArgs)e;
+            s_EntityLogicTcs.TryGetValue(ne.Entity.Id, out var tcs);
+            if (tcs != null)
+            {
+                tcs.SetResult(ne.Entity.Logic);
+                s_EntityLogicTcs.Remove(ne.Entity.Id);
+            }
+        }
+
+        private static void OnShowEntityLogicFailure(object sender, GameEventArgs e)
+        {
+            ShowEntityFailureEventArgs ne = (ShowEntityFailureEventArgs)e;
+            s_EntityLogicTcs.TryGetValue(ne.EntityId, out var tcs);
+            if (tcs != null)
+            {
+                tcs.SetException(new GameFrameworkException(ne.ErrorMessage));
+                s_EntityLogicTcs.Remove(ne.EntityId);
+            }
+        }
 
 
         /// <summary>
         /// 加载场景（可等待）
         /// </summary>
-        public static Task<bool> LoadSceneAsync(this SceneComponent sceneComponent, string sceneAssetName)
+        public static Task<bool> LoadSceneAsync(this SceneComponent sceneComponent, string sceneAssetName, LoadSceneMode loadSceneMode = LoadSceneMode.Single)
         {
             TipsSubscribeEvent();
             var tcs = new TaskCompletionSource<bool>();
             s_SceneTcs.Add(sceneAssetName, tcs);
-            sceneComponent.LoadScene(sceneAssetName);
+            sceneComponent.LoadScene(sceneAssetName, loadSceneMode);
             return tcs.Task;
         }
 
@@ -167,6 +216,7 @@ namespace UGFExtensions.Await
                 tcs.SetResult(true);
                 s_SceneTcs.Remove(ne.SceneAssetName);
             }
+            GameModule.UI.UICameraAttach(Camera.main);
         }
 
         private static void OnLoadSceneFailure(object sender, GameEventArgs e)

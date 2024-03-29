@@ -8,7 +8,6 @@ using Cysharp.Threading.Tasks;
 using FairyGUI;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityGameFramework.Resource;
 using UnityGameFramework.Runtime;
 using YooAsset;
 using Object = UnityEngine.Object;
@@ -25,6 +24,11 @@ namespace GameFramework.Resource
         /// 资源包名称。
         /// </summary>
         public string PackageName { get; set; } = SettingsUtils.FrameworkGlobalSettings.DefaultPkgName;
+        
+        /// <summary>
+        /// 资源包版本信息
+        /// </summary>
+        public string PackageVersion { set; get; }
 
         /// <summary>
         /// 资源系统运行模式。
@@ -51,16 +55,6 @@ namespace GameFramework.Resource
         /// 实例化的根节点。
         /// </summary>
         public Transform InstanceRoot { get; set; }
-
-        /// <summary>
-        /// 资源生命周期服务器。
-        /// </summary>
-        public ResourceHelper ResourceHelper { get; private set; }
-
-        /// <summary>
-        /// Propagates notification that operations should be canceled.
-        /// </summary>
-        public CancellationToken CancellationToken { get; private set; }
 
         /// <summary>
         /// 资源服务器地址。
@@ -99,11 +93,28 @@ namespace GameFramework.Resource
 
         public int DownloadingMaxNum { get; set; }
         public int FailedTryAgain { get; set; }
-
-
-        private Dictionary<ValueTuple<string,int>, AssetOperationHandle> m_AssetHandlers;
-        private Dictionary<string, List<string>> m_UIAssetHandlers;
         
+        /// <summary>
+        /// 是否重新检查AssetInfo，并更新配置文件
+        /// </summary>
+        public bool RecheckAssetInfo { get; set; }
+
+
+        /// <summary>
+        /// 加载的资源句柄
+        /// </summary>
+        private Dictionary<(string key,int hash), OperationHandleBase> m_AssetHandlers;
+
+        /// <summary>
+        /// 因未更新Manifest导致找不到路径时需要重试的资源
+        /// </summary>
+        private List<string> m_LoadFailBeforeUpdate;
+        
+        /// <summary>
+        /// 加载的UI资源
+        /// </summary>
+        private Dictionary<string, List<string>> m_UIAssetHandlers;
+
         #endregion
 
         /// <summary>
@@ -111,7 +122,8 @@ namespace GameFramework.Resource
         /// </summary>
         public ResourceManager()
         {
-            m_AssetHandlers = new Dictionary<ValueTuple<string,int>, AssetOperationHandle>();
+            m_AssetHandlers = new Dictionary<ValueTuple<string,int>, OperationHandleBase>();
+            m_LoadFailBeforeUpdate = new List<string>();
             m_UIAssetHandlers = new Dictionary<string, List<string>>();
         }
 
@@ -130,8 +142,6 @@ namespace GameFramework.Resource
                 defaultPackage = YooAssets.CreatePackage(packageName);
                 YooAssets.SetDefaultPackage(defaultPackage);
             }
-            ResourceHelper = InstanceRoot.gameObject.AddComponent<ResourceHelper>();
-            CancellationToken = ResourceHelper.GetCancellationTokenOnDestroy();
         }
 
         #region 设置接口
@@ -217,8 +227,10 @@ namespace GameFramework.Resource
         internal override void Shutdown()
         {
             m_AssetHandlers.Clear();
+            m_LoadFailBeforeUpdate.Clear();
             m_UIAssetHandlers.Clear();
             m_AssetHandlers = null;
+            m_LoadFailBeforeUpdate = null;
             m_UIAssetHandlers = null;
             YooAssets.Destroy();
         }
@@ -235,75 +247,7 @@ namespace GameFramework.Resource
             _lastUpdateFrame = Time.frameCount;
         }
 
-        #region 资源信息
-
-        /// <summary>
-        /// 是否需要从远端更新下载。
-        /// </summary>
-        /// <param name="location">资源的定位地址</param>
-        public bool IsNeedDownloadFromRemote(string location)
-        {
-            return YooAssets.IsNeedDownloadFromRemote(location);
-        }
-
-        /// <summary>
-        /// 是否需要从远端更新下载。
-        /// </summary>
-        /// <param name="assetInfo">资源信息。</param>
-        public bool IsNeedDownloadFromRemote(AssetInfo assetInfo)
-        {
-            return YooAssets.IsNeedDownloadFromRemote(assetInfo);
-        }
-
-        /// <summary>
-        /// 获取资源信息列表。
-        /// </summary>
-        /// <param name="tag">资源标签。</param>
-        /// <returns>资源信息列表。</returns>
-        public AssetInfo[] GetAssetInfos(string tag)
-        {
-            return YooAssets.GetAssetInfos(tag);
-        }
-
-        /// <summary>
-        /// 获取资源信息列表。
-        /// </summary>
-        /// <param name="tags">资源标签列表。</param>
-        /// <returns>资源信息列表。</returns>
-        public AssetInfo[] GetAssetInfos(string[] tags)
-        {
-            return YooAssets.GetAssetInfos(tags);
-        }
-
-        /// <summary>
-        /// 获取资源信息。
-        /// </summary>
-        /// <param name="location">资源的定位地址。</param>
-        /// <returns>资源信息。</returns>
-        public AssetInfo GetAssetInfo(string location)
-        {
-            return YooAssets.GetAssetInfo(location);
-        }
-
-        /// <summary>
-        /// 检查资源定位地址是否有效。
-        /// </summary>
-        /// <param name="location">资源的定位地址</param>
-        public bool CheckLocationValid(string location)
-        {
-            return YooAssets.CheckLocationValid(location);
-        }
-
-        #endregion
-
         #region Public Methods
-        /// <summary>
-        /// 设置默认的资源包。
-        /// </summary>
-        public void SetDefaultPackage(ResourcePackage package)
-        {
-            YooAssets.SetDefaultPackage(package);
-        }
         /// <summary>
         /// 异步资源加载
         /// </summary>
@@ -313,48 +257,164 @@ namespace GameFramework.Resource
         /// <exception cref="GameFrameworkException"></exception>
         public async UniTask<TObject> LoadAssetAsync<TObject>(string location) where TObject : UnityEngine.Object
         {
-            if (string.IsNullOrEmpty(location))
+            if (typeof(TObject) == typeof(GameObject))
             {
-                throw new GameFrameworkException("Asset location is invalid.");
+                GameFrameworkLog.Warning("If you need instance a GameObject, you should call InstantiateAsync().");
             }
-            ResourcePackage assetPackage = YooAssets.TryGetPackage(PackageName);
-            AssetOperationHandle handle = assetPackage.LoadAssetAsync<TObject>(location);
-            await handle.ToUniTask(ResourceHelper);
-            if (handle == null || handle.AssetObject == null || handle.Status == EOperationStatus.Failed)
+            AssetOperationHandle handle = await InternalLoadAssetHandleAsync(location);
+            return handle.AssetObject as TObject;
+        }
+
+        /// <summary>
+        /// 同步资源加载
+        /// </summary>
+        /// <param name="location"></param>
+        /// <typeparam name="TObject"></typeparam>
+        /// <returns></returns>
+        public TObject LoadAssetSync<TObject>(string location) where TObject : UnityEngine.Object
+        {
+            if (typeof(TObject) == typeof(GameObject))
             {
-                string errorMessage = Utility.Text.Format("Can not load asset '{0}'.", location);
-                throw new GameFrameworkException(errorMessage);
+                GameFrameworkLog.Warning("If you need instance a GameObject, you should call InstantiateSync().");
             }
-            TObject result = handle.AssetObject as TObject;
-            if (result == null)
+            return InternalLoadAssetHandle(location).AssetObject as TObject;
+        }
+
+        /// <summary>
+        /// 异步实例化预制体
+        /// </summary>
+        /// <param name="prefabPath"></param>
+        /// <param name="position"></param>
+        /// <param name="rotation"></param>
+        /// <param name="parent"></param>
+        /// <param name="worldPositionStays"></param>
+        /// <returns></returns>
+        public async System.Threading.Tasks.Task<GameObject> InstantiateTaskAsync(string prefabPath,Vector3 position, Quaternion rotation, Transform parent,bool worldPositionStays)
+        {
+            AssetOperationHandle handle = await InternalLoadAssetHandleAsync(prefabPath, false);
+            InstantiateOperation instHandle;
+            if (worldPositionStays)
             {
-                throw new GameFrameworkException( Utility.Text.Format("TObject '{0}' is invalid.", typeof(TObject).FullName));
+                instHandle = handle.InstantiateAsync(parent, true);
             }
-            m_AssetHandlers[(location, result.GetHashCode())] = handle;
+            else
+            {
+                instHandle = handle.InstantiateAsync(position, rotation, parent);
+            }
+            await instHandle.Task;
+            GameObject result = instHandle.Result;
+            m_AssetHandlers[(prefabPath, result.GetHashCode())] = handle;
             return result;
         }
 
-        public async System.Threading.Tasks.Task<TObject> LoadAssetTaskAsync<TObject>(string location)
-            where TObject : UnityEngine.Object
+        /// <summary>
+        /// 同步实例化预制体
+        /// </summary>
+        /// <param name="prefabPath"></param>
+        /// <param name="position"></param>
+        /// <param name="rotation"></param>
+        /// <param name="parent"></param>
+        /// <param name="worldPositionStays"></param>
+        /// <returns></returns>
+        public GameObject InstantiateSync(string prefabPath, Vector3 position, Quaternion rotation, Transform parent,bool worldPositionStays)
+        {
+            if (position == default) position = Vector3.zero;
+            if (rotation == default) rotation = Quaternion.identity;
+            AssetOperationHandle handle = InternalLoadAssetHandle(prefabPath, false);
+            GameObject result;
+            if (worldPositionStays)
+            {
+                result = handle.InstantiateSync(parent, true);
+            }
+            else
+            {
+                result = handle.InstantiateSync(position, rotation, parent);
+            }
+            m_AssetHandlers[(prefabPath, result.GetHashCode())] = handle;
+            return result;
+        }
+
+        /// <summary>
+        /// 异步加载原始文件资源
+        /// </summary>
+        /// <param name="location"></param>
+        /// <returns></returns>
+        /// <exception cref="GameFrameworkException"></exception>
+        public async UniTask<byte[]> LoadRawFileAsync(string location)
         {
             if (string.IsNullOrEmpty(location))
             {
                 throw new GameFrameworkException("Asset location is invalid.");
             }
             ResourcePackage assetPackage = YooAssets.TryGetPackage(PackageName);
-            AssetOperationHandle handle = assetPackage.LoadAssetAsync<TObject>(location);
+            AssetInfo assetInfo = assetPackage.GetAssetInfo(location);
+            if (assetInfo.IsInvalid)
+            {
+                if(RecheckAssetInfo) return await RecheckLoadFailAssets(location);
+                throw new GameFrameworkException(Utility.Text.Format("Can not load asset '{0}'.", location));
+            }
+            RawFileOperationHandle handle = assetPackage.LoadRawFileAsync(assetInfo);
             await handle.Task;
-            if (handle == null || handle.AssetObject == null || handle.Status == EOperationStatus.Failed)
+            if (handle == null || handle.Status == EOperationStatus.Failed)
             {
                 string errorMessage = Utility.Text.Format("Can not load asset '{0}'.", location);
                 throw new GameFrameworkException(errorMessage);
             }
-            TObject result = handle.AssetObject as TObject;
-            if (result == null)
+            byte[] result = handle.GetRawFileData();
+            m_AssetHandlers[(location, -1)] = handle;
+            return result;
+        }
+
+        public byte[] LoadRawFileSync(string location)
+        {
+            if (string.IsNullOrEmpty(location))
             {
-                throw new GameFrameworkException( Utility.Text.Format("TObject '{0}' is invalid.", typeof(TObject).FullName));
+                throw new GameFrameworkException("Asset location is invalid.");
             }
-            m_AssetHandlers[(location, result.GetHashCode())] = handle;
+            ResourcePackage assetPackage = YooAssets.TryGetPackage(PackageName);
+            AssetInfo assetInfo = assetPackage.GetAssetInfo(location);
+            if (assetInfo.IsInvalid)
+            {
+                throw new GameFrameworkException($"Asset info '{location}' is invalid.");
+            }
+            RawFileOperationHandle handle = assetPackage.LoadRawFileSync(assetInfo);
+            byte[] result = handle.GetRawFileData();
+            m_AssetHandlers[(location, -1)] = handle;
+            return result;
+        }
+
+        /// <summary>
+        /// 异步加载原始文件资源
+        /// </summary>
+        /// <param name="location"></param>
+        /// <param name="resultCallback"></param>
+        public async UniTask LoadRawFileAsync(string location, Action<byte[]> resultCallback)
+        {
+            byte[] result = await LoadRawFileAsync(location);
+            resultCallback?.Invoke(result);
+        }
+
+        public async System.Threading.Tasks.Task<TObject> LoadAssetTaskAsync<TObject>(string location) where TObject : UnityEngine.Object
+        {
+            AssetOperationHandle handle = await InternalLoadAssetHandleAsync(location);
+            return handle.AssetObject as TObject;
+        }
+
+        public async UniTask<GameObject> InstantiateAsync(string prefabPath,Vector3 position, Quaternion rotation, Transform parent,bool worldPositionStays)
+        {
+            AssetOperationHandle handle = await InternalLoadAssetHandleAsync(prefabPath,false);
+            InstantiateOperation instHandle;
+            if (worldPositionStays)
+            {
+                instHandle = handle.InstantiateAsync(parent, true);
+            }
+            else
+            {
+                instHandle = handle.InstantiateAsync(position, rotation, parent);
+            }
+            await instHandle.Task;
+            GameObject result = instHandle.Result;
+            m_AssetHandlers[(prefabPath, result.GetHashCode())] = handle;
             return result;
         }
 
@@ -369,45 +429,16 @@ namespace GameFramework.Resource
         {
             float duration = Time.time;
 
-            if (string.IsNullOrEmpty(assetName))
-            {
-                throw new GameFrameworkException("Asset name is invalid.");
-            }
-
             if (loadAssetCallbacks == null)
             {
                 throw new GameFrameworkException("Load asset callbacks is invalid.");
             }
-
-            ResourcePackage assetPackage = YooAssets.TryGetPackage(PackageName);
-
-            AssetInfo assetInfo = assetPackage.GetAssetInfo(assetName);
-
-            if (assetInfo == null)
-            {
-                string errorMessage = Utility.Text.Format("Can not load asset '{0}'.", assetName);
-                if (loadAssetCallbacks.LoadAssetFailureCallback != null)
-                {
-                    loadAssetCallbacks.LoadAssetFailureCallback(assetName, LoadResourceStatus.NotExist, errorMessage, userData);
-                    return;
-                }
-
-                throw new GameFrameworkException(errorMessage);
-            }
-
-            OperationHandleBase handleBase = assetPackage.LoadAssetAsync(assetName, assetType);
-
-            await handleBase.ToUniTask(ResourceHelper);
             
-            AssetOperationHandle handle = (AssetOperationHandle)handleBase;
+            AssetOperationHandle handle = await InternalLoadAssetHandleAsync(assetName);
             if (handle == null || handle.AssetObject == null || handle.Status == EOperationStatus.Failed)
             {
                 string errorMessage = Utility.Text.Format("Can not load asset '{0}'.", assetName);
-                if (loadAssetCallbacks.LoadAssetFailureCallback != null)
-                {
-                    loadAssetCallbacks.LoadAssetFailureCallback(assetName, LoadResourceStatus.NotReady, errorMessage, userData);
-                    return;
-                }
+                loadAssetCallbacks.LoadAssetFailureCallback?.Invoke(assetName, LoadResourceStatus.NotReady, errorMessage, userData);
                 throw new GameFrameworkException(errorMessage);
             }
             if (loadAssetCallbacks.LoadAssetSuccessCallback != null)
@@ -415,7 +446,6 @@ namespace GameFramework.Resource
                 duration = Time.time - duration;
                 loadAssetCallbacks.LoadAssetSuccessCallback(assetName, handle.AssetObject, duration, userData);
             }
-            m_AssetHandlers[(assetName, handle.AssetObject.GetHashCode())] = handle;
         }
 
 
@@ -429,96 +459,116 @@ namespace GameFramework.Resource
         {
             float duration = Time.time;
 
-            if (string.IsNullOrEmpty(assetName))
-            {
-                throw new GameFrameworkException("Asset name is invalid.");
-            }
-
             if (loadAssetCallbacks == null)
             {
                 throw new GameFrameworkException("Load asset callbacks is invalid.");
             }
-
-            ResourcePackage assetPackage = YooAssets.TryGetPackage(PackageName);
-
-            AssetInfo assetInfo = assetPackage.GetAssetInfo(assetName);
-
-            if (assetInfo == null)
-            {
-                string errorMessage = Utility.Text.Format("Can not load asset '{0}'.", assetName);
-                if (loadAssetCallbacks.LoadAssetFailureCallback != null)
-                {
-                    loadAssetCallbacks.LoadAssetFailureCallback(assetName, LoadResourceStatus.NotExist, errorMessage, userData);
-                    return;
-                }
-
-                throw new GameFrameworkException(errorMessage);
-            }
-
-            OperationHandleBase handleBase = assetPackage.LoadAssetAsync(assetInfo);
-
-            await handleBase.ToUniTask(ResourceHelper);
-
-            AssetOperationHandle handle = (AssetOperationHandle)handleBase;
+            AssetOperationHandle handle = await InternalLoadAssetHandleAsync(assetName);
             if (handle == null || handle.AssetObject == null || handle.Status == EOperationStatus.Failed)
             {
                 string errorMessage = Utility.Text.Format("Can not load asset '{0}'.", assetName);
-                if (loadAssetCallbacks.LoadAssetFailureCallback != null)
-                {
-                    loadAssetCallbacks.LoadAssetFailureCallback(assetName, LoadResourceStatus.NotReady, errorMessage, userData);
-                    return;
-                }
-
+                loadAssetCallbacks.LoadAssetFailureCallback?.Invoke(assetName, LoadResourceStatus.NotReady, errorMessage, userData);
                 throw new GameFrameworkException(errorMessage);
             }
-
             if (loadAssetCallbacks.LoadAssetSuccessCallback != null)
             {
                 duration = Time.time - duration;
                 loadAssetCallbacks.LoadAssetSuccessCallback(assetName, handle.AssetObject, duration, userData);
             }
-            
-            m_AssetHandlers[(assetName, handle.AssetObject.GetHashCode())] = handle;
         }
         #endregion
 
         public void UnloadUnusedAssets()
         {
+            YooAssets.GetPackage(PackageName).UnloadUnusedAssets();
         }
 
         public void ForceUnloadAllAssets()
         {
+            YooAssets.GetPackage(PackageName).ForceUnloadAllAssets();
         }
 
+        /// <summary>
+        /// 卸载资源
+        /// </summary>
+        /// <param name="asset"></param>
         public void UnloadAsset(object asset)
         {
+            if (m_AssetHandlers == null) return;
+            int hashCode = asset.GetHashCode();
+            bool hasRelease = false;
+            var enumerator = m_AssetHandlers.GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                if (enumerator.Current.Key.hash == hashCode)
+                {
+                    enumerator.Current.Value.ReleaseInternal();
+                    GameFrameworkLog.Info($"Unload asset {enumerator.Current.Key}");
+                    m_AssetHandlers.Remove(enumerator.Current.Key);
+                    hasRelease = true;
+                    break;
+                }
+            }
+            enumerator.Dispose();
+            if (!hasRelease)
+            {
+                if (asset is Object unityObj)
+                {
+                    Object.DestroyImmediate(unityObj);
+                }
+                else
+                {
+                    GameFrameworkLog.Warning("UnloadAsset: {0} failed", asset);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 卸载资源
+        /// </summary>
+        /// <param name="assetPath"></param>
+        public void UnloadAsset(string assetPath)
+        {
+            if (m_AssetHandlers == null) return;
+            var enumerator = m_AssetHandlers.GetEnumerator();
+            bool hasRelease = false;
+            while (enumerator.MoveNext())
+            {
+                if (enumerator.Current.Key.key.Equals(assetPath))
+                {
+                    enumerator.Current.Value.ReleaseInternal();
+                    GameFrameworkLog.Info($"Unload asset {enumerator.Current.Key}");
+                    m_AssetHandlers.Remove(enumerator.Current.Key);
+                    hasRelease = true;
+                    break;
+                }
+            }
+            enumerator.Dispose();
+            if (!hasRelease)
+            {
+                GameFrameworkLog.Warning("UnloadAsset: {0} failed", assetPath);
+            }
+        }
+
+        public void UnloadAsset(Object asset)
+        {
+            if (m_AssetHandlers == null) return;
+            bool hasRelease = false;
             int hashCode = asset.GetHashCode();
             var enumerator = m_AssetHandlers.GetEnumerator();
             while (enumerator.MoveNext())
             {
                 if (enumerator.Current.Key.Item2 == hashCode)
                 {
-                    enumerator.Current.Value.Release();
+                    enumerator.Current.Value.ReleaseInternal();
+                    GameFrameworkLog.Info($"Unload asset {enumerator.Current.Key}");
                     m_AssetHandlers.Remove(enumerator.Current.Key);
+                    hasRelease = true;
                     break;
                 }
             }
             enumerator.Dispose();
-        }
-
-        public void UnloadAsset(string assetPath)
-        {
-            var enumerator = m_AssetHandlers.GetEnumerator();
-            while (enumerator.MoveNext())
-            {
-                if (enumerator.Current.Key.Item1 == assetPath)
-                {
-                    enumerator.Current.Value.Release();
-                    m_AssetHandlers.Remove(enumerator.Current.Key);
-                    break;
-                }
-            }
-            enumerator.Dispose();
+            if(!hasRelease) Object.DestroyImmediate(asset);
         }
 
         /// <summary>
@@ -544,10 +594,11 @@ namespace GameFramework.Resource
         /// 异步加载场景。
         /// </summary>
         /// <param name="sceneAssetName">要加载场景资源的名称。</param>
+        /// <param name="loadSceneMode">加载模式</param>
         /// <param name="priority">加载场景资源的优先级。</param>
         /// <param name="loadSceneCallbacks">加载场景回调函数集。</param>
         /// <param name="userData">用户自定义数据。</param>
-        public async void LoadScene(string sceneAssetName, int priority, LoadSceneCallbacks loadSceneCallbacks, object userData = null)
+        public async void LoadScene(string sceneAssetName, LoadSceneMode loadSceneMode, int priority, LoadSceneCallbacks loadSceneCallbacks, object userData = null)
         {
             if (string.IsNullOrEmpty(sceneAssetName))
             {
@@ -561,9 +612,9 @@ namespace GameFramework.Resource
 
             float duration = Time.time;
 
-            SceneOperationHandle handle = YooAssets.LoadSceneAsync(sceneAssetName, LoadSceneMode.Single, suspendLoad: false, priority: priority);
+            SceneOperationHandle handle = YooAssets.LoadSceneAsync(sceneAssetName, loadSceneMode, suspendLoad: false, priority: priority);
 
-            await handle.ToUniTask(ResourceHelper);
+            await handle.Task;
 
             if (loadSceneCallbacks.LoadSceneSuccessCallback != null)
             {
@@ -698,7 +749,7 @@ namespace GameFramework.Resource
                 handleList = new List<string>();
                 m_UIAssetHandlers.Add(pkgName, handleList);
             }
-            handleList.Add(pkgName);
+            handleList.Add(resPath);
             return pkgDesc;
         }
 
@@ -744,6 +795,107 @@ namespace GameFramework.Resource
                 {
                     unloadSceneCallbacks.UnloadSceneFailureCallback(sceneAssetName, userData);
                 }
+            }
+        }
+
+        private async UniTask<AssetOperationHandle> InternalLoadAssetHandleAsync(string location, bool recordRef = true)
+        {
+            if (string.IsNullOrEmpty(location))
+            {
+                throw new GameFrameworkException("Asset location is invalid.");
+            }
+            ResourcePackage assetPackage = YooAssets.TryGetPackage(PackageName);
+            AssetInfo assetInfo = assetPackage.GetAssetInfo(location);
+            if (assetInfo.IsInvalid)
+            {
+                if(RecheckAssetInfo) return await InternalReloadAssetHandleAsync(location);
+                throw new GameFrameworkException(Utility.Text.Format("Can not load asset '{0}'.", location));
+            }
+            AssetOperationHandle handle = assetPackage.LoadAssetAsync(assetInfo);
+            await handle.Task;
+            if (handle.AssetObject == null || handle.Status == EOperationStatus.Failed)
+            {
+                string errorMessage = Utility.Text.Format("Can not load asset '{0}'.", location);
+                throw new GameFrameworkException(errorMessage);
+            }
+            if (recordRef) m_AssetHandlers[(location, handle.AssetObject.GetHashCode())] = handle;
+            return handle;
+        }
+
+        private AssetOperationHandle InternalLoadAssetHandle(string location, bool recordRef = true)
+        {
+            if (string.IsNullOrEmpty(location))
+            {
+                throw new GameFrameworkException("Asset location is invalid.");
+            }
+            ResourcePackage assetPackage = YooAssets.TryGetPackage(PackageName);
+            AssetInfo assetInfo = assetPackage.GetAssetInfo(location);
+            if (assetInfo.IsInvalid)
+            {
+                throw new GameFrameworkException($"Asset info {location} is invalid.");
+            }
+            AssetOperationHandle handle = assetPackage.LoadAssetSync(assetInfo);
+            if (handle.AssetObject == null || handle.Status == EOperationStatus.Failed)
+            {
+                string errorMessage = Utility.Text.Format("Can not load asset '{0}'.", location);
+                throw new GameFrameworkException(errorMessage);
+            }
+            if (recordRef) m_AssetHandlers[(location, handle.AssetObject.GetHashCode())] = handle;
+            return handle;
+        }
+
+        private async UniTask<AssetOperationHandle> InternalReloadAssetHandleAsync(string location)
+        {
+            if (m_LoadFailBeforeUpdate.Contains(location))
+            {
+                m_LoadFailBeforeUpdate.Remove(location);
+                string errorMessage = Utility.Text.Format("Can not load asset handle '{0}'.", location);
+                throw new GameFrameworkException(errorMessage);
+            }
+            m_LoadFailBeforeUpdate.Add(location);
+            await ReUpdatePackageManifest();
+            AssetOperationHandle result = await InternalLoadAssetHandleAsync(location);
+            m_LoadFailBeforeUpdate.Remove(location);
+            return result;
+        }
+
+        private async UniTask<byte[]> RecheckLoadFailAssets(string location)
+        {
+            // 已经失败过，说明确实是资源问题，直接抛出异常
+            if (m_LoadFailBeforeUpdate.Contains(location))
+            {
+                m_LoadFailBeforeUpdate.Remove(location);
+                string errorMessage = Utility.Text.Format("Can not load asset '{0}'.", location);
+                throw new GameFrameworkException(errorMessage);
+            }
+            // 首次加载失败，可能是服务端资源更新，需要进行Manifest同步后再加载
+            m_LoadFailBeforeUpdate.Add(location);
+            await ReUpdatePackageManifest();
+            
+            // 再去加载一次
+            byte[] result = await LoadRawFileAsync(location);
+            m_LoadFailBeforeUpdate.Remove(location);
+
+            return result;
+        }
+
+        private async UniTask ReUpdatePackageManifest()
+        {
+            var activePackage = YooAssets.GetPackage(PackageName);
+            var versionLoadOperation = activePackage.UpdatePackageVersionAsync(timeout: 10);
+            await versionLoadOperation.Task;
+            
+            if (!versionLoadOperation.IsDone || versionLoadOperation.Status != EOperationStatus.Succeed)
+            {
+                throw new GameFrameworkException(versionLoadOperation.Error);
+            }
+            PackageVersion = versionLoadOperation.PackageVersion;
+
+            var manifestLoadOperation = activePackage.UpdatePackageManifestAsync(PackageVersion, timeout: 10);
+            await manifestLoadOperation.Task;
+            if (!manifestLoadOperation.IsDone || manifestLoadOperation.Status != EOperationStatus.Succeed)
+            {
+                throw new GameFrameworkException(versionLoadOperation.Error);
             }
         }
     }

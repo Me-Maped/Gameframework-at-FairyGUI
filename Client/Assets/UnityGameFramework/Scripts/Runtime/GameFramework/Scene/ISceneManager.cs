@@ -1,6 +1,7 @@
 ﻿using GameFramework.Resource;
 using System;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 
 namespace GameFramework.Scene
 {
@@ -113,29 +114,33 @@ namespace GameFramework.Scene
         /// 加载场景。
         /// </summary>
         /// <param name="sceneAssetName">场景资源名称。</param>
-        void LoadScene(string sceneAssetName);
+        /// <param name="loadSceneMode">场景加载模式</param>
+        void LoadScene(string sceneAssetName,LoadSceneMode loadSceneMode);
 
         /// <summary>
         /// 加载场景。
         /// </summary>
         /// <param name="sceneAssetName">场景资源名称。</param>
         /// <param name="priority">加载场景资源的优先级。</param>
-        void LoadScene(string sceneAssetName, int priority);
+        /// <param name="loadSceneMode">场景加载模式</param>
+        void LoadScene(string sceneAssetName, int priority,LoadSceneMode loadSceneMode);
 
         /// <summary>
         /// 加载场景。
         /// </summary>
         /// <param name="sceneAssetName">场景资源名称。</param>
         /// <param name="userData">用户自定义数据。</param>
-        void LoadScene(string sceneAssetName, object userData);
+        /// <param name="loadSceneMode">场景加载模式</param>
+        void LoadScene(string sceneAssetName, object userData, LoadSceneMode loadSceneMode);
 
         /// <summary>
         /// 加载场景。
         /// </summary>
         /// <param name="sceneAssetName">场景资源名称。</param>
+        /// <param name="loadSceneMode">场景加载模式</param>
         /// <param name="priority">加载场景资源的优先级。</param>
         /// <param name="userData">用户自定义数据。</param>
-        void LoadScene(string sceneAssetName, int priority, object userData);
+        void LoadScene(string sceneAssetName,LoadSceneMode loadSceneMode, int priority, object userData);
 
         /// <summary>
         /// 卸载场景。

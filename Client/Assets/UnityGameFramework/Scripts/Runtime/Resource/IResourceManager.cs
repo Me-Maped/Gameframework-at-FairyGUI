@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using YooAsset;
 
 namespace GameFramework.Resource
@@ -74,6 +75,15 @@ namespace GameFramework.Resource
             get;
             set;
         }
+
+        /// <summary>
+        /// 获取或设置资源包版本。
+        /// </summary>
+        string PackageVersion
+        {
+            get;
+            set;
+        }
         
         /// <summary>
         /// 获取或设置运行模式。
@@ -130,6 +140,12 @@ namespace GameFramework.Resource
         void UnloadAsset(string assetPath);
 
         /// <summary>
+        ///  卸载资源
+        /// </summary>
+        /// <param name="asset"></param>
+        void UnloadAsset(UnityEngine.Object asset);
+
+        /// <summary>
         /// 资源回收（卸载引用计数为零的资源）
         /// </summary>
         void UnloadUnusedAssets();
@@ -138,6 +154,32 @@ namespace GameFramework.Resource
         /// 强制回收所有资源
         /// </summary>
         void ForceUnloadAllAssets();
+
+        /// <summary>
+        /// 同步加载资源。
+        /// </summary>
+        /// <param name="assetPath"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        T LoadAssetSync<T>(string assetPath) where T : UnityEngine.Object;
+
+        /// <summary>
+        /// 同步实例化预制体
+        /// </summary>
+        /// <param name="prefabPath"></param>
+        /// <param name="position"></param>
+        /// <param name="rotation"></param>
+        /// <param name="parent"></param>
+        /// <param name="worldPositionStays"></param>
+        /// <returns></returns>
+        GameObject InstantiateSync(string prefabPath, Vector3 position, Quaternion rotation, Transform parent,bool worldPositionStays);
+
+        /// <summary>
+        /// 同步加载原始文件
+        /// </summary>
+        /// <param name="assetPath"></param>
+        /// <returns></returns>
+        byte[] LoadRawFileSync(string assetPath);
         
         /// <summary>
         /// 异步加载资源。
@@ -154,6 +196,42 @@ namespace GameFramework.Resource
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
         System.Threading.Tasks.Task<T> LoadAssetTaskAsync<T>(string assetPath) where T : UnityEngine.Object;
+
+        /// <summary>
+        /// 异步实例化资源。
+        /// </summary>
+        /// <param name="prefabPath"></param>
+        /// <param name="position"></param>
+        /// <param name="rotation"></param>
+        /// <param name="parent"></param>
+        /// <param name="worldPositionStays"></param>
+        /// <returns></returns>
+        Cysharp.Threading.Tasks.UniTask<GameObject> InstantiateAsync(string prefabPath,Vector3 position, Quaternion rotation, Transform parent,bool worldPositionStays);
+
+        /// <summary>
+        /// 异步实例化资源。
+        /// </summary>
+        /// <param name="prefabPath"></param>
+        /// <param name="position"></param>
+        /// <param name="rotation"></param>
+        /// <param name="parent"></param>
+        /// <param name="worldPositionStays"></param>
+        /// <returns></returns>
+        System.Threading.Tasks.Task<GameObject> InstantiateTaskAsync(string prefabPath,Vector3 position, Quaternion rotation, Transform parent,bool worldPositionStays);
+
+        /// <summary>
+        ///  异步加载文件资源。
+        /// </summary>
+        /// <param name="assetPath"></param>
+        /// <returns></returns>
+        Cysharp.Threading.Tasks.UniTask<byte[]> LoadRawFileAsync(string assetPath);
+
+        /// <summary>
+        /// 异步加载文件资源
+        /// </summary>
+        /// <param name="assetName"></param>
+        /// <param name="resultCallback"></param>
+        Cysharp.Threading.Tasks.UniTask LoadRawFileAsync(string assetName, Action<byte[]> resultCallback);
 
         /// <summary>
         /// 异步加载资源。
@@ -178,15 +256,16 @@ namespace GameFramework.Resource
         /// <param name="assetName">要检查资源的名称。</param>
         /// <returns>检查资源是否存在的结果。</returns>
         HasAssetResult HasAsset(string assetName);
-        
+
         /// <summary>
         /// 异步加载场景。
         /// </summary>
         /// <param name="sceneAssetName">要加载场景资源的名称。</param>
+        /// <param name="loadSceneMode">场景加载模式</param>
         /// <param name="priority">加载场景资源的优先级。</param>
         /// <param name="loadSceneCallbacks">加载场景回调函数集。</param>
         /// <param name="userData">用户自定义数据。</param>
-        void LoadScene(string sceneAssetName, int priority, LoadSceneCallbacks loadSceneCallbacks, object userData = null);
+        void LoadScene(string sceneAssetName,LoadSceneMode loadSceneMode, int priority, LoadSceneCallbacks loadSceneCallbacks, object userData = null);
         /// <summary>
         /// 异步卸载场景。
         /// </summary>
@@ -203,7 +282,7 @@ namespace GameFramework.Resource
         /// <param name="loadAssetCallbacks"></param>
         /// <param name="userData"></param>
         void LoadUIPackagesAsync(string pkgName,string[] dependPkgs, LoadAssetCallbacks loadAssetCallbacks, object userData);
-
+        
         /// <summary>
         /// 卸载UI资源。
         /// </summary>
