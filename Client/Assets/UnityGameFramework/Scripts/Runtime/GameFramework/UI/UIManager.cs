@@ -121,6 +121,7 @@ namespace GameFramework.UI
             if (m_ResourceManager == null) throw new GameFrameworkException("You must set ResourceManager first");
             if (m_LoadedFormInst.TryGetValue(formType, out UIFormBase loadedForm) && loadedForm.Config.OneInst)
             {
+                loadedForm.UserData = userData;
                 if (loadedForm.IsOpened) return loadedForm;
                 InternalOpenUIForm(loadedForm, 0);
                 return loadedForm;
