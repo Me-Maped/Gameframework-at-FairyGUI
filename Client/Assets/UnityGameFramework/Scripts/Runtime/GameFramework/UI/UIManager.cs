@@ -45,6 +45,7 @@ namespace GameFramework.UI
         private Dictionary<string, int> m_PackageRefCount;
         private List<string> m_LoadingPkgNames;
         private Queue<UIFormBase> m_NeedCloseForms;
+        private Queue<UIFormBase> m_NeedImmediatlyCloseForms;
 
         private bool m_IsShutdown;
         private IObjectPoolManager m_ObjectPoolManager;
@@ -75,6 +76,7 @@ namespace GameFramework.UI
             m_PackageRefCount = new Dictionary<string, int>();
             m_LoadingPkgNames = new List<string>();
             m_NeedCloseForms = new Queue<UIFormBase>();
+            m_NeedImmediatlyCloseForms = new Queue<UIFormBase>();
             m_LoadUIFormSuccessEventHandler = null;
             m_LoadUIFormFailureEventHandler = null;
             m_LoadUIFormUpdateEventHandler = null;
@@ -223,20 +225,17 @@ namespace GameFramework.UI
         public void CloseForm(UIFormBase uiForm)
         {
             if (uiForm == null) return;
-            GetUIGroup(uiForm.Config.GroupEnum).CloseForm(uiForm);
-            if (m_CloseUIFormCompleteEventHandler != null)
-            {
-                var args = CloseFormCompleteEventArgs.Create(uiForm.Config.ResName, uiForm.Config.GroupEnum);
-                m_CloseUIFormCompleteEventHandler(this, args);
-                ReferencePool.Release(args);
-            }
+            m_NeedCloseForms.Enqueue(uiForm);
         }
-
+        
         public void CloseAllForm()
         {
             foreach (var groupInfo in m_UIGroups)
             {
-                groupInfo.Value.CloseAllForm();
+                foreach (var uiForm in groupInfo.Value.UIForms)
+                {
+                    m_NeedCloseForms.Enqueue(uiForm);
+                }
             }
         }
 
@@ -250,7 +249,7 @@ namespace GameFramework.UI
         public void CloseFormImmediately(UIFormBase uiForm)
         {
             if (uiForm == null) return;
-            GetUIGroup(uiForm.Config.GroupEnum).CloseFormImmediately(uiForm);
+            m_NeedImmediatlyCloseForms.Enqueue(uiForm);
         }
 
         public void CloseFormByGroup(UIGroupEnum groupEnum)
@@ -340,8 +339,12 @@ namespace GameFramework.UI
 
             while (m_NeedCloseForms.Count > 0)
             {
-                UIFormBase uiForm = m_NeedCloseForms.Dequeue();
-                CloseForm(uiForm);
+                InternalCloseUIForm(m_NeedCloseForms.Dequeue());
+            }
+
+            while (m_NeedImmediatlyCloseForms.Count > 0)
+            {
+                InternalCloseUIFormImmediately(m_NeedImmediatlyCloseForms.Dequeue());
             }
         }
 
@@ -357,6 +360,7 @@ namespace GameFramework.UI
             m_ToBeLoadFormInst.Clear();
             m_LoadingPkgNames.Clear();
             m_NeedCloseForms.Clear();
+            m_NeedImmediatlyCloseForms.Clear();
             m_PackageRefCount.Clear();
         }
 
@@ -409,6 +413,28 @@ namespace GameFramework.UI
                     ReferencePool.Release(eventArgs);
                 }
                 throw;
+            }
+        }
+        
+        private void InternalCloseUIForm(UIFormBase uiForm)
+        {
+            GetUIGroup(uiForm.Config.GroupEnum).CloseForm(uiForm);
+            if (m_CloseUIFormCompleteEventHandler != null)
+            {
+                var args = CloseFormCompleteEventArgs.Create(uiForm.Config.ResName, uiForm.Config.GroupEnum);
+                m_CloseUIFormCompleteEventHandler(this, args);
+                ReferencePool.Release(args);
+            }
+        }
+
+        private void InternalCloseUIFormImmediately(UIFormBase uiForm)
+        {
+            GetUIGroup(uiForm.Config.GroupEnum).CloseFormImmediately(uiForm);
+            if (m_CloseUIFormCompleteEventHandler != null)
+            {
+                var args = CloseFormCompleteEventArgs.Create(uiForm.Config.ResName, uiForm.Config.GroupEnum);
+                m_CloseUIFormCompleteEventHandler(this, args);
+                ReferencePool.Release(args);
             }
         }
 
