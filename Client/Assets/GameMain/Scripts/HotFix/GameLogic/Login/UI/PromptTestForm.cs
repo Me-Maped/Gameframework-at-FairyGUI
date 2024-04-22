@@ -20,7 +20,7 @@ namespace GameLogic.Login
         {
             Log.Info("{0}", (int)UserData);
             View.m_title.text = "提示: " + (int)UserData;
-            Timers.inst.Add(5, 1, o => { Close(); });
+            Timers.inst.Add(5, 1, o => { SelfClose(); });
         }
     }
 }

@@ -47,7 +47,7 @@ namespace GameFramework.UI
         /// 打开界面
         /// </summary>
         /// <exception cref="GameFrameworkException"></exception>
-        internal void Open()
+        internal void InternalOpen()
         {
             if (Config == null) throw new GameFrameworkException("Config is null,you must override Config property");
             m_State = UIFormState.SHOW_START;
@@ -66,6 +66,7 @@ namespace GameFramework.UI
                 throw new GameFrameworkException("Instance is null,you must override Instance property");
             Instance.visible = visible;
             m_FormBg?.SetVisible(visible);
+            OnVisibleChange(visible);
         }
 
         /// <summary>
@@ -82,7 +83,7 @@ namespace GameFramework.UI
         /// <summary>
         /// 关闭界面
         /// </summary>
-        internal void Close()
+        internal void InternalClose()
         {
             // 不可重复关闭
             if (InHideMode) return;
@@ -103,7 +104,7 @@ namespace GameFramework.UI
         /// <summary>
         /// 立即关闭界面
         /// </summary>
-        internal void CloseImmediately()
+        internal void InternalCloseImmediately()
         {
             m_InAnimation?.Stop();
             m_InAnimation = null;
@@ -167,7 +168,6 @@ namespace GameFramework.UI
         /// <exception cref="GameFrameworkException"></exception>
         private void CreateInstance()
         {
-            if (Instance != null) return;
             Instance = UIPackage.CreateObject(Config.PkgName, Config.ResName).asCom;
             if (Instance == null || Instance.isDisposed) throw new GameFrameworkException("Can not create Instance, maybe the pkg has been removed");
             SerializeChild();
@@ -210,13 +210,13 @@ namespace GameFramework.UI
                 switch (action)
                 {
                     case UIFormActionConst.RETURN:
-                        child.onClick.Add(GoReturn);
+                        child.onClick.Add(SelfGoReturn);
                         break;
                     case UIFormActionConst.HOME:
-                        child.onClick.Add(GoHome);
+                        child.onClick.Add(SelfGoHome);
                         break;
                     case UIFormActionConst.CLOSE:
-                        child.onClick.Add(CloseForm);
+                        child.onClick.Add(SelfClose);
                         break;
                 }
             }
@@ -225,7 +225,7 @@ namespace GameFramework.UI
         /// <summary>
         /// 返回上一层
         /// </summary>
-        protected void GoReturn()
+        protected virtual void SelfGoReturn()
         {
             GameFrameworkEntry.GetModule<IUIManager>().Back();
         }
@@ -233,7 +233,7 @@ namespace GameFramework.UI
         /// <summary>
         /// 回到主界面
         /// </summary>
-        protected void GoHome()
+        protected virtual void SelfGoHome()
         {
             GameFrameworkEntry.GetModule<IUIManager>().GoHome();
         }
@@ -241,9 +241,25 @@ namespace GameFramework.UI
         /// <summary>
         /// 关闭当前界面
         /// </summary>
-        private void CloseForm()
+        protected virtual void SelfClose()
         {
             GameFrameworkEntry.GetModule<IUIManager>().CloseForm(this);
+        }
+
+        /// <summary>
+        /// 立即关闭当前界面
+        /// </summary>
+        protected virtual void SelfCloseImmediately()
+        {
+            GameFrameworkEntry.GetModule<IUIManager>().CloseFormImmediately(this);
+        }
+
+        /// <summary>
+        /// 退出游戏
+        /// </summary>
+        protected virtual void SelfQuitGame()
+        {
+            UnityGameFramework.Runtime.GameEntry.Shutdown(UnityGameFramework.Runtime.ShutdownType.Quit);
         }
 
         /// <summary>
@@ -268,14 +284,14 @@ namespace GameFramework.UI
         private void CheckAndOpen()
         {
             if (!m_IsDataReady) return;
-            Instance.visible = true;
+            SetVisible(true);
             Instance.touchable = true;
             GameFrameworkEntry.GetModule<IUIManager>().AddToStage(this);
             try
             {
+                OnMVCOpen();
                 OnOpen();
                 OnPartOpen();
-                OnMVCOpen();
             }
             catch (Exception e)
             {
@@ -384,7 +400,7 @@ namespace GameFramework.UI
             m_FormBg?.Close(-1);
             m_IsDataReady = false;
             m_State = UIFormState.HIDE_OVER;
-            Instance.visible = false;
+            SetVisible(false);
             Instance.touchable = false;
             m_CloseCompleteCallback?.Invoke();
             m_CloseCompleteCallback = null;
@@ -410,8 +426,8 @@ namespace GameFramework.UI
         {
             try
             {
-                OnUpdate(elapseSeconds, realElapseSeconds);
                 OnMVCUpdate(elapseSeconds, realElapseSeconds);
+                OnUpdate(elapseSeconds, realElapseSeconds);
             }
             catch (Exception e)
             {
@@ -493,6 +509,12 @@ namespace GameFramework.UI
         /// 关闭界面完成
         /// </summary>
         protected virtual void OnCloseComplete() { }
+
+        /// <summary>
+        /// 界面可见发生修改
+        /// </summary>
+        /// <param name="visible"></param>
+        protected virtual void OnVisibleChange(bool visible) { }
         
         /// <summary>
         /// 轮询
@@ -562,7 +584,7 @@ namespace GameFramework.UI
         #endregion
 
         #region MVC 可选
-        
+
         private IUIModel m_UIModel;
         private IUIController m_UICtrl;
 

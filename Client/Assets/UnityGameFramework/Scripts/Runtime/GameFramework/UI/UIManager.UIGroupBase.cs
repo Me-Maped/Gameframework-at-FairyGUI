@@ -1,18 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using FairyGUI;
+using GameFramework.ObjectPool;
 using UnityEngine;
 
 namespace GameFramework.UI
 {
     internal sealed partial class UIManager : GameFrameworkModule, IUIManager
     {
-        private abstract class UIGroupBase : IUIGroup
+        private class UIGroupBase : IUIGroup
         {
             protected const string MASK_NAME = "MASK";
             protected readonly List<UIFormBase> m_UIForms;
             protected readonly List<UIFormBase> m_CachedList;
             protected readonly UIGroupEnum m_GroupEnum;
+            protected readonly IObjectPool<UIFormInstanceObject> m_InstancePool;
 
             protected GComponent m_GroupRoot;
             protected GGraph m_Mask;
@@ -43,9 +45,10 @@ namespace GameFramework.UI
                 }
             }
 
-            protected UIGroupBase(UIGroupEnum groupEnum)
+            public UIGroupBase(UIGroupEnum groupEnum,IObjectPool<UIFormInstanceObject> instancePool)
             {
                 m_GroupEnum = groupEnum;
+                m_InstancePool = instancePool;
                 m_UIForms = new List<UIFormBase>();
                 m_CachedList = new List<UIFormBase>();
                 string groupName = groupEnum.ToString();
@@ -57,24 +60,37 @@ namespace GameFramework.UI
                 GRoot.inst.AddChild(m_GroupRoot);
             }
 
+            protected virtual void CheckBeforeOpen(bool isTopFormFullScreen)
+            {
+                if (GroupEnum != UIGroupEnum.PANEL || !isTopFormFullScreen) return;
+                for (int i = m_UIForms.Count - 1; i >= 0; i--)
+                {
+                    m_UIForms[i].SetVisible(false);
+                }
+            }
+
+            protected virtual void CheckAfterClose(bool isClosedFormFullScreen)
+            {
+                if (GroupEnum != UIGroupEnum.PANEL || !isClosedFormFullScreen) return;
+                m_TopForm?.SetVisible(true);
+            }
+            
             public virtual void OpenForm(UIFormBase uiFormBase)
             {
                 if (CloseOthers)
                 {
-                    m_CachedList.AddRange(m_UIForms);
-                    foreach (var uiForm in m_CachedList)
-                    {
-                        GameFrameworkEntry.GetModule<IUIManager>().CloseForm(uiForm);
-                    }
-                    m_CachedList.Clear();
+                    CloseAllForm();
                 }
+                CheckBeforeOpen(uiFormBase.Config.StyleEnum == UIFormStyleEnum.FULL_SCREEN);
                 m_UIForms.Remove(uiFormBase);
                 m_UIForms.Add(uiFormBase);
-                uiFormBase.Open();
+                uiFormBase.InternalOpen();
             }
 
             public virtual void CloseForm(UIFormBase uiFormBase)
             {
+                bool isClosedFormFullScreen = uiFormBase.Config.StyleEnum == UIFormStyleEnum.FULL_SCREEN;
+                if(uiFormBase.Instance!=null) m_InstancePool.Unspawn(uiFormBase.Instance);
                 if (!m_UIForms.Contains(uiFormBase)) return;
                 m_UIForms.Remove(uiFormBase);
                 if (uiFormBase.IsWaitingForData)
@@ -83,12 +99,15 @@ namespace GameFramework.UI
                 }
                 else
                 {
-                    uiFormBase.Close();
+                    uiFormBase.InternalClose();
                 }
+                CheckAfterClose(isClosedFormFullScreen);
             }
 
             public virtual void CloseFormImmediately(UIFormBase uiFormBase)
             {
+                bool isClosedFormFullScreen = uiFormBase.Config.StyleEnum == UIFormStyleEnum.FULL_SCREEN;
+                if(uiFormBase.Instance!=null) m_InstancePool.Unspawn(uiFormBase.Instance);
                 if (!m_UIForms.Contains(uiFormBase)) return;
                 m_UIForms.Remove(uiFormBase);
                 if (uiFormBase.IsWaitingForData)
@@ -97,8 +116,9 @@ namespace GameFramework.UI
                 }
                 else
                 {
-                    uiFormBase.CloseImmediately();
+                    uiFormBase.InternalCloseImmediately();
                 }
+                CheckAfterClose(isClosedFormFullScreen);
             }
 
             public virtual void CloseAllForm()
@@ -107,13 +127,14 @@ namespace GameFramework.UI
                 for (int i = m_UIForms.Count - 1; i >= 0; i--)
                 {
                     UIFormBase uiForm = m_UIForms[i];
+                    if (uiForm.Instance != null) m_InstancePool.Unspawn(uiForm.Instance);
                     if (uiForm.IsWaitingForData)
                     {
                         uiForm.CloseOffline();
                     }
                     else
                     {
-                        uiForm.Close();
+                        uiForm.InternalClose();
                     }
                 }
 
@@ -173,7 +194,7 @@ namespace GameFramework.UI
 
                 m_UIForms.Clear();
                 m_TopForm = null;
-                m_Mask.Dispose();
+                m_Mask?.Dispose();
                 m_GroupRoot.Dispose();
             }
 

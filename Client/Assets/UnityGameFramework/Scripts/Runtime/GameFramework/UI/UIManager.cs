@@ -223,7 +223,6 @@ namespace GameFramework.UI
         public void CloseForm(UIFormBase uiForm)
         {
             if (uiForm == null) return;
-            if (uiForm.Instance != null) m_InstancePool.Unspawn(uiForm.Instance);
             GetUIGroup(uiForm.Config.GroupEnum).CloseForm(uiForm);
             if (m_CloseUIFormCompleteEventHandler != null)
             {
@@ -286,7 +285,7 @@ namespace GameFramework.UI
         {
             m_UIGroups.TryGetValue(groupEnum, out IUIGroup uiGroup);
             if (uiGroup != null) return uiGroup;
-            uiGroup = new UIGroupDefault(groupEnum);
+            uiGroup = new UIGroupBase(groupEnum,m_InstancePool);
             m_UIGroups.Add(groupEnum, uiGroup);
             return uiGroup;
         }
@@ -497,7 +496,7 @@ namespace GameFramework.UI
         {
             if (uiForm == null) return;
             m_LoadedFormInst.Remove(uiForm.GetType());
-            GameFrameworkLog.Warning("UIFormHelper OnInstanceReleaseCall type = {0}", uiForm.GetType());
+            GameFrameworkLog.Info("UIFormHelper OnInstanceReleaseCall type = {0}", uiForm.GetType());
             if (uiForm.Config.AutoRelease)
             {
                 OnPackageRefReduce(GetPackageDependencies(uiForm.Config.PkgName, uiForm.Config.Depends));
@@ -540,7 +539,7 @@ namespace GameFramework.UI
                 UIPackage.GetByName(pkgName)?.UnloadAssets();
                 UIPackage.RemovePackage(pkgName);
                 m_PackageRefCount.Remove(pkgName);
-                GameFrameworkLog.Warning("Remove UIPackage {0}", pkgName);
+                GameFrameworkLog.Info("Remove UIPackage {0}", pkgName);
             }
         }
 

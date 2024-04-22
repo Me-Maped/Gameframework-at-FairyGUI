@@ -12,15 +12,6 @@ namespace UnityGameFramework.Runtime
         {
             View = Instance as T;
         }
-
-        #region Public Methods
-        public void Close(bool immediately = false)
-        {
-            if (!immediately) GameEntry.GetComponent<UIComponent>().CloseForm(this);
-            else GameEntry.GetComponent<UIComponent>().CloseFormImmediately(this);
-        }
-
-        #endregion
     }
 
     public abstract class UIForm<TView, TModel, TCtrl> : UIFormBase where TView : GComponent

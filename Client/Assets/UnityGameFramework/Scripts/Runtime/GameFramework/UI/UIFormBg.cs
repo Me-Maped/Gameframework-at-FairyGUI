@@ -56,7 +56,7 @@ namespace GameFramework.UI
 
         public void Dispose()
         {
-            if (Loader == null) return;
+            if (Loader == null || Loader.displayObject.gameObject == null) return;
             Loader.visible = false;
             Loader.RemoveFromParent();
             Loader.Dispose();
