@@ -39,6 +39,7 @@ namespace GameFramework.UI
 
         private readonly LoadAssetCallbacks m_LoadAssetCallbacks;
         private readonly Dictionary<UIGroupEnum, IUIGroup> m_UIGroups;
+        private List<IUIGroup> m_UIGroupCached;
 
         private Dictionary<Type, UIFormBase> m_LoadedFormInst;
         private Dictionary<string, List<UIFormBase>> m_ToBeLoadFormInst;
@@ -71,6 +72,7 @@ namespace GameFramework.UI
             m_UIJumpHelper = null;
             m_UICameraHelper = null;
             m_UIGroups = new Dictionary<UIGroupEnum, IUIGroup>();
+            m_UIGroupCached = new List<IUIGroup>();
             m_LoadedFormInst = new Dictionary<Type, UIFormBase>();
             m_ToBeLoadFormInst = new Dictionary<string, List<UIFormBase>>();
             m_PackageRefCount = new Dictionary<string, int>();
@@ -124,7 +126,12 @@ namespace GameFramework.UI
             if (m_LoadedFormInst.TryGetValue(formType, out UIFormBase loadedForm) && loadedForm.Config.OneInst)
             {
                 loadedForm.UserData = userData;
-                if (loadedForm.IsOpened) return loadedForm;
+                GetUIGroup(loadedForm.Config.GroupEnum).CloseOthers = closeOther;
+                if (loadedForm.IsOpened)
+                {
+                    m_UIJumpHelper.Record(formType);
+                    return loadedForm;
+                }
                 InternalOpenUIForm(loadedForm, 0);
                 return loadedForm;
             }
@@ -332,9 +339,14 @@ namespace GameFramework.UI
 
         internal override void Update(float elapseSeconds, float realElapseSeconds)
         {
+            m_UIGroupCached.Clear();
             foreach (var groupInfo in m_UIGroups)
             {
-                groupInfo.Value.Update(elapseSeconds, realElapseSeconds);
+                m_UIGroupCached.Add(groupInfo.Value);
+            }
+            foreach (var groupInfo in m_UIGroupCached)
+            {
+                groupInfo.Update(elapseSeconds, realElapseSeconds);
             }
 
             while (m_NeedCloseForms.Count > 0)
@@ -356,6 +368,7 @@ namespace GameFramework.UI
                 groupInfo.Value.Shutdown();
             }
             m_UIGroups.Clear();
+            m_UIGroupCached.Clear();
             m_LoadedFormInst.Clear();
             m_ToBeLoadFormInst.Clear();
             m_LoadingPkgNames.Clear();

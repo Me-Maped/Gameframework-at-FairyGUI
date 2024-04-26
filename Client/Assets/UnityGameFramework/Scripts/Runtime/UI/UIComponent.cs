@@ -246,9 +246,9 @@ namespace UnityGameFramework.Runtime
         /// <param name="userData"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public UIFormBase OpenForm<T>(bool closeOther = false,object userData = null) where T : UIFormBase
+        public T OpenForm<T>(bool closeOther = false,object userData = null) where T : UIFormBase
         {
-            return m_UIManager.OpenForm<T>(closeOther,userData);
+            return (T)m_UIManager.OpenForm<T>(closeOther,userData);
         }
         
         /// <summary>
@@ -256,9 +256,9 @@ namespace UnityGameFramework.Runtime
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public UIFormBase GetForm<T>() where T : UIFormBase
+        public T GetForm<T>() where T : UIFormBase
         {
-            return m_UIManager.GetForm<T>();
+            return (T)m_UIManager.GetForm<T>();
         }
         
         /// <summary>

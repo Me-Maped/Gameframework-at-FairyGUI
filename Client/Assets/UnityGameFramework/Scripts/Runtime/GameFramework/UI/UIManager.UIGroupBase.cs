@@ -79,7 +79,8 @@ namespace GameFramework.UI
             {
                 if (CloseOthers)
                 {
-                    CloseAllForm();
+                    GameFrameworkEntry.GetModule<IUIManager>().CloseFormByGroup(GroupEnum);
+                    CloseOthers = false;
                 }
                 CheckBeforeOpen(uiFormBase.Config.StyleEnum == UIFormStyleEnum.FULL_SCREEN);
                 m_UIForms.Remove(uiFormBase);
