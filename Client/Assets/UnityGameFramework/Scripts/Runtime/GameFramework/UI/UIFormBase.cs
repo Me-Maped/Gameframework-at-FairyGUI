@@ -53,6 +53,7 @@ namespace GameFramework.UI
             m_State = UIFormState.SHOW_START;
             if(Instance == null) CreateInstance();
             IsWaitingForData = true;
+            SerializeChild();
             OnRequestData();
         }
 
