@@ -667,11 +667,15 @@ namespace GameFramework.Resource
             }
             float duration = Time.time;
             string rootPath = SettingsUtils.FrameworkGlobalSettings.UIResourceFolder;
+            UIPackage uiPackage = UIPackage.GetByName(pkgName);
             TextAsset pkgDesc = await InternalLoadUIAsset(pkgName);
-            UIPackage uiPackage = UIPackage.AddPackage(pkgDesc.bytes, string.Empty, (name, extension, type, packageItem) =>
+            if (uiPackage == null)
             {
-                LoadUIExtensions(rootPath, name, extension, type, packageItem, loadAssetCallbacks, duration, userData);
-            });
+                uiPackage = UIPackage.AddPackage(pkgDesc.bytes, string.Empty, (name, extension, type, packageItem) =>
+                {
+                    LoadUIExtensionsAsync(rootPath, name, extension, packageItem, loadAssetCallbacks, duration, userData);
+                });
+            }
             List<string> depPkgNames = null;
             if (dependPkgs != null && dependPkgs.Length > 0)
             {
