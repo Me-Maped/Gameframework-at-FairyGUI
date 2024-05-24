@@ -50,24 +50,12 @@ namespace GameFramework.UI
         internal void InternalOpen()
         {
             if (Config == null) throw new GameFrameworkException("Config is null,you must override Config property");
+            if (m_State == UIFormState.SHOW_OVER) return;
             m_State = UIFormState.SHOW_START;
             if(Instance == null) CreateInstance();
             IsWaitingForData = true;
             SerializeChild();
             OnRequestData();
-        }
-
-        /// <summary>
-        /// 设置界面是否可见
-        /// </summary>
-        /// <param name="visible"></param>
-        internal void SetVisible(bool visible)
-        {
-            if (Instance == null)
-                throw new GameFrameworkException("Instance is null,you must override Instance property");
-            Instance.visible = visible;
-            m_FormBg?.SetVisible(visible);
-            OnVisibleChange(visible);
         }
 
         /// <summary>
@@ -219,6 +207,10 @@ namespace GameFramework.UI
                     case UIFormActionConst.CLOSE:
                         child.onClick.Add(SelfClose);
                         break;
+                    case UIFormActionConst.BACKGROUND:
+                        child.MakeFullScreen();
+                        child.Center();
+                        break;
                 }
             }
         }
@@ -285,7 +277,6 @@ namespace GameFramework.UI
         private void CheckAndOpen()
         {
             if (!m_IsDataReady) return;
-            SetVisible(true);
             Instance.touchable = true;
             GameFrameworkEntry.GetModule<IUIManager>().AddToStage(this);
             try
@@ -401,7 +392,6 @@ namespace GameFramework.UI
             m_FormBg?.Close(-1);
             m_IsDataReady = false;
             m_State = UIFormState.HIDE_OVER;
-            SetVisible(false);
             Instance.touchable = false;
             m_CloseCompleteCallback?.Invoke();
             m_CloseCompleteCallback = null;
@@ -511,12 +501,6 @@ namespace GameFramework.UI
         /// </summary>
         protected virtual void OnCloseComplete() { }
 
-        /// <summary>
-        /// 界面可见发生修改
-        /// </summary>
-        /// <param name="visible"></param>
-        protected virtual void OnVisibleChange(bool visible) { }
-        
         /// <summary>
         /// 轮询
         /// </summary>

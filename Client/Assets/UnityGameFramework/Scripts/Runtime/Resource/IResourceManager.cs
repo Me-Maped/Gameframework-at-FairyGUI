@@ -188,6 +188,14 @@ namespace GameFramework.Resource
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
         Cysharp.Threading.Tasks.UniTask<T> LoadAssetAsync<T>(string assetPath) where T : UnityEngine.Object;
+        
+        /// <summary>
+        /// 异步加载资源
+        /// </summary>
+        /// <param name="assetPath"></param>
+        /// <param name="assetType"></param>
+        /// <returns></returns>
+        Cysharp.Threading.Tasks.UniTask<UnityEngine.Object> LoadAssetAsync(string assetPath, System.Type assetType);
 
         /// <summary>
         /// 异步加载资源。
@@ -196,6 +204,14 @@ namespace GameFramework.Resource
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
         System.Threading.Tasks.Task<T> LoadAssetTaskAsync<T>(string assetPath) where T : UnityEngine.Object;
+        
+        /// <summary>
+        /// 异步加载资源
+        /// </summary>
+        /// <param name="assetPath"></param>
+        /// <param name="assetType"></param>
+        /// <returns></returns>
+        System.Threading.Tasks.Task<UnityEngine.Object> LoadAssetTaskAsync(string assetPath, System.Type assetType);
 
         /// <summary>
         /// 异步实例化资源。
@@ -282,11 +298,11 @@ namespace GameFramework.Resource
         /// <param name="loadAssetCallbacks"></param>
         /// <param name="userData"></param>
         void LoadUIPackagesAsync(string pkgName,string[] dependPkgs, LoadAssetCallbacks loadAssetCallbacks, object userData);
-        
+
         /// <summary>
-        /// 卸载UI资源。
+        /// 异步加载单个UI资源包
         /// </summary>
-        /// <param name="assetName"></param>
-        void UnloadUIAsset(string assetName);
+        /// <param name="pkgName"></param>
+        Cysharp.Threading.Tasks.UniTask<FairyGUI.UIPackage> LoadUIPackageAsync(string pkgName);
     }
 }

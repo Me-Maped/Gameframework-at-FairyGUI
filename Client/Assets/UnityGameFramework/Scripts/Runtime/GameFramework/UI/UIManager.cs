@@ -45,7 +45,6 @@ namespace GameFramework.UI
         private Dictionary<string, List<UIFormBase>> m_ToBeLoadFormInst;
         private Dictionary<string, int> m_PackageRefCount;
         private List<string> m_LoadingPkgNames;
-        private Queue<UIFormBase> m_NeedCloseForms;
         private Queue<UIFormBase> m_NeedImmediatlyCloseForms;
 
         private bool m_IsShutdown;
@@ -77,7 +76,6 @@ namespace GameFramework.UI
             m_ToBeLoadFormInst = new Dictionary<string, List<UIFormBase>>();
             m_PackageRefCount = new Dictionary<string, int>();
             m_LoadingPkgNames = new List<string>();
-            m_NeedCloseForms = new Queue<UIFormBase>();
             m_NeedImmediatlyCloseForms = new Queue<UIFormBase>();
             m_LoadUIFormSuccessEventHandler = null;
             m_LoadUIFormFailureEventHandler = null;
@@ -123,22 +121,17 @@ namespace GameFramework.UI
         {
             if (formType == null) throw new GameFrameworkException("FormType is invalid");
             if (m_ResourceManager == null) throw new GameFrameworkException("You must set ResourceManager first");
+            UIFormBase uiForm;
             if (m_LoadedFormInst.TryGetValue(formType, out UIFormBase loadedForm) && loadedForm.Config.OneInst)
             {
-                loadedForm.UserData = userData;
-                GetUIGroup(loadedForm.Config.GroupEnum).CloseOthers = closeOther;
-                if (loadedForm.IsOpened)
-                {
-                    m_UIJumpHelper.Record(formType);
-                    return loadedForm;
-                }
-                InternalOpenUIForm(loadedForm, 0);
-                return loadedForm;
+                uiForm = loadedForm;
             }
-            UIFormBase uiForm = (UIFormBase)ReferencePool.Acquire(formType);
+            else
+            {
+                uiForm = (UIFormBase)ReferencePool.Acquire(formType);
+            }
             uiForm.UserData = userData;
             GetUIGroup(uiForm.Config.GroupEnum).CloseOthers = closeOther;
-
             if (m_LoadingPkgNames.Contains(uiForm.Config.PkgName))
             {
                 if (m_ToBeLoadFormInst.TryGetValue(uiForm.Config.PkgName, out List<UIFormBase> uiForms))
@@ -152,8 +145,13 @@ namespace GameFramework.UI
                 }
                 return uiForm;
             }
+            if (m_LoadedFormInst.ContainsKey(uiForm.GetType()))
+            {
+                InternalOpenUIForm(uiForm, 0);
+                return uiForm;
+            }
             m_LoadingPkgNames.Add(uiForm.Config.PkgName);
-            m_ResourceManager.LoadUIPackagesAsync(uiForm.Config.PkgName,uiForm.Config.Depends, m_LoadAssetCallbacks, uiForm);
+            m_ResourceManager.LoadUIPackagesAsync(uiForm.Config.PkgName, uiForm.Config.Depends, m_LoadAssetCallbacks, uiForm);
             return uiForm;
         }
 
@@ -223,7 +221,7 @@ namespace GameFramework.UI
         public void CloseForm(UIFormBase uiForm)
         {
             if (uiForm == null) return;
-            m_NeedCloseForms.Enqueue(uiForm);
+            InternalCloseUIForm(uiForm);
         }
         
         public void CloseAllForm()
@@ -232,7 +230,7 @@ namespace GameFramework.UI
             {
                 foreach (var uiForm in groupInfo.Value.UIForms)
                 {
-                    m_NeedCloseForms.Enqueue(uiForm);
+                    InternalCloseUIForm(uiForm);
                 }
             }
         }
@@ -340,11 +338,6 @@ namespace GameFramework.UI
                 groupInfo.Update(elapseSeconds, realElapseSeconds);
             }
 
-            while (m_NeedCloseForms.Count > 0)
-            {
-                InternalCloseUIForm(m_NeedCloseForms.Dequeue());
-            }
-
             while (m_NeedImmediatlyCloseForms.Count > 0)
             {
                 InternalCloseUIFormImmediately(m_NeedImmediatlyCloseForms.Dequeue());
@@ -363,7 +356,6 @@ namespace GameFramework.UI
             m_LoadedFormInst.Clear();
             m_ToBeLoadFormInst.Clear();
             m_LoadingPkgNames.Clear();
-            m_NeedCloseForms.Clear();
             m_NeedImmediatlyCloseForms.Clear();
             m_PackageRefCount.Clear();
         }
@@ -489,6 +481,7 @@ namespace GameFramework.UI
 
         private void LoadFormSuccessCallback(string pkgName, object asset, float duration, object userdata)
         {
+            // 这里的asset是ui描述文件，不需要使用
             UIFormBase uiForm = userdata as UIFormBase;
             if (uiForm == null) throw new GameFrameworkException("LoadFormSuccessCallback form is invalid");
             //依赖包加载完成并不能直接打开，需要等待主包加载完成
@@ -565,11 +558,9 @@ namespace GameFramework.UI
             m_PackageRefCount[pkgName]--;
             if (m_PackageRefCount[pkgName] <= 0)
             {
-                m_ResourceManager.UnloadUIAsset(pkgName);
                 UIPackage.GetByName(pkgName)?.UnloadAssets();
-                UIPackage.RemovePackage(pkgName);
                 m_PackageRefCount.Remove(pkgName);
-                GameFrameworkLog.Info("Remove UIPackage {0}", pkgName);
+                GameFrameworkLog.Info("Unload ui package assets: {0}", pkgName);
             }
         }
 

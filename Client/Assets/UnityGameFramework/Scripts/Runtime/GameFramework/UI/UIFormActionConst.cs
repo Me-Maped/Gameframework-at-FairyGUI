@@ -31,5 +31,10 @@
         /// 分享
         /// </summary>
         public const string SHARE = "share";
+        
+        /// <summary>
+        /// 背景组件（会拉伸至屏幕大小）
+        /// </summary>
+        public const string BACKGROUND = "bg";
     }
 }

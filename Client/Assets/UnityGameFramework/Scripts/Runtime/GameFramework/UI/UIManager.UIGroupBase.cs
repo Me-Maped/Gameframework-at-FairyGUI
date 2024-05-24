@@ -10,6 +10,8 @@ namespace GameFramework.UI
     {
         private class UIGroupBase : IUIGroup
         {
+            private List<Type> _cachedFormTypes = new();
+
             protected const string MASK_NAME = "MASK";
             protected readonly List<UIFormBase> m_UIForms;
             protected readonly List<UIFormBase> m_CachedList;
@@ -60,37 +62,30 @@ namespace GameFramework.UI
                 GRoot.inst.AddChild(m_GroupRoot);
             }
 
-            protected virtual void CheckBeforeOpen(bool isTopFormFullScreen)
-            {
-                if (GroupEnum != UIGroupEnum.PANEL || !isTopFormFullScreen) return;
-                for (int i = m_UIForms.Count - 1; i >= 0; i--)
-                {
-                    m_UIForms[i].SetVisible(false);
-                }
-            }
-
-            protected virtual void CheckAfterClose(bool isClosedFormFullScreen)
-            {
-                if (GroupEnum != UIGroupEnum.PANEL || !isClosedFormFullScreen) return;
-                m_TopForm?.SetVisible(true);
-            }
-            
             public virtual void OpenForm(UIFormBase uiFormBase)
             {
                 if (CloseOthers)
                 {
-                    GameFrameworkEntry.GetModule<IUIManager>().CloseFormByGroup(GroupEnum);
+                    foreach (var uiForm in m_UIForms)
+                    {
+                        if (uiForm == uiFormBase) continue;
+                        _cachedFormTypes.Add(uiForm.GetType());
+                    }
+                    foreach (var formType in _cachedFormTypes)
+                    {
+                        GameFrameworkEntry.GetModule<IUIManager>().CloseForm(formType);
+                    }
+                    _cachedFormTypes.Clear();
                     CloseOthers = false;
                 }
-                CheckBeforeOpen(uiFormBase.Config.StyleEnum == UIFormStyleEnum.FULL_SCREEN);
                 m_UIForms.Remove(uiFormBase);
                 m_UIForms.Add(uiFormBase);
                 uiFormBase.InternalOpen();
+                uiFormBase.Instance.z = (int)GroupEnum - m_UIForms.Count;
             }
 
             public virtual void CloseForm(UIFormBase uiFormBase)
             {
-                bool isClosedFormFullScreen = uiFormBase.Config.StyleEnum == UIFormStyleEnum.FULL_SCREEN;
                 if(uiFormBase.Instance!=null) m_InstancePool.Unspawn(uiFormBase.Instance);
                 if (!m_UIForms.Contains(uiFormBase)) return;
                 m_UIForms.Remove(uiFormBase);
@@ -102,12 +97,10 @@ namespace GameFramework.UI
                 {
                     uiFormBase.InternalClose();
                 }
-                CheckAfterClose(isClosedFormFullScreen);
             }
 
             public virtual void CloseFormImmediately(UIFormBase uiFormBase)
             {
-                bool isClosedFormFullScreen = uiFormBase.Config.StyleEnum == UIFormStyleEnum.FULL_SCREEN;
                 if(uiFormBase.Instance!=null) m_InstancePool.Unspawn(uiFormBase.Instance);
                 if (!m_UIForms.Contains(uiFormBase)) return;
                 m_UIForms.Remove(uiFormBase);
@@ -119,7 +112,6 @@ namespace GameFramework.UI
                 {
                     uiFormBase.InternalCloseImmediately();
                 }
-                CheckAfterClose(isClosedFormFullScreen);
             }
 
             public virtual void CloseAllForm()

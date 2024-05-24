@@ -109,12 +109,6 @@ namespace GameFramework.Resource
         /// 因未更新Manifest导致找不到路径时需要重试的资源
         /// </summary>
         private List<string> m_LoadFailBeforeUpdate;
-        
-        /// <summary>
-        /// 加载的UI资源
-        /// </summary>
-        private Dictionary<string, List<string>> m_UIAssetHandlers;
-
         #endregion
 
         /// <summary>
@@ -124,7 +118,9 @@ namespace GameFramework.Resource
         {
             m_AssetHandlers = new Dictionary<ValueTuple<string,int>, OperationHandleBase>();
             m_LoadFailBeforeUpdate = new List<string>();
-            m_UIAssetHandlers = new Dictionary<string, List<string>>();
+
+            NTexture.CustomDestroyMethod += CustomUnloadUIAssetsFunc;
+            NAudioClip.CustomDestroyMethod += CustomUnloadUIAssetsFunc;
         }
 
         public void Initialize()
@@ -228,10 +224,8 @@ namespace GameFramework.Resource
         {
             m_AssetHandlers.Clear();
             m_LoadFailBeforeUpdate.Clear();
-            m_UIAssetHandlers.Clear();
             m_AssetHandlers = null;
             m_LoadFailBeforeUpdate = null;
-            m_UIAssetHandlers = null;
             YooAssets.Destroy();
         }
 
@@ -261,8 +255,24 @@ namespace GameFramework.Resource
             {
                 GameFrameworkLog.Warning("If you need instance a GameObject, you should call InstantiateAsync().");
             }
-            AssetOperationHandle handle = await InternalLoadAssetHandleAsync(location);
+            AssetOperationHandle handle = await InternalLoadAssetHandleAsync(location, typeof(TObject));
             return handle.AssetObject as TObject;
+        }
+
+        /// <summary>
+        /// 异步资源加载
+        /// </summary>
+        /// <param name="location"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public async UniTask<UnityEngine.Object> LoadAssetAsync(string location, System.Type type)
+        {
+            if (type == typeof(GameObject))
+            {
+                GameFrameworkLog.Warning("If you need instance a GameObject, you should call InstantiateAsync().");
+            }
+            AssetOperationHandle handle = await InternalLoadAssetHandleAsync(location, type);
+            return handle.AssetObject;
         }
 
         /// <summary>
@@ -277,7 +287,7 @@ namespace GameFramework.Resource
             {
                 GameFrameworkLog.Warning("If you need instance a GameObject, you should call InstantiateSync().");
             }
-            return InternalLoadAssetHandle(location).AssetObject as TObject;
+            return InternalLoadAssetHandle(location,typeof(TObject)).AssetObject as TObject;
         }
 
         /// <summary>
@@ -291,7 +301,7 @@ namespace GameFramework.Resource
         /// <returns></returns>
         public async System.Threading.Tasks.Task<GameObject> InstantiateTaskAsync(string prefabPath,Vector3 position, Quaternion rotation, Transform parent,bool worldPositionStays)
         {
-            AssetOperationHandle handle = await InternalLoadAssetHandleAsync(prefabPath, false);
+            AssetOperationHandle handle = await InternalLoadAssetHandleAsync(prefabPath, typeof(GameObject),false);
             InstantiateOperation instHandle;
             if (worldPositionStays)
             {
@@ -320,7 +330,7 @@ namespace GameFramework.Resource
         {
             if (position == default) position = Vector3.zero;
             if (rotation == default) rotation = Quaternion.identity;
-            AssetOperationHandle handle = InternalLoadAssetHandle(prefabPath, false);
+            AssetOperationHandle handle = InternalLoadAssetHandle(prefabPath, typeof(GameObject),false);
             GameObject result;
             if (worldPositionStays)
             {
@@ -394,15 +404,34 @@ namespace GameFramework.Resource
             resultCallback?.Invoke(result);
         }
 
+        /// <summary>
+        /// 异步加载资源
+        /// </summary>
+        /// <param name="location"></param>
+        /// <typeparam name="TObject"></typeparam>
+        /// <returns></returns>
         public async System.Threading.Tasks.Task<TObject> LoadAssetTaskAsync<TObject>(string location) where TObject : UnityEngine.Object
         {
-            AssetOperationHandle handle = await InternalLoadAssetHandleAsync(location);
+            AssetOperationHandle handle = await InternalLoadAssetHandleAsync(location,typeof(TObject));
             return handle.AssetObject as TObject;
+        }
+
+        /// <summary>
+        /// 异步加载资源
+        /// </summary>
+        /// <param name="location"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public async System.Threading.Tasks.Task<UnityEngine.Object> LoadAssetTaskAsync(string location,
+            System.Type type)
+        {
+            AssetOperationHandle handle = await InternalLoadAssetHandleAsync(location, type);
+            return handle.AssetObject;
         }
 
         public async UniTask<GameObject> InstantiateAsync(string prefabPath,Vector3 position, Quaternion rotation, Transform parent,bool worldPositionStays)
         {
-            AssetOperationHandle handle = await InternalLoadAssetHandleAsync(prefabPath,false);
+            AssetOperationHandle handle = await InternalLoadAssetHandleAsync(prefabPath,typeof(GameObject),false);
             InstantiateOperation instHandle;
             if (worldPositionStays)
             {
@@ -434,7 +463,7 @@ namespace GameFramework.Resource
                 throw new GameFrameworkException("Load asset callbacks is invalid.");
             }
             
-            AssetOperationHandle handle = await InternalLoadAssetHandleAsync(assetName);
+            AssetOperationHandle handle = await InternalLoadAssetHandleAsync(assetName,assetType);
             if (handle == null || handle.AssetObject == null || handle.Status == EOperationStatus.Failed)
             {
                 string errorMessage = Utility.Text.Format("Can not load asset '{0}'.", assetName);
@@ -463,7 +492,7 @@ namespace GameFramework.Resource
             {
                 throw new GameFrameworkException("Load asset callbacks is invalid.");
             }
-            AssetOperationHandle handle = await InternalLoadAssetHandleAsync(assetName);
+            AssetOperationHandle handle = await InternalLoadAssetHandleAsync(assetName,typeof(Object));
             if (handle == null || handle.AssetObject == null || handle.Status == EOperationStatus.Failed)
             {
                 string errorMessage = Utility.Text.Format("Can not load asset '{0}'.", assetName);
@@ -647,6 +676,15 @@ namespace GameFramework.Resource
         }
 
         /// <summary>
+        /// UI包加载
+        /// </summary>
+        /// <param name="pkgName"></param>
+        public async UniTask<UIPackage> LoadUIPackageAsync(string pkgName)
+        {
+            return await InternalLoadUIPackageAsync(pkgName, null, null);
+        }
+
+        /// <summary>
         /// 异步加载UI包，自动加载依赖包
         /// </summary>
         /// <param name="pkgName"></param>
@@ -666,16 +704,7 @@ namespace GameFramework.Resource
                 throw new GameFrameworkException("Load asset callbacks is invalid.");
             }
             float duration = Time.time;
-            string rootPath = SettingsUtils.FrameworkGlobalSettings.UIResourceFolder;
-            UIPackage uiPackage = UIPackage.GetByName(pkgName);
-            TextAsset pkgDesc = await InternalLoadUIAsset(pkgName);
-            if (uiPackage == null)
-            {
-                uiPackage = UIPackage.AddPackage(pkgDesc.bytes, string.Empty, (name, extension, type, packageItem) =>
-                {
-                    LoadUIExtensionsAsync(rootPath, name, extension, packageItem, loadAssetCallbacks, duration, userData);
-                });
-            }
+            UIPackage uiPackage = await InternalLoadUIPackageAsync(pkgName, loadAssetCallbacks, userData);
             List<string> depPkgNames = null;
             if (dependPkgs != null && dependPkgs.Length > 0)
             {
@@ -693,49 +722,53 @@ namespace GameFramework.Resource
                 for (int i = 0; i < depPkgNames.Count; i++)
                 {
                     string depPkgName = depPkgNames[i];
-                    TextAsset depPkgDesc = await InternalLoadUIAsset(depPkgName);
-                    UIPackage.AddPackage(depPkgDesc.bytes, string.Empty,
-                        (name, extension, type, packageItem) =>
-                        {
-                            LoadUIExtensions(rootPath, name, extension, type, packageItem, loadAssetCallbacks, duration,
-                                userData);
-                        });
+                    await InternalLoadUIPackageAsync(depPkgName, loadAssetCallbacks, userData);
                     // 所有包加载完成后给出回调
                     if (i == depPkgNames.Count - 1)
                     {
-                        loadAssetCallbacks.LoadAssetSuccessCallback?.Invoke(pkgName, pkgDesc, Time.time - duration,
+                        loadAssetCallbacks.LoadAssetSuccessCallback?.Invoke(pkgName, null, Time.time - duration,
                             userData);
                     }
                 }
-                GameFrameworkLog.Info("Main package '{0}', loading dependent packages '{1}'", pkgName,
-                    depPkgNames.ToString());
             }
             else
             {
-                loadAssetCallbacks.LoadAssetSuccessCallback?.Invoke(pkgName, pkgDesc, Time.time - duration, userData);
+                loadAssetCallbacks.LoadAssetSuccessCallback?.Invoke(pkgName, null, Time.time - duration, userData);
             }
         }
 
         /// <summary>
-        /// 卸载UI资源。
+        /// 异步加载UI包
         /// </summary>
-        /// <param name="assetName"></param>
-        public void UnloadUIAsset(string assetName)
+        /// <param name="pkgName"></param>
+        /// <param name="callbacks"></param>
+        /// <param name="userData"></param>
+        /// <returns></returns>
+        private async UniTask<UIPackage> InternalLoadUIPackageAsync(string pkgName, LoadAssetCallbacks callbacks, object userData)
         {
-            if (m_UIAssetHandlers.TryGetValue(assetName, out var locationList))
+            UIPackage result = UIPackage.GetByName(pkgName);
+            if (result != null)
             {
-                foreach (var location in locationList)
-                {
-                    UnloadAsset(location);
-                }
-                locationList.Clear();
-                m_UIAssetHandlers.Remove(assetName);
+                result.ReloadAssets();
+                return result;
             }
+            string rootPath = SettingsUtils.FrameworkGlobalSettings.UIResourceFolder;
+            TextAsset pkgDesc = await InternalLoadUIAsset(pkgName);
+            result = UIPackage.AddPackage(pkgDesc.bytes, string.Empty, (name, extension, type, packageItem) =>
+            {
+                LoadUIExtensionsAsync(rootPath, name, extension, type,packageItem, callbacks, Time.time, userData);
+            });
+            return result;
         }
 
+        /// <summary>
+        /// 加载UI包描述数据，文件很小，不需要记录以及销毁
+        /// </summary>
+        /// <param name="pkgName"></param>
+        /// <returns></returns>
+        /// <exception cref="GameFrameworkException"></exception>
         private async UniTask<TextAsset> InternalLoadUIAsset(string pkgName)
         {
-            //加载包描述数据
             if (string.IsNullOrEmpty(pkgName))
             {
                 throw new GameFrameworkException("Asset name is invalid.");
@@ -747,13 +780,6 @@ namespace GameFramework.Resource
             {
                 throw new GameFrameworkException(Utility.Text.Format("Asset name '{0}' is invalid.", pkgName));
             }
-            m_UIAssetHandlers.TryGetValue(pkgName, out var handleList);
-            if (handleList == null)
-            {
-                handleList = new List<string>();
-                m_UIAssetHandlers.Add(pkgName, handleList);
-            }
-            handleList.Add(resPath);
             return pkgDesc;
         }
 
@@ -763,17 +789,16 @@ namespace GameFramework.Resource
         /// <param name="rootPath"></param>
         /// <param name="name"></param>
         /// <param name="extension"></param>
-        /// <param name="type"></param>
         /// <param name="packageItem"></param>
         /// <param name="loadAssetCallbacks"></param>
-        /// <param name="duration"></param>
+        /// <param name="startTime"></param>
         /// <param name="userData"></param>
-        private async void LoadUIExtensions(string rootPath, string name, string extension, Type type, PackageItem packageItem, LoadAssetCallbacks loadAssetCallbacks, float duration, object userData)
+        private async void LoadUIExtensionsAsync(string rootPath, string name, string extension, System.Type type,PackageItem packageItem, LoadAssetCallbacks loadAssetCallbacks, float startTime, object userData)
         {
             string extPath = Utility.Text.Format("{0}{1}/{1}_{2}{3}", rootPath, packageItem.owner.name, name, extension);
-            var targetObj = await LoadAssetAsync<Object>(extPath);
-            packageItem.owner.SetItemAsset(packageItem, targetObj, DestroyMethod.None);
-            loadAssetCallbacks.LoadAssetSuccessCallback?.Invoke(name, targetObj, Time.time - duration, userData);
+            var targetObj = await LoadAssetAsync(extPath,type);
+            packageItem.owner.SetItemAsset(packageItem, targetObj, DestroyMethod.Custom);
+            loadAssetCallbacks?.LoadAssetSuccessCallback?.Invoke(name, targetObj, Time.time - startTime, userData);
         }
 
         private IEnumerator UnloadSceneCo(string sceneAssetName, UnloadSceneCallbacks unloadSceneCallbacks, object userData)
@@ -802,7 +827,7 @@ namespace GameFramework.Resource
             }
         }
 
-        private async UniTask<AssetOperationHandle> InternalLoadAssetHandleAsync(string location, bool recordRef = true)
+        private async UniTask<AssetOperationHandle> InternalLoadAssetHandleAsync(string location,System.Type type, bool recordRef = true)
         {
             if (string.IsNullOrEmpty(location))
             {
@@ -812,10 +837,10 @@ namespace GameFramework.Resource
             AssetInfo assetInfo = assetPackage.GetAssetInfo(location);
             if (assetInfo.IsInvalid)
             {
-                if(RecheckAssetInfo) return await InternalReloadAssetHandleAsync(location);
+                if(RecheckAssetInfo) return await InternalReloadAssetHandleAsync(location, type);
                 throw new GameFrameworkException(Utility.Text.Format("Can not load asset '{0}'.", location));
             }
-            AssetOperationHandle handle = assetPackage.LoadAssetAsync(assetInfo);
+            AssetOperationHandle handle = assetPackage.LoadAssetAsync(location, type);
             await handle.Task;
             if (handle.AssetObject == null || handle.Status == EOperationStatus.Failed)
             {
@@ -826,7 +851,7 @@ namespace GameFramework.Resource
             return handle;
         }
 
-        private AssetOperationHandle InternalLoadAssetHandle(string location, bool recordRef = true)
+        private AssetOperationHandle InternalLoadAssetHandle(string location,System.Type type, bool recordRef = true)
         {
             if (string.IsNullOrEmpty(location))
             {
@@ -838,7 +863,7 @@ namespace GameFramework.Resource
             {
                 throw new GameFrameworkException($"Asset info {location} is invalid.");
             }
-            AssetOperationHandle handle = assetPackage.LoadAssetSync(assetInfo);
+            AssetOperationHandle handle = assetPackage.LoadAssetSync(location, type);
             if (handle.AssetObject == null || handle.Status == EOperationStatus.Failed)
             {
                 string errorMessage = Utility.Text.Format("Can not load asset '{0}'.", location);
@@ -848,7 +873,7 @@ namespace GameFramework.Resource
             return handle;
         }
 
-        private async UniTask<AssetOperationHandle> InternalReloadAssetHandleAsync(string location)
+        private async UniTask<AssetOperationHandle> InternalReloadAssetHandleAsync(string location,System.Type type)
         {
             if (m_LoadFailBeforeUpdate.Contains(location))
             {
@@ -858,7 +883,7 @@ namespace GameFramework.Resource
             }
             m_LoadFailBeforeUpdate.Add(location);
             await ReUpdatePackageManifest();
-            AssetOperationHandle result = await InternalLoadAssetHandleAsync(location);
+            AssetOperationHandle result = await InternalLoadAssetHandleAsync(location, type);
             m_LoadFailBeforeUpdate.Remove(location);
             return result;
         }
@@ -901,6 +926,16 @@ namespace GameFramework.Resource
             {
                 throw new GameFrameworkException(versionLoadOperation.Error);
             }
+        }
+        
+        /// <summary>
+        /// 自定义UI资源卸载方法
+        /// </summary>
+        /// <param name="obj"></param>
+        private static void CustomUnloadUIAssetsFunc(UnityEngine.Object obj)
+        {
+            var resourceComp = GameEntry.GetComponent<ResourceComponent>();
+            resourceComp.UnloadAsset(obj);
         }
     }
 }
