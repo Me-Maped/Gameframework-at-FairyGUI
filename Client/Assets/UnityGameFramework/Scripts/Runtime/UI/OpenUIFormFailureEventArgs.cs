@@ -20,7 +20,6 @@ namespace UnityGameFramework.Runtime
         public OpenUIFormFailureEventArgs()
         {
             UIFormAssetName = null;
-            GroupEnum = UIGroupEnum.NONE;
             ErrorMessage = null;
         }
 
@@ -45,15 +44,6 @@ namespace UnityGameFramework.Runtime
         }
 
         /// <summary>
-        /// 获取界面组名称。
-        /// </summary>
-        public UIGroupEnum GroupEnum
-        {
-            get;
-            private set;
-        }
-
-        /// <summary>
         /// 获取错误信息。
         /// </summary>
         public string ErrorMessage
@@ -71,7 +61,6 @@ namespace UnityGameFramework.Runtime
         {
             OpenUIFormFailureEventArgs openUIFormFailureEventArgs = ReferencePool.Acquire<OpenUIFormFailureEventArgs>();
             openUIFormFailureEventArgs.UIFormAssetName = e.UIFormAssetName;
-            openUIFormFailureEventArgs.GroupEnum = e.GroupEnum;
             openUIFormFailureEventArgs.ErrorMessage = e.ErrorMessage;
             return openUIFormFailureEventArgs;
         }
@@ -82,7 +71,6 @@ namespace UnityGameFramework.Runtime
         public override void Clear()
         {
             UIFormAssetName = null;
-            GroupEnum = UIGroupEnum.NONE;
             ErrorMessage = null;
         }
     }

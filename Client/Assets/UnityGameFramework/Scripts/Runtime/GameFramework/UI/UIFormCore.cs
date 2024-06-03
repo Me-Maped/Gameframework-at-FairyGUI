@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using FairyGUI;
 using GameFramework.Event;
 using UnityEngine;
+using UnityGameFramework.Runtime;
 
 namespace GameFramework.UI
 {
@@ -15,16 +16,12 @@ namespace GameFramework.UI
         private Dictionary<GObject, EventCallback0> m_ClickCallbacks;
         private Dictionary<GObject, EventCallback1> m_ClickCallbacks1;
         private Dictionary<int, EventHandler<GameEventArgs>> m_Events;
-        private Dictionary<GObject, float> m_ProtectBtns;
+        private Dictionary<GObject, (float curTime, float delaySec)> m_ProtectBtns;
         private List<GObject> m_CachedList;
         private List<GObject> m_CachedList2;
-
-        /// <summary>
-        /// 周期更新
-        /// </summary>
-        /// <param name="elapseSeconds"></param>
-        /// <param name="realElapseSeconds"></param>
-        public virtual void Update(float elapseSeconds, float realElapseSeconds) { }
+        
+        private GameEventMgr m_EventMgr;
+        protected GameEventMgr EventMgr => m_EventMgr ??= ReferencePool.Acquire<GameEventMgr>();
 
         /// <summary>
         /// 关闭界面组
@@ -101,9 +98,9 @@ namespace GameFramework.UI
         public void ProtectBtn(GObject obj, float seconds = 5f)
         {
             if (m_ProtectBtns == null)
-                m_ProtectBtns = new Dictionary<GObject, float>();
+                m_ProtectBtns = new Dictionary<GObject, (float, float)>();
             if (m_ProtectBtns.ContainsKey(obj)) m_ProtectBtns.Remove(obj);
-            m_ProtectBtns.Add(obj, seconds);
+            m_ProtectBtns.Add(obj, (Time.unscaledTime, seconds));
             obj.touchable = false;
             if (obj.displayObject != null && obj.displayObject is Container)
                 ((Container)obj.displayObject).touchable = false;
@@ -133,7 +130,7 @@ namespace GameFramework.UI
         /// <param name="param"></param>
         internal void RevertProtectBtn(object param)
         {
-            float curTime = Time.time;
+            float curTime = Time.unscaledTime;
             if (m_ProtectBtns == null)
             {
                 Timers.inst.Remove(RevertProtectBtn);
@@ -151,8 +148,8 @@ namespace GameFramework.UI
             for (int i = m_CachedList.Count - 1; i >= 0; i--)
             {
                 GObject key = m_CachedList[i];
-                float value = m_ProtectBtns[key];
-                if (value <= curTime)
+                (float curTime, float delaySec) value = m_ProtectBtns[key];
+                if (value.curTime + value.delaySec <= curTime)
                 {
                     if (!key.isDisposed)
                     {
@@ -160,6 +157,7 @@ namespace GameFramework.UI
                         if (key.displayObject != null && key.displayObject is Container)
                             ((Container)key.displayObject).touchable = true;
                     }
+
                     m_CachedList2.Add(key);
                 }
             }
@@ -203,12 +201,20 @@ namespace GameFramework.UI
         /// </summary>
         internal void DisposeEvent()
         {
-            if (m_Events == null) return;
-            foreach (var eventInfo in m_Events)
+            if (m_Events != null)
             {
-                GameFrameworkEntry.GetModule<IEventManager>().Unsubscribe(eventInfo.Key, eventInfo.Value);
+                foreach (var eventInfo in m_Events)
+                {
+                    GameFrameworkEntry.GetModule<IEventManager>().Unsubscribe(eventInfo.Key, eventInfo.Value);
+                }
+                m_Events.Clear();
             }
-            m_Events.Clear();
+
+            if (m_EventMgr != null)
+            {
+                ReferencePool.Release(m_EventMgr);
+                m_EventMgr = null;
+            }
         }
 
         /// <summary>

@@ -42,10 +42,9 @@ namespace GameFramework.UI
         private List<IUIGroup> m_UIGroupCached;
 
         private Dictionary<Type, UIFormBase> m_LoadedFormInst;
-        private Dictionary<string, List<UIFormBase>> m_ToBeLoadFormInst;
         private Dictionary<string, int> m_PackageRefCount;
         private List<string> m_LoadingPkgNames;
-        private Queue<UIFormBase> m_NeedImmediatlyCloseForms;
+        private List<UIFormBase> m_ToBeLoadFormInst;
 
         private bool m_IsShutdown;
         private IObjectPoolManager m_ObjectPoolManager;
@@ -73,10 +72,9 @@ namespace GameFramework.UI
             m_UIGroups = new Dictionary<UIGroupEnum, IUIGroup>();
             m_UIGroupCached = new List<IUIGroup>();
             m_LoadedFormInst = new Dictionary<Type, UIFormBase>();
-            m_ToBeLoadFormInst = new Dictionary<string, List<UIFormBase>>();
+            m_ToBeLoadFormInst = new List<UIFormBase>();
             m_PackageRefCount = new Dictionary<string, int>();
             m_LoadingPkgNames = new List<string>();
-            m_NeedImmediatlyCloseForms = new Queue<UIFormBase>();
             m_LoadUIFormSuccessEventHandler = null;
             m_LoadUIFormFailureEventHandler = null;
             m_LoadUIFormUpdateEventHandler = null;
@@ -122,9 +120,16 @@ namespace GameFramework.UI
             if (formType == null) throw new GameFrameworkException("FormType is invalid");
             if (m_ResourceManager == null) throw new GameFrameworkException("You must set ResourceManager first");
             UIFormBase uiForm;
+            UIFormBase toBeLoadForm = GetToBeLoadedForm(formType);
             if (m_LoadedFormInst.TryGetValue(formType, out UIFormBase loadedForm) && loadedForm.Config.OneInst)
             {
                 uiForm = loadedForm;
+            }
+            else if (toBeLoadForm!=null && toBeLoadForm.Config.OneInst)
+            {
+                toBeLoadForm.UserData = userData;
+                GetUIGroup(toBeLoadForm.Config.GroupEnum).CloseOthers = closeOther;
+                return toBeLoadForm;
             }
             else
             {
@@ -134,15 +139,7 @@ namespace GameFramework.UI
             GetUIGroup(uiForm.Config.GroupEnum).CloseOthers = closeOther;
             if (m_LoadingPkgNames.Contains(uiForm.Config.PkgName))
             {
-                if (m_ToBeLoadFormInst.TryGetValue(uiForm.Config.PkgName, out List<UIFormBase> uiForms))
-                {
-                    uiForms.Add(uiForm);
-                }
-                else
-                {
-                    uiForms = new List<UIFormBase> { uiForm };
-                    m_ToBeLoadFormInst.Add(uiForm.Config.PkgName, uiForms);
-                }
+                m_ToBeLoadFormInst.Add(uiForm);
                 return uiForm;
             }
             if (m_LoadedFormInst.ContainsKey(uiForm.GetType()))
@@ -151,7 +148,8 @@ namespace GameFramework.UI
                 return uiForm;
             }
             m_LoadingPkgNames.Add(uiForm.Config.PkgName);
-            m_ResourceManager.LoadUIPackagesAsync(uiForm.Config.PkgName, uiForm.Config.Depends, m_LoadAssetCallbacks, uiForm);
+            m_ToBeLoadFormInst.Add(uiForm);
+            m_ResourceManager.LoadUIPackagesAsync(uiForm.Config.PkgName, uiForm.Config.Depends, m_LoadAssetCallbacks,uiForm.Config.ResName);
             return uiForm;
         }
 
@@ -206,21 +204,21 @@ namespace GameFramework.UI
 
         public void CloseForm<T>() where T : UIFormBase
         {
-            UIFormBase uiForm = GetForm<T>();
-            if (uiForm == null) return;
-            CloseForm(uiForm);
+            CloseForm(typeof(T));
         }
 
         public void CloseForm(Type uiFormType)
         {
+            DisposeToBeLoadForm(uiFormType);
             UIFormBase uiForm = GetForm(uiFormType);
             if (uiForm == null) return;
-            CloseForm(uiForm);
+            InternalCloseUIForm(uiForm);
         }
 
         public void CloseForm(UIFormBase uiForm)
         {
             if (uiForm == null) return;
+            DisposeToBeLoadForm(uiForm);
             InternalCloseUIForm(uiForm);
         }
         
@@ -228,24 +226,53 @@ namespace GameFramework.UI
         {
             foreach (var groupInfo in m_UIGroups)
             {
-                foreach (var uiForm in groupInfo.Value.UIForms)
+                using var enumerator = groupInfo.Value.UIForms.GetEnumerator();
+                while (enumerator.MoveNext())
                 {
-                    InternalCloseUIForm(uiForm);
+                    CloseForm(enumerator.Current);
                 }
+                enumerator.Dispose();
+            }
+        }
+
+        public void CloseForms<T>() where T : UIFormBase
+        {
+            CloseForms(typeof(T));
+        }
+
+        public void CloseForms(Type formType)
+        {
+            foreach (var groupInfo in m_UIGroups)
+            {
+                using var enumerator = groupInfo.Value.UIForms.GetEnumerator();
+                while (enumerator.MoveNext())
+                {
+                    UIFormBase uiForm = enumerator.Current;
+                    if (uiForm == null) break;
+                    if (uiForm.GetType() == formType) CloseForm(uiForm);
+                }
+                enumerator.Dispose();
             }
         }
 
         public void CloseFormImmediately<T>() where T : UIFormBase
         {
-            UIFormBase uiForm = GetForm<T>();
+            CloseFormImmediately(typeof(T));
+        }
+
+        public void CloseFormImmediately(Type formType)
+        {
+            DisposeToBeLoadForm(formType);
+            UIFormBase uiForm = GetForm(formType);
             if (uiForm == null) return;
-            CloseFormImmediately(uiForm);
+            InternalCloseUIFormImmediately(uiForm);
         }
 
         public void CloseFormImmediately(UIFormBase uiForm)
         {
             if (uiForm == null) return;
-            m_NeedImmediatlyCloseForms.Enqueue(uiForm);
+            DisposeToBeLoadForm(uiForm);
+            InternalCloseUIFormImmediately(uiForm);
         }
 
         public void CloseFormByGroup(UIGroupEnum groupEnum)
@@ -337,11 +364,6 @@ namespace GameFramework.UI
             {
                 groupInfo.Update(elapseSeconds, realElapseSeconds);
             }
-
-            while (m_NeedImmediatlyCloseForms.Count > 0)
-            {
-                InternalCloseUIFormImmediately(m_NeedImmediatlyCloseForms.Dequeue());
-            }
         }
 
         internal override void Shutdown()
@@ -356,8 +378,16 @@ namespace GameFramework.UI
             m_LoadedFormInst.Clear();
             m_ToBeLoadFormInst.Clear();
             m_LoadingPkgNames.Clear();
-            m_NeedImmediatlyCloseForms.Clear();
             m_PackageRefCount.Clear();
+        }
+        
+        private UIFormBase GetToBeLoadedForm(Type formType)
+        {
+            foreach (UIFormBase uiForm in m_ToBeLoadFormInst)
+            {
+                if (uiForm.GetType() == formType) return uiForm;
+            }
+            return null;
         }
 
         private void InternalOpenUIForm(UIFormBase uiForm, float duration)
@@ -404,7 +434,7 @@ namespace GameFramework.UI
             {
                 if (m_LoadUIFormFailureEventHandler != null)
                 {
-                    var eventArgs = LoadFormFailureEventArgs.Create(uiForm.Config.ResName, uiForm.Config.GroupEnum, e.Message);
+                    var eventArgs = LoadFormFailureEventArgs.Create(uiForm.Config.ResName, e.Message);
                     m_LoadUIFormFailureEventHandler(this, eventArgs);
                     ReferencePool.Release(eventArgs);
                 }
@@ -436,12 +466,10 @@ namespace GameFramework.UI
 
         private void LoadFormDependencyCallback(string pkgName, string dependencyAssetName, int loadedCount, int totalCount, object userdata)
         {
-            UIFormBase uiForm = userdata as UIFormBase;
-            if (uiForm == null) throw new GameFrameworkException("LoadFormDependencyCallback form is invalid");
             if (m_LoadUIFormDependencyEventHandler != null)
             {
-                var args = LoadFormDependencyEventArgs.Create(uiForm.Config.ResName,
-                    uiForm.Config.GroupEnum, dependencyAssetName, loadedCount,
+                string resName = userdata as string;
+                var args = LoadFormDependencyEventArgs.Create(resName, dependencyAssetName, loadedCount,
                     totalCount);
                 m_LoadUIFormDependencyEventHandler(this, args);
                 ReferencePool.Release(args);
@@ -450,12 +478,10 @@ namespace GameFramework.UI
 
         private void LoadFormUpdateCallback(string pkgName, float progress, object userdata)
         {
-            UIFormBase uiForm = userdata as UIFormBase;
-            if (uiForm == null) throw new GameFrameworkException("LoadFormUpdateCallback form is invalid");
             if (m_LoadUIFormUpdateEventHandler != null)
             {
-                var args = LoadFormUpdateEventArgs.Create(uiForm.Config.ResName,
-                    uiForm.Config.GroupEnum, progress);
+                string resName = userdata as string;
+                var args = LoadFormUpdateEventArgs.Create(resName, progress);
                 m_LoadUIFormUpdateEventHandler(this, args);
                 ReferencePool.Release(args);
             }
@@ -463,15 +489,12 @@ namespace GameFramework.UI
 
         private void LoadFormFailureCallback(string pkgName, LoadResourceStatus status, string errorMessage, object userdata)
         {
-            UIFormBase uiForm = userdata as UIFormBase;
-            if (uiForm == null) throw new GameFrameworkException("LoadFormFailureCallback form is invalid");
             m_LoadingPkgNames.Remove(pkgName);
-            var resName = uiForm.Config.ResName;
+            string resName = userdata as string;
             var message = Utility.Text.Format("LoadUIFormFailure, asset name={0},state={1},errorMsg={2}", resName, status.ToString(), errorMessage);
             if (m_LoadUIFormFailureEventHandler != null)
             {
-                var args = LoadFormFailureEventArgs.Create(resName,
-                    uiForm.Config.GroupEnum, message);
+                var args = LoadFormFailureEventArgs.Create(resName, message);
                 m_LoadUIFormFailureEventHandler(this, args);
                 ReferencePool.Release(args);
             }
@@ -481,38 +504,51 @@ namespace GameFramework.UI
 
         private void LoadFormSuccessCallback(string pkgName, object asset, float duration, object userdata)
         {
-            // 这里的asset是ui描述文件，不需要使用
-            UIFormBase uiForm = userdata as UIFormBase;
-            if (uiForm == null) throw new GameFrameworkException("LoadFormSuccessCallback form is invalid");
-            //依赖包加载完成并不能直接打开，需要等待主包加载完成
-            if (!pkgName.Equals(uiForm.Config.PkgName)) return;
             m_LoadingPkgNames.Remove(pkgName);
-            InternalOpenUIForm(uiForm, duration);
             OpenToBeLoadForm(pkgName, duration);
         }
 
         private void OpenToBeLoadForm(string pkgName, float duration)
         {
             if (m_ToBeLoadFormInst.Count <= 0) return;
-            if (!m_ToBeLoadFormInst.TryGetValue(pkgName, out List<UIFormBase> uiFormList)) return;
+            List<UIFormBase> uiFormList = m_ToBeLoadFormInst.FindAll(x => x.Config.PkgName.Contains(pkgName));
             foreach (var uiForm in uiFormList)
             {
                 InternalOpenUIForm(uiForm, duration);
             }
-            uiFormList.Clear();
-            m_ToBeLoadFormInst.Remove(pkgName);
+            m_ToBeLoadFormInst.RemoveAll(x => x.Config.PkgName.Equals(pkgName));
         }
 
         private void DisposeToBeLoadForm(string pkgName)
         {
             if (m_ToBeLoadFormInst.Count <= 0) return;
-            if (!m_ToBeLoadFormInst.TryGetValue(pkgName, out List<UIFormBase> uiFormList)) return;
+            List<UIFormBase> uiFormList = m_ToBeLoadFormInst.FindAll(x => x.Config.PkgName.Contains(pkgName));
             foreach (var uiForm in uiFormList)
             {
-                uiForm.Dispose();
+                DisposeToBeLoadForm(uiForm);
             }
-            uiFormList.Clear();
-            m_ToBeLoadFormInst.Remove(pkgName);
+        }
+
+        private void DisposeToBeLoadForm(UIFormBase uiForm)
+        {
+            if (!m_ToBeLoadFormInst.Contains(uiForm)) return;
+            m_ToBeLoadFormInst.Remove(uiForm);
+            uiForm.Dispose();
+        }
+
+        private void DisposeToBeLoadForm(Type formType)
+        {
+            using var enumerator = m_ToBeLoadFormInst.GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                var uiForm = enumerator.Current;
+                if (uiForm == null) break;
+                if (uiForm.GetType() == formType)
+                {
+                    DisposeToBeLoadForm(uiForm);
+                }
+            }
+            enumerator.Dispose();
         }
 
         private void OnInstanceReleaseCall(UIFormBase uiForm)

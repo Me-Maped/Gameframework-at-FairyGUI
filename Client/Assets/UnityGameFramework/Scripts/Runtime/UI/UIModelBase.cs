@@ -16,25 +16,39 @@ namespace UnityGameFramework.Runtime
 
         void IUIModel.Init()
         {
-            try
+            if (Define.PkgArg.Debug)
             {
                 OnInit();
             }
-            catch (Exception e)
+            else
             {
-                throw new GameFrameworkException(e.Message);
+                try
+                {
+                    OnInit();
+                }
+                catch (Exception e)
+                {
+                    throw new GameFrameworkException(e.Message);
+                }
             }
         }
 
         void IUIModel.Open()
         {
-            try
+            if (Define.PkgArg.Debug)
             {
                 OnOpen();
             }
-            catch (Exception e)
+            else
             {
-                throw new GameFrameworkException(e.Message);
+                try
+                {
+                    OnOpen();
+                }
+                catch (Exception e)
+                {
+                    throw new GameFrameworkException(e.Message);
+                }
             }
         }
 
@@ -45,25 +59,39 @@ namespace UnityGameFramework.Runtime
                 ReferencePool.Release(_gameEventMgr);
                 _gameEventMgr = null;
             }
-            try
+            if (Define.PkgArg.Debug)
             {
                 OnClose();
             }
-            catch (Exception e)
+            else
             {
-                throw new GameFrameworkException(e.Message);
+                try
+                {
+                    OnClose();
+                }
+                catch (Exception e)
+                {
+                    throw new GameFrameworkException(e.Message);
+                }
             }
         }
 
         void IUIModel.Update(float elapseSeconds, float realElapseSeconds)
         {
-            try
+            if (Define.PkgArg.Debug)
             {
                 OnUpdate(elapseSeconds, realElapseSeconds);
             }
-            catch (Exception e)
+            else
             {
-                throw new GameFrameworkException(e.Message);
+                try
+                {
+                    OnUpdate(elapseSeconds, realElapseSeconds);
+                }
+                catch (Exception e)
+                {
+                    throw new GameFrameworkException(e.Message);
+                }
             }
         }
 
@@ -75,9 +103,35 @@ namespace UnityGameFramework.Runtime
         
         protected virtual void OnUpdate(float elapseSeconds, float realElapseSeconds) { }
 
+        #region Event
+        protected void Trigger<TValue>(int hashCode, TValue value)
+        {
+            GameEvent.Send(hashCode, value);
+        }
+
         protected void Trigger<TValue>(string propertyName, TValue value)
         {
             GameEvent.Send(propertyName, value);
+        }
+
+        protected void Trigger<TValue>(Enum enumValue, TValue value)
+        {
+            Trigger(enumValue.ToString(), value);
+        }
+
+        protected void Trigger(int hashCode)
+        {
+            GameEvent.Send(hashCode);
+        }
+        
+        protected void Trigger(string propertyName)
+        {
+            GameEvent.Send(propertyName);
+        }
+        
+        protected  void Trigger(Enum enumValue)
+        {
+            Trigger(enumValue.ToString());
         }
 
         public void Register<TValue>(string propertyName, Action<TValue> handler)
@@ -89,6 +143,11 @@ namespace UnityGameFramework.Runtime
         {
             EventMgr.AddEvent(hashCode, handler);
         }
+        
+        public void Register<TValue>(Enum enumValue, Action<TValue> handler)
+        {
+            Register(enumValue.ToString(), handler);
+        }
 
         public void Register(string propertyName, Action handler)
         {
@@ -99,5 +158,12 @@ namespace UnityGameFramework.Runtime
         {
             EventMgr.AddEvent(hashCode, handler);
         }
+        
+        public void Register(Enum enumValue, Action handler)
+        {
+            Register(enumValue.ToString(), handler);
+        }
+        #endregion
+
     }
 }

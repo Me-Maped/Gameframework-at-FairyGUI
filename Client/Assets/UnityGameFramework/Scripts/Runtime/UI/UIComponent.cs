@@ -474,7 +474,7 @@ namespace UnityGameFramework.Runtime
 
         private void OnOpenUIFormFailure(object sender, LoadFormFailureEventArgs e)
         {
-            Log.Warning("Open UI form failure, asset name '{0}', UI group name '{1}', error message '{2}'.", e.UIFormAssetName, e.GroupEnum, e.ErrorMessage);
+            Log.Warning("Open UI form failure, asset name '{0}', UI group name '{1}', error message '{2}'.", e.UIFormAssetName, e.ErrorMessage);
             if (m_EnableOpenUIFormFailureEvent)
             {
                 m_EventComponent.Fire(this, OpenUIFormFailureEventArgs.Create(e));

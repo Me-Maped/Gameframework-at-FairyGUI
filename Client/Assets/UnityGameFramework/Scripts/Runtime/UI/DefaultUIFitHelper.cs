@@ -10,7 +10,7 @@ namespace UnityGameFramework.Runtime
         {
             if (uiForm.Config.GroupEnum == UIGroupEnum.POP)
                 FitPop(uiForm);
-            else
+            else if(uiForm.Config.GroupEnum == UIGroupEnum.PANEL)
                 FitPanel(uiForm);
         }
 
@@ -34,29 +34,38 @@ namespace UnityGameFramework.Runtime
             var ui = GameEntry.GetComponent<UIComponent>();
             var notch = ui.SafeNotch;
             var moveDown = Mathf.CeilToInt(notch.y / GRoot.contentScaleFactor);
+            var moveRight = Mathf.CeilToInt(notch.x / GRoot.contentScaleFactor);
             obj.height = Mathf.CeilToInt(Screen.height / GRoot.contentScaleFactor - moveDown);
+            obj.width = Mathf.CeilToInt(Screen.width / GRoot.contentScaleFactor - moveRight);
             obj.y = moveDown;
+            obj.x = moveRight;
         }
 
         private void FitPanel(UIFormBase uiForm)
         {
+            if (uiForm.Config.StyleEnum == UIFormStyleEnum.FIX_SIZE)
+            {
+                uiForm.Instance.Center();
+                return;
+            }
             var ui = GameEntry.GetComponent<UIComponent>();
             var notch = ui.SafeNotch;
-            if (notch.y <= 0) return;
             var groupInst = ui.GetUIGroup(uiForm.Config.GroupEnum).Instance;
             var moveDown = Mathf.CeilToInt(notch.y / GRoot.contentScaleFactor);
+            var moveRight = Mathf.CeilToInt(notch.x / GRoot.contentScaleFactor);
             groupInst.height = Mathf.CeilToInt(Screen.height / GRoot.contentScaleFactor - moveDown);
+            groupInst.width = Mathf.CeilToInt(Screen.width / GRoot.contentScaleFactor - moveRight);
             groupInst.y = moveDown;
+            groupInst.x = moveRight;
             uiForm.Instance.SetSize(groupInst.width, groupInst.height);
             uiForm.Instance.AddRelation(groupInst, RelationType.Size);
+            uiForm.Instance.Center();
         }
 
         private void FitPop(UIFormBase uiForm)
         {
-            var ui = GameEntry.GetComponent<UIComponent>();
-            var groupInst = ui.GetUIGroup(uiForm.Config.GroupEnum).Instance;
-            uiForm.Instance.SetXY((groupInst.width - uiForm.Instance.width)/2, (groupInst.height-uiForm.Instance.height) / 2);
-            uiForm.Instance.AddRelation(groupInst, RelationType.Size);
+            if (uiForm.Config.StyleEnum == UIFormStyleEnum.FULL_SCREEN) uiForm.Instance.MakeFullScreen();
+            uiForm.Instance.Center(true);
         }
     }
 }

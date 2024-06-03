@@ -179,10 +179,28 @@ namespace GameFramework.UI
         void CloseAllForm();
 
         /// <summary>
+        /// 关闭某一类型所有界面
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        void CloseForms<T>() where T : UIFormBase;
+
+        /// <summary>
+        /// 关闭某一类型所有界面
+        /// </summary>
+        /// <param name="formType"></param>
+        void CloseForms(Type formType);
+
+        /// <summary>
         /// 立即关闭界面
         /// </summary>
         /// <typeparam name="T"></typeparam>
         void CloseFormImmediately<T>() where T : UIFormBase;
+
+        /// <summary>
+        /// 立即关闭界面
+        /// </summary>
+        /// <param name="formType"></param>
+        void CloseFormImmediately(Type formType);
         
         /// <summary>
         /// 立即关闭界面

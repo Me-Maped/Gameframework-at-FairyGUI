@@ -50,7 +50,25 @@ namespace GameFramework.UI
         internal void InternalOpen()
         {
             if (Config == null) throw new GameFrameworkException("Config is null,you must override Config property");
-            if (m_State == UIFormState.SHOW_OVER) return;
+            if (m_State == UIFormState.SHOW_OVER)
+            {
+                if (Define.PkgArg.Debug)
+                {
+                    OnReopen();
+                }
+                else
+                {
+                    try
+                    {
+                        OnReopen();
+                    }
+                    catch (Exception e)
+                    {
+                        throw new GameFrameworkException(e.Message);
+                    }
+                }
+                return;
+            }
             m_State = UIFormState.SHOW_START;
             if(Instance == null) CreateInstance();
             IsWaitingForData = true;
@@ -77,15 +95,24 @@ namespace GameFramework.UI
             // 不可重复关闭
             if (InHideMode) return;
             m_State = UIFormState.HIDE_START;
-            try
+            if (Define.PkgArg.Debug)
             {
                 OnClose();
                 OnPartClose();
                 OnMVCClose();
             }
-            catch (Exception e)
+            else
             {
-                throw new GameFrameworkException(e.Message);
+                try
+                {
+                    OnClose();
+                    OnPartClose();
+                    OnMVCClose();
+                }
+                catch (Exception e)
+                {
+                    throw new GameFrameworkException(e.Message);
+                }
             }
             OnPlayCloseAnimation();
         }
@@ -100,15 +127,24 @@ namespace GameFramework.UI
             m_FormBg?.CloseImmediately();
             if (InHideMode) return;
             m_State = UIFormState.HIDE_START;
-            try
+            if (Define.PkgArg.Debug)
             {
                 OnClose();
                 OnPartClose();
                 OnMVCClose();
             }
-            catch (Exception e)
+            else
             {
-                throw new GameFrameworkException(e.Message);
+                try
+                {
+                    OnClose();
+                    OnPartClose();
+                    OnMVCClose();
+                }
+                catch (Exception e)
+                {
+                    throw new GameFrameworkException(e.Message);
+                }
             }
             CloseComplete(null);
         }
@@ -125,7 +161,8 @@ namespace GameFramework.UI
                 {
                     Key = Config.InstName
                 };
-                GRoot.inst.AddChild(m_FormBg.Loader);
+                Instance.AddChildAt(m_FormBg.Loader, 0);
+                m_FormBg.Loader.displayObject.gameObject.transform.SetAsFirstSibling();
             }
             m_FormBg.SetVisible(true);
             m_FormBg.Load(Config.BgUrl, Config.InstName);
@@ -152,6 +189,19 @@ namespace GameFramework.UI
         }
 
         /// <summary>
+        /// 设置界面是否可见
+        /// </summary>
+        /// <param name="visible"></param>
+        public void SetVisible(bool visible)
+        {
+            if (Instance == null)
+                throw new GameFrameworkException("Instance is null,you must override Instance property");
+            Instance.visible = visible;
+            m_FormBg?.SetVisible(visible);
+            OnVisibleChange(visible);
+        }
+        
+        /// <summary>
         /// 创建实例
         /// </summary>
         /// <exception cref="GameFrameworkException"></exception>
@@ -164,14 +214,22 @@ namespace GameFramework.UI
             Instance.name = Config.InstName;
             Instance.displayObject.name = Config.InstName;
             RegisterCompEvents(Instance);
-            try
+            if (Define.PkgArg.Debug)
             {
                 OnMVCInit();
                 OnInit();
             }
-            catch (Exception e)
+            else
             {
-                throw new GameFrameworkException(e.Message);
+                try
+                {
+                    OnMVCInit();
+                    OnInit();
+                }
+                catch (Exception e)
+                {
+                    throw new GameFrameworkException(e.Message);
+                }
             }
             InitPart();
         }
@@ -277,17 +335,30 @@ namespace GameFramework.UI
         private void CheckAndOpen()
         {
             if (!m_IsDataReady) return;
+            if (GameFrameworkEntry.GetModule<IUIManager>().GetForm(GetType()) == null) return;
+            SetVisible(true);
             Instance.touchable = true;
             GameFrameworkEntry.GetModule<IUIManager>().AddToStage(this);
-            try
+            if (Define.PkgArg.Debug)
             {
+                // Debug模式下直接抛出错误，方便调试
                 OnMVCOpen();
                 OnOpen();
                 OnPartOpen();
             }
-            catch (Exception e)
+            else
             {
-                throw new GameFrameworkException(e.Message);
+                try
+                {
+                    OnMVCOpen();
+                    OnOpen();
+                    OnPartOpen();
+                }
+                catch (Exception e)
+                {
+                    // 正式环境下的异常处理，可以是关闭界面，或者不做处理
+                    throw new GameFrameworkException(e.Message);
+                }
             }
             OnPlayOpenAnimation();
         }
@@ -366,14 +437,22 @@ namespace GameFramework.UI
             m_OpenCompleteCallback = null;
             m_State = UIFormState.SHOW_OVER;
             Instance.touchable = true;
-            try
+            if (Define.PkgArg.Debug)
             {
                 OnOpenComplete();
                 OnPartOpenComplete();
             }
-            catch (Exception e)
+            else
             {
-                throw new GameFrameworkException(e.Message);
+                try
+                {
+                    OnOpenComplete();
+                    OnPartOpenComplete();
+                }
+                catch (Exception e)
+                {
+                    throw new GameFrameworkException(e.Message);
+                }
             }
         }
 
@@ -392,19 +471,28 @@ namespace GameFramework.UI
             m_FormBg?.Close(-1);
             m_IsDataReady = false;
             m_State = UIFormState.HIDE_OVER;
+            SetVisible(false);
             Instance.touchable = false;
             m_CloseCompleteCallback?.Invoke();
             m_CloseCompleteCallback = null;
             m_FormFinishCallback?.Invoke();
             m_FormFinishCallback = null;
-            try
+            if (Define.PkgArg.Debug)
             {
                 OnCloseComplete();
                 OnPartCloseComplete();
             }
-            catch (Exception e)
+            else
             {
-                throw new GameFrameworkException(e.Message);
+                try
+                {
+                    OnCloseComplete();
+                    OnPartCloseComplete();
+                }
+                catch (Exception e)
+                {
+                    throw new GameFrameworkException(e.Message);
+                }
             }
         }
 
@@ -415,14 +503,22 @@ namespace GameFramework.UI
         /// <param name="realElapseSeconds"></param>
         public void Update(float elapseSeconds, float realElapseSeconds)
         {
-            try
+            if (Define.PkgArg.Debug)
             {
                 OnMVCUpdate(elapseSeconds, realElapseSeconds);
                 OnUpdate(elapseSeconds, realElapseSeconds);
             }
-            catch (Exception e)
+            else
             {
-                throw new GameFrameworkException(e.Message);
+                try
+                {
+                    OnMVCUpdate(elapseSeconds, realElapseSeconds);
+                    OnUpdate(elapseSeconds, realElapseSeconds);
+                }
+                catch (Exception e)
+                {
+                    throw new GameFrameworkException(e.Message);
+                }
             }
         }
 
@@ -480,11 +576,16 @@ namespace GameFramework.UI
         /// 初始化
         /// </summary>
         protected virtual void OnInit() { }
-
+        
         /// <summary>
         /// 打开界面
         /// </summary>
         protected virtual void OnOpen() { }
+        
+        /// <summary>
+        /// 界面已经打开后，再次调用打开时执行
+        /// </summary>
+        protected virtual void OnReopen(){}
 
         /// <summary>
         /// 打开界面完成
@@ -500,6 +601,12 @@ namespace GameFramework.UI
         /// 关闭界面完成
         /// </summary>
         protected virtual void OnCloseComplete() { }
+        
+        /// <summary>
+        /// 界面可见发生修改
+        /// </summary>
+        /// <param name="visible"></param>
+        protected virtual void OnVisibleChange(bool visible) { }
 
         /// <summary>
         /// 轮询
@@ -602,6 +709,7 @@ namespace GameFramework.UI
             m_UIModel?.Open();
             m_UICtrl?.Open();
         }
+
         /// <summary>
         /// MVC关闭
         /// </summary>

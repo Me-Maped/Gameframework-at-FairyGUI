@@ -22,49 +22,77 @@ namespace UnityGameFramework.Runtime
             {
                 throw new GameFrameworkException("Cast fail. View or Model is null");
             }
-            try
+            if (Define.PkgArg.Debug)
             {
                 OnInit();
             }
-            catch(Exception e)
+            else
             {
-                throw new GameFrameworkException(e.Message);
+                try
+                {
+                    OnInit();
+                }
+                catch(Exception e)
+                {
+                    throw new GameFrameworkException(e.Message);
+                }
             }
         }
 
         void IUIController.Open()
         {
-            try
+            if (Define.PkgArg.Debug)
             {
                 OnOpen();
             }
-            catch (Exception e)
+            else
             {
-                throw new GameFrameworkException(e.Message);
+                try
+                {
+                    OnOpen();
+                }
+                catch (Exception e)
+                {
+                    throw new GameFrameworkException(e.Message);
+                }
             }
         }
 
         void IUIController.Close()
         {
-            try
+            if (Define.PkgArg.Debug)
             {
                 OnClose();
             }
-            catch (Exception e)
+            else
             {
-                throw new GameFrameworkException(e.Message);
+                try
+                {
+                    OnClose();
+                }
+                catch (Exception e)
+                {
+                    throw new GameFrameworkException(e.Message);
+                }
             }
         }
 
         void IUIController.Update(float elapseSeconds, float realElapseSeconds)
         {
-            try
+            if (Define.PkgArg.Debug)
             {
                 OnUpdate(elapseSeconds, realElapseSeconds);
             }
-            catch (Exception e)
+            else
             {
-                throw new GameFrameworkException(e.Message);
+                try
+                {
+                    OnUpdate(elapseSeconds, realElapseSeconds);
+                }
+                catch (Exception e)
+                {
+                    throw new GameFrameworkException(e.Message);
+                }
             }
         }
 

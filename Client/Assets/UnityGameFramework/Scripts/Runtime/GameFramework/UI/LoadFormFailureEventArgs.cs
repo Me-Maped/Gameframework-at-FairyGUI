@@ -12,15 +12,6 @@
         }
 
         /// <summary>
-        /// 获取界面组名称。
-        /// </summary>
-        public UIGroupEnum GroupEnum
-        {
-            get;
-            private set;
-        }
-
-        /// <summary>
         /// 获取错误信息。
         /// </summary>
         public string ErrorMessage
@@ -32,22 +23,19 @@
         public LoadFormFailureEventArgs()
         {
             UIFormAssetName = null;
-            GroupEnum = UIGroupEnum.NONE;
             ErrorMessage = null;
         }
         
         public override void Clear()
         {
             UIFormAssetName = null;
-            GroupEnum = UIGroupEnum.NONE;
             ErrorMessage = null;
         }
 
-        public static LoadFormFailureEventArgs Create(string uiFormAssetName, UIGroupEnum groupEnum, string errorMessage)
+        public static LoadFormFailureEventArgs Create(string uiFormAssetName, string errorMessage)
         {
             LoadFormFailureEventArgs loadFormFailEventArgs = ReferencePool.Acquire<LoadFormFailureEventArgs>();
             loadFormFailEventArgs.UIFormAssetName = uiFormAssetName;
-            loadFormFailEventArgs.GroupEnum = groupEnum;
             loadFormFailEventArgs.ErrorMessage = errorMessage;
             return loadFormFailEventArgs;
         }

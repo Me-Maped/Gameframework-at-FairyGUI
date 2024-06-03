@@ -18,6 +18,7 @@ namespace GameFramework.UI
                 {
                     m_Loader = new UILoader
                     {
+                        gameObjectName = $"UIFormBg_{Key}",
                         touchable = false,
                         align = AlignType.Center,
                         verticalAlign = VertAlignType.Middle,

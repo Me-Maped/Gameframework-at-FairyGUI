@@ -20,7 +20,6 @@ namespace UnityGameFramework.Runtime
         public OpenUIFormUpdateEventArgs()
         {
             UIFormAssetName = null;
-            GroupEnum = UIGroupEnum.NONE;
             Progress = 0f;
         }
 
@@ -45,15 +44,6 @@ namespace UnityGameFramework.Runtime
         }
 
         /// <summary>
-        /// 获取界面组名称。
-        /// </summary>
-        public UIGroupEnum GroupEnum
-        {
-            get;
-            private set;
-        }
-
-        /// <summary>
         /// 获取打开界面进度。
         /// </summary>
         public float Progress
@@ -71,7 +61,6 @@ namespace UnityGameFramework.Runtime
         {
             OpenUIFormUpdateEventArgs openUIFormUpdateEventArgs = ReferencePool.Acquire<OpenUIFormUpdateEventArgs>();
             openUIFormUpdateEventArgs.UIFormAssetName = e.UIFormAssetName;
-            openUIFormUpdateEventArgs.GroupEnum = e.GroupEnum;
             openUIFormUpdateEventArgs.Progress = e.Progress;
             return openUIFormUpdateEventArgs;
         }
@@ -82,7 +71,6 @@ namespace UnityGameFramework.Runtime
         public override void Clear()
         {
             UIFormAssetName = null;
-            GroupEnum = UIGroupEnum.NONE;
             Progress = 0f;
         }
     }

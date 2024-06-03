@@ -8,7 +8,6 @@
         public LoadFormUpdateEventArgs()
         {
             UIFormAssetName = null;
-            GroupEnum = UIGroupEnum.NONE;
             Progress = 0f;
         }
 
@@ -16,15 +15,6 @@
         /// 获取界面资源名称。
         /// </summary>
         public string UIFormAssetName
-        {
-            get;
-            private set;
-        }
-
-        /// <summary>
-        /// 获取界面组名称。
-        /// </summary>
-        public UIGroupEnum GroupEnum
         {
             get;
             private set;
@@ -42,15 +32,13 @@
         public override void Clear()
         {
             UIFormAssetName = null;
-            GroupEnum = UIGroupEnum.NONE;
             Progress = 0f;
         }
 
-        public static LoadFormUpdateEventArgs Create(string uiFormAssetName, UIGroupEnum groupEnum, float progress)
+        public static LoadFormUpdateEventArgs Create(string uiFormAssetName, float progress)
         {
             LoadFormUpdateEventArgs loadFormUpdateEventArgs = ReferencePool.Acquire<LoadFormUpdateEventArgs>();
             loadFormUpdateEventArgs.UIFormAssetName = uiFormAssetName;
-            loadFormUpdateEventArgs.GroupEnum = groupEnum;
             loadFormUpdateEventArgs.Progress = progress;
             return loadFormUpdateEventArgs;
         }

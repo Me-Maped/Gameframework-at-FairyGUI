@@ -86,8 +86,8 @@ namespace GameFramework.UI
 
             public virtual void CloseForm(UIFormBase uiFormBase)
             {
-                if(uiFormBase.Instance!=null) m_InstancePool.Unspawn(uiFormBase.Instance);
                 if (!m_UIForms.Contains(uiFormBase)) return;
+                if(uiFormBase.Instance!=null) m_InstancePool.Unspawn(uiFormBase.Instance);
                 m_UIForms.Remove(uiFormBase);
                 if (uiFormBase.IsWaitingForData)
                 {
@@ -101,8 +101,8 @@ namespace GameFramework.UI
 
             public virtual void CloseFormImmediately(UIFormBase uiFormBase)
             {
-                if(uiFormBase.Instance!=null) m_InstancePool.Unspawn(uiFormBase.Instance);
                 if (!m_UIForms.Contains(uiFormBase)) return;
+                if(uiFormBase.Instance!=null) m_InstancePool.Unspawn(uiFormBase.Instance);
                 m_UIForms.Remove(uiFormBase);
                 if (uiFormBase.IsWaitingForData)
                 {

@@ -8,7 +8,6 @@
         public LoadFormDependencyEventArgs()
         {
             UIFormAssetName = null;
-            GroupEnum = UIGroupEnum.NONE;
             DependencyAssetName = null;
             LoadedCount = 0;
             TotalCount = 0;
@@ -18,15 +17,6 @@
         /// 获取界面资源名称。
         /// </summary>
         public string UIFormAssetName
-        {
-            get;
-            private set;
-        }
-
-        /// <summary>
-        /// 获取界面组名称。
-        /// </summary>
-        public UIGroupEnum GroupEnum
         {
             get;
             private set;
@@ -62,17 +52,15 @@
         public override void Clear()
         {
             UIFormAssetName = null;
-            GroupEnum = UIGroupEnum.NONE;
             DependencyAssetName = null;
             LoadedCount = 0;
             TotalCount = 0;
         }
 
-        public static LoadFormDependencyEventArgs Create(string uiFormAssetName, UIGroupEnum groupEnum, string dependencyAssetName, int loadedCount, int totalCount)
+        public static LoadFormDependencyEventArgs Create(string uiFormAssetName, string dependencyAssetName, int loadedCount, int totalCount)
         {
             LoadFormDependencyEventArgs loadFormDepEventArgs = ReferencePool.Acquire<LoadFormDependencyEventArgs>();
             loadFormDepEventArgs.UIFormAssetName = uiFormAssetName;
-            loadFormDepEventArgs.GroupEnum = groupEnum;
             loadFormDepEventArgs.DependencyAssetName = dependencyAssetName;
             loadFormDepEventArgs.LoadedCount = loadedCount;
             loadFormDepEventArgs.TotalCount = totalCount;

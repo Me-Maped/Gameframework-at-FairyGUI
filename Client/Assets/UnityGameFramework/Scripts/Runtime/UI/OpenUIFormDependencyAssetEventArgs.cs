@@ -20,7 +20,6 @@ namespace UnityGameFramework.Runtime
         public OpenUIFormDependencyAssetEventArgs()
         {
             UIFormAssetName = null;
-            GroupEnum = UIGroupEnum.NONE;
             DependencyAssetName = null;
             LoadedCount = 0;
             TotalCount = 0;
@@ -41,15 +40,6 @@ namespace UnityGameFramework.Runtime
         /// 获取界面资源名称。
         /// </summary>
         public string UIFormAssetName
-        {
-            get;
-            private set;
-        }
-
-        /// <summary>
-        /// 获取界面组名称。
-        /// </summary>
-        public UIGroupEnum GroupEnum
         {
             get;
             private set;
@@ -91,7 +81,6 @@ namespace UnityGameFramework.Runtime
         {
             OpenUIFormDependencyAssetEventArgs openUIFormDependencyAssetEventArgs = ReferencePool.Acquire<OpenUIFormDependencyAssetEventArgs>();
             openUIFormDependencyAssetEventArgs.UIFormAssetName = e.UIFormAssetName;
-            openUIFormDependencyAssetEventArgs.GroupEnum = e.GroupEnum;
             openUIFormDependencyAssetEventArgs.DependencyAssetName = e.DependencyAssetName;
             openUIFormDependencyAssetEventArgs.LoadedCount = e.LoadedCount;
             openUIFormDependencyAssetEventArgs.TotalCount = e.TotalCount;
@@ -104,7 +93,6 @@ namespace UnityGameFramework.Runtime
         public override void Clear()
         {
             UIFormAssetName = null;
-            GroupEnum = UIGroupEnum.NONE;
             DependencyAssetName = null;
             LoadedCount = 0;
             TotalCount = 0;
