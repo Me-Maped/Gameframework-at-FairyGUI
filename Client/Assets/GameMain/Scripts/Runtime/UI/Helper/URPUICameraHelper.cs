@@ -28,6 +28,8 @@ namespace GameMain
         public override void UICameraAttach(Camera targetCamera)
         {
 #if URP_ENABLE
+            targetCamera ??= Camera.main;
+            if (targetCamera == null) return;
             Camera stageCamera = StageCamera.main;
             // ui相机挂在到场景上需要修改renderType为Overlay
             stageCamera.GetUniversalAdditionalCameraData().renderType = CameraRenderType.Overlay;

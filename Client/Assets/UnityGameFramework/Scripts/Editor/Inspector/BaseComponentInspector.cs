@@ -153,9 +153,9 @@ namespace UnityGameFramework.Editor
                 }
             }
 
-            SceneAsset entryScene = EditorGUILayout.ObjectField("Entry Scene", m_EntryScene.objectReferenceValue, typeof(SceneAsset), false) as SceneAsset;
+            SceneAsset entryScene = EditorGUILayout.ObjectField("Entry Scene", m_EntryScene.objectReferenceValue,typeof(SceneAsset),false) as SceneAsset;
             m_EntryScene.objectReferenceValue = entryScene;
-            m_EntrySceneName.stringValue = entryScene != null ? entryScene.name : string.Empty;
+            m_EntrySceneName.stringValue = entryScene != null ? AssetDatabase.GetAssetPath(entryScene) : string.Empty;
 
             Language editorLanguage = (Language)EditorGUILayout.EnumPopup("Editor Language", (Language)m_EditorLanguage.enumValueIndex);
             m_EditorLanguage.enumValueIndex = (int)editorLanguage;

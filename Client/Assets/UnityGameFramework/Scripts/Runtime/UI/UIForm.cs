@@ -4,37 +4,48 @@ using GameFramework.UI;
 
 namespace UnityGameFramework.Runtime
 {
+    /// <summary>
+    /// Default
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public abstract class UIForm<T> : UIFormBase where T : GComponent
     {
-        protected T View;
+        public T View { get; protected set; }
         protected abstract override UIFormConfig CreateConfig();
         protected override void SerializeChild()
         {
             View = Instance as T;
-        }
-    }
-
-    public abstract class UIForm<TView, TModel, TCtrl> : UIFormBase where TView : GComponent
-        where TModel : UIModelBase<TModel>, new()
-        where TCtrl : class, IUIController, new()
-    {
-        public TView View { get; protected set; }
-        protected TModel Model { get; private set; }
-        protected abstract override UIFormConfig CreateConfig();
-
-        protected override void SerializeChild()
-        {
-            View = Instance as TView;
             if (View == null)
             {
-                throw new GameFrameworkException(
+                throw  new GameFrameworkException(
                     "View case fail. Is this a new package? please check 'UIBinder.cs' and click 'Export UIBinder' in GameFramework tools");
             }
         }
 
+        #region Protected Methods
+        protected void GoTo<TView>(bool closeOther = false,object userData = null) where TView : UIFormBase
+        {
+            GameEntry.GetComponent<UIComponent>().CloseForm(this);
+            GameEntry.GetComponent<UIComponent>().OpenForm<TView>(closeOther, userData);
+        }
+        #endregion
+    }
+    
+    /// <summary>
+    /// MVC
+    /// </summary>
+    /// <typeparam name="TView"></typeparam>
+    /// <typeparam name="TModel"></typeparam>
+    /// <typeparam name="TCtrl"></typeparam>
+    public abstract class UIForm<TView,TModel,TCtrl> : UIForm<TView> where TModel : UIModelBase<TModel>, new() where TCtrl : class, IUIController, new() where TView : GComponent
+    {
+        protected TModel Model { get; private set; }
+        protected TCtrl Ctrl { get; private set; }
+
         protected override IUIController GetUICtrl()
         {
-            return ReferencePool.Acquire<TCtrl>();
+            Ctrl = ReferencePool.Acquire<TCtrl>();
+            return Ctrl;
         }
 
         protected override IUIModel GetUIModel()
@@ -42,15 +53,21 @@ namespace UnityGameFramework.Runtime
             Model = UIModelBase<TModel>.Inst;
             return Model;
         }
+    }
+    
+    /// <summary>
+    /// Singleton
+    /// </summary>
+    /// <typeparam name="TView"></typeparam>
+    /// <typeparam name="TModel"></typeparam>
+    public abstract class UIForm<TView,TModel> : UIForm<TView> where TModel : UIModelBase<TModel>, new() where TView : GComponent
+    {
+        protected TModel Model { get; private set; }
 
-        #region Public Methods
-
-        public void Close(bool immediately = false)
+        protected override IUIModel GetUIModel()
         {
-            if (!immediately) GameEntry.GetComponent<UIComponent>().CloseForm(this);
-            else GameEntry.GetComponent<UIComponent>().CloseFormImmediately(this);
+            Model = UIModelBase<TModel>.Inst;
+            return Model;
         }
-
-        #endregion
     }
 }
