@@ -133,7 +133,7 @@ namespace GameMain
                 var bytes = memoryStream.ToArray();
                 var packetSize = bytes.ReadToReverse(0);
                 var packetUniId = bytes.ReadToReverse(_netPacketLength);
-                var packetCmdId = bytes.ReadToReverse(_netPacketLength);
+                var packetCmdId = bytes.ReadToReverse(_netPacketLength+_netOrderLength);
                 packetHeader.PacketLength = packetSize;
                 packetHeader.CmdId = packetCmdId;
                 packetHeader.UniId = packetUniId;
