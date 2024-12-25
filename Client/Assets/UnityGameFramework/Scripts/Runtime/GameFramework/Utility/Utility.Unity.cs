@@ -16,6 +16,16 @@ namespace GameFramework
         {
             private static GameObject _entity;
             private static MainBehaviour _behaviour;
+            public static Transform Entity
+            {
+                get
+                {
+                    if (Quiting) return null;
+                    _MakeEntity();
+                    return _entity.transform;
+                }
+            }
+            
             private static bool _quiting;
             public static bool Quiting
             {
