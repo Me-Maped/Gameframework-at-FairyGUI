@@ -327,7 +327,7 @@ MonoBehaviour:
   m_GameSpeed: 1
   m_RunInBackground: 1
   m_NeverSleep: 1
-  m_EntrySceneName: Login
+  m_EntrySceneName: Assets/AssetRaw/Scenes/Login.unity
   m_EntrySceneAsset: {fileID: 102900000, guid: 84848c96572ccff4eb5b71608749d89f, type: 3}
 --- !u!1 &118246
 GameObject:
@@ -861,7 +861,7 @@ MonoBehaviour:
   m_CustomUIFitHelper: {fileID: 0}
   m_UIJumpHelperTypeName: UnityGameFramework.Runtime.DefaultUIJumpHelper
   m_CustomUIJumpHelper: {fileID: 0}
-  m_UICameraHelperTypeName: GameMain.URPUICameraHelper
+  m_UICameraHelperTypeName: GameMain.HDRPUICameraHelper
   m_CustomUICameraHelper: {fileID: 0}
   m_LaunchTipsSettingName: Settings/LaunchTipsSettings
   m_LaunchPkgNames:

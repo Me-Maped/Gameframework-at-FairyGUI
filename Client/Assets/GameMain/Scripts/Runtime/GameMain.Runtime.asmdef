@@ -6,7 +6,7 @@
         "GUID:6055be8ebefd69e48b49212b09b47b2f",
         "GUID:13ba8ce62aa80c74598530029cb2d649",
         "GUID:d2b3f626c427143079d7d5dda188777b",
-        "GUID:15fc0a57446b3144c949da3e2b9737a9"
+        "GUID:457756d89b35d2941b3e7b37b4ece6f1"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -17,9 +17,9 @@
     "defineConstraints": [],
     "versionDefines": [
         {
-            "name": "com.unity.render-pipelines.universal",
+            "name": "com.unity.render-pipelines.high-definition",
             "expression": "",
-            "define": "URP_ENABLE"
+            "define": "HDRP_ENABLE"
         }
     ],
     "noEngineReferences": false
