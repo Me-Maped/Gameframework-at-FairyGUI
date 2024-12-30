@@ -327,7 +327,7 @@ MonoBehaviour:
   m_GameSpeed: 1
   m_RunInBackground: 1
   m_NeverSleep: 1
-  m_EntrySceneName: Login
+  m_EntrySceneName: Assets/AssetRaw/Scenes/Login.unity
   m_EntrySceneAsset: {fileID: 102900000, guid: 84848c96572ccff4eb5b71608749d89f, type: 3}
 --- !u!1 &118246
 GameObject:
@@ -419,8 +419,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f05eaceeebe870a4595e51f998ed518b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Skin: {fileID: 0}
-  m_ActiveWindow: 0
+  m_Skin: {fileID: 11400000, guid: a06a4c0455d3ccb45baf4d805cab535a, type: 2}
+  m_ActiveWindow: 1
   m_ShowFullWindow: 0
   m_ConsoleWindow:
     m_LockScroll: 1
