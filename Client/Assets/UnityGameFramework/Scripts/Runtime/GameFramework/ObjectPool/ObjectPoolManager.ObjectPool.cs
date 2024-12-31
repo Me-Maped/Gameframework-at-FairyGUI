@@ -509,6 +509,16 @@ namespace GameFramework.ObjectPool
             }
 
             /// <summary>
+            /// 获取对象池中某一资源对象的数量
+            /// </summary>
+            /// <param name="name"></param>
+            /// <returns></returns>
+            public int GetObjectCount(string name)
+            {
+                return !m_Objects.Contains(name) ? 0 : m_Objects[name].Count;
+            }
+
+            /// <summary>
             /// 获取所有对象信息。
             /// </summary>
             /// <returns>所有对象信息。</returns>

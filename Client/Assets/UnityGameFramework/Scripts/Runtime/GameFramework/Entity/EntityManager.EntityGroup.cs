@@ -15,6 +15,9 @@ namespace GameFramework.Entity
             private readonly IObjectPool<EntityInstanceObject> m_InstancePool;
             private readonly GameFrameworkLinkedList<IEntity> m_Entities;
             private LinkedListNode<IEntity> m_CachedNode;
+            
+            // 对象池引用
+            public IObjectPool<EntityInstanceObject> InstancePool => m_InstancePool;
 
             /// <summary>
             /// 初始化实体组的新实例。

@@ -207,5 +207,12 @@ namespace GameFramework.ObjectPool
         /// 释放对象池中的所有未使用对象。
         /// </summary>
         void ReleaseAllUnused();
+        
+        /// <summary>
+        /// 获取对象池中某一资源的对象数量
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        int GetObjectCount(string name);
     }
 }

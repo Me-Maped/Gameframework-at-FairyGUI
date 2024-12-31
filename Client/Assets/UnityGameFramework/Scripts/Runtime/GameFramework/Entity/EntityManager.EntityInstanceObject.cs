@@ -11,14 +11,16 @@ namespace GameFramework.Entity
         {
             private object m_EntityAsset;
             private IEntityHelper m_EntityHelper;
+            private IObjectPool<EntityInstanceObject> m_ObjectPool;
 
             public EntityInstanceObject()
             {
                 m_EntityAsset = null;
                 m_EntityHelper = null;
+                m_ObjectPool = null;
             }
 
-            public static EntityInstanceObject Create(string name, object entityAsset, object entityInstance, IEntityHelper entityHelper)
+            public static EntityInstanceObject Create(string name, object entityAsset, IEntityHelper entityHelper, IObjectPool<EntityInstanceObject> objectPool)
             {
                 if (entityAsset == null)
                 {
@@ -31,9 +33,10 @@ namespace GameFramework.Entity
                 }
 
                 EntityInstanceObject entityInstanceObject = ReferencePool.Acquire<EntityInstanceObject>();
-                entityInstanceObject.Initialize(name, entityInstance);
+                entityInstanceObject.Initialize(name, entityHelper.InstantiateEntity(entityAsset));
                 entityInstanceObject.m_EntityAsset = entityAsset;
                 entityInstanceObject.m_EntityHelper = entityHelper;
+                entityInstanceObject.m_ObjectPool = objectPool;
                 return entityInstanceObject;
             }
 
@@ -46,7 +49,7 @@ namespace GameFramework.Entity
 
             protected internal override void Release(bool isShutdown)
             {
-                m_EntityHelper.ReleaseEntity(m_EntityAsset, Target);
+                m_EntityHelper.ReleaseEntity(m_EntityAsset, Target, m_ObjectPool.GetObjectCount(Name) == 0);
             }
         }
     }
