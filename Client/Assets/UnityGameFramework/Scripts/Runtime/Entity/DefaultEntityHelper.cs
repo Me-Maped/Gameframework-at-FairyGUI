@@ -9,6 +9,7 @@ namespace UnityGameFramework.Runtime
     public class DefaultEntityHelper : EntityHelperBase
     {
         private ResourceComponent m_ResourceComponent = null;
+        private EntityComponent m_EntityComponent = null;
 
         /// <summary>
         /// 实例化实体。
@@ -45,14 +46,13 @@ namespace UnityGameFramework.Runtime
         /// <summary>
         /// 释放实体。
         /// </summary>
-        /// <param name="entityAsset">要释放的实体资源。</param>
+        /// <param name="entityAssetName">要释放的实体资源。</param>
         /// <param name="entityInstance">要释放的实体实例。</param>
-        /// <param name="releaseSource">是否需要释放原资源</param>
-        public override void ReleaseEntity(object entityAsset, object entityInstance,bool releaseSource)
+        public override void ReleaseEntity(string entityAssetName, object entityInstance)
         {
-            if (releaseSource)
+            if (m_EntityComponent.GetEntityInstanceCount(entityAssetName) == 0)
             {
-                m_ResourceComponent.UnloadAsset(entityAsset);
+                m_ResourceComponent.UnloadAsset(entityAssetName);
             }
             Destroy((Object)entityInstance);
         }
@@ -60,9 +60,10 @@ namespace UnityGameFramework.Runtime
         private void Start()
         {
             m_ResourceComponent = GameEntry.GetComponent<ResourceComponent>();
-            if (m_ResourceComponent == null)
+            m_EntityComponent = GameEntry.GetComponent<EntityComponent>();
+            if (m_ResourceComponent == null || m_EntityComponent == null)
             {
-                Log.Fatal("Resource component is invalid.");
+                Log.Fatal("Resource or Entity component is invalid.");
                 return;
             }
         }

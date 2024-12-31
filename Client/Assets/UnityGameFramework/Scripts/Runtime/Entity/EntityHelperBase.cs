@@ -27,9 +27,8 @@ namespace UnityGameFramework.Runtime
         /// <summary>
         /// 释放实体。
         /// </summary>
-        /// <param name="entityAsset">要释放的实体资源。</param>
+        /// <param name="entityAssetName">要释放的实体资源。</param>
         /// <param name="entityInstance">要释放的实体实例。</param>
-        /// <param name="releaseSource">是否需要释放原资源。</param>
-        public abstract void ReleaseEntity(object entityAsset, object entityInstance,bool releaseSource);
+        public abstract void ReleaseEntity(string entityAssetName, object entityInstance);
     }
 }
