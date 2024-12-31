@@ -1152,6 +1152,21 @@ namespace GameFramework.Entity
             return null;
         }
 
+        /// <summary>
+        /// 获取所有组中某一资源实例数量
+        /// </summary>
+        /// <param name="entityAssetName"></param>
+        /// <returns></returns>
+        public int GetEntityInstanceCount(string entityAssetName)
+        {
+            int result = 0;
+            foreach (KeyValuePair<string, EntityGroup> group in m_EntityGroups)
+            {
+                result += group.Value.InstancePool.GetObjectCount(entityAssetName);
+            }
+            return result;
+        }
+
         private void InternalShowEntity(int entityId, string entityAssetName, EntityGroup entityGroup, object entityInstance, bool isNewInstance, float duration, object userData)
         {
             try
@@ -1246,13 +1261,12 @@ namespace GameFramework.Entity
             {
                 m_EntitiesToReleaseOnLoad.Remove(showEntityInfo.SerialId);
                 ReferencePool.Release(showEntityInfo);
-                m_EntityHelper.ReleaseEntity(entityAsset, null,
-                    showEntityInfo.EntityGroup.InstancePool.GetObjectCount(entityAssetName) == 0);
+                m_EntityHelper.ReleaseEntity(entityAssetName, null);
                 return;
             }
 
             m_EntitiesBeingLoaded.Remove(showEntityInfo.EntityId);
-            EntityInstanceObject entityInstanceObject = EntityInstanceObject.Create(entityAssetName, entityAsset, m_EntityHelper,showEntityInfo.EntityGroup.InstancePool);
+            EntityInstanceObject entityInstanceObject = EntityInstanceObject.Create(entityAssetName, entityAsset, m_EntityHelper);
             showEntityInfo.EntityGroup.RegisterEntityInstanceObject(entityInstanceObject, true);
 
             InternalShowEntity(showEntityInfo.EntityId, entityAssetName, showEntityInfo.EntityGroup, entityInstanceObject.Target, true, duration, showEntityInfo.UserData);

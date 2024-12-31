@@ -439,5 +439,12 @@ namespace GameFramework.Entity
         /// <param name="parentEntity">被解除的父实体。</param>
         /// <param name="userData">用户自定义数据。</param>
         void DetachChildEntities(IEntity parentEntity, object userData);
+
+        /// <summary>
+        /// 获取所有组中某一资源实例数量
+        /// </summary>
+        /// <param name="entityAssetName">资源名称</param>
+        /// <returns></returns>
+        public int GetEntityInstanceCount(string entityAssetName);
     }
 }
