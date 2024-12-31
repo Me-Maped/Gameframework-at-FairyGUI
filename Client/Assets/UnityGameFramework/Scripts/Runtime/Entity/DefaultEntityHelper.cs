@@ -47,9 +47,13 @@ namespace UnityGameFramework.Runtime
         /// </summary>
         /// <param name="entityAsset">要释放的实体资源。</param>
         /// <param name="entityInstance">要释放的实体实例。</param>
-        public override void ReleaseEntity(object entityAsset, object entityInstance)
+        /// <param name="releaseSource">是否需要释放原资源</param>
+        public override void ReleaseEntity(object entityAsset, object entityInstance,bool releaseSource)
         {
-            m_ResourceComponent.UnloadAsset(entityAsset);
+            if (releaseSource)
+            {
+                m_ResourceComponent.UnloadAsset(entityAsset);
+            }
             Destroy((Object)entityInstance);
         }
 

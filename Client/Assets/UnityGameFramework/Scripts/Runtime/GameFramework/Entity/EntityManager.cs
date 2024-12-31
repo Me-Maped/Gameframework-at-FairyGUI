@@ -1246,12 +1246,13 @@ namespace GameFramework.Entity
             {
                 m_EntitiesToReleaseOnLoad.Remove(showEntityInfo.SerialId);
                 ReferencePool.Release(showEntityInfo);
-                m_EntityHelper.ReleaseEntity(entityAsset, null);
+                m_EntityHelper.ReleaseEntity(entityAsset, null,
+                    showEntityInfo.EntityGroup.InstancePool.GetObjectCount(entityAssetName) == 0);
                 return;
             }
 
             m_EntitiesBeingLoaded.Remove(showEntityInfo.EntityId);
-            EntityInstanceObject entityInstanceObject = EntityInstanceObject.Create(entityAssetName, entityAsset, m_EntityHelper.InstantiateEntity(entityAsset), m_EntityHelper);
+            EntityInstanceObject entityInstanceObject = EntityInstanceObject.Create(entityAssetName, entityAsset, m_EntityHelper,showEntityInfo.EntityGroup.InstancePool);
             showEntityInfo.EntityGroup.RegisterEntityInstanceObject(entityInstanceObject, true);
 
             InternalShowEntity(showEntityInfo.EntityId, entityAssetName, showEntityInfo.EntityGroup, entityInstanceObject.Target, true, duration, showEntityInfo.UserData);
