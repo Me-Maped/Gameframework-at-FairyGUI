@@ -1103,6 +1103,20 @@ namespace UnityGameFramework.Runtime
             entityGroup.SetEntityInstancePriority(entity.gameObject, priority);
         }
 
+        /// <summary>
+        /// 获取所有组中某一资源实例数量
+        /// </summary>
+        /// <param name="entityAssetName"></param>
+        public int GetEntityInstanceCount(string entityAssetName)
+        {
+            if (string.IsNullOrEmpty(entityAssetName))
+            {
+                Log.Warning("EntityAssetName is invalid.");
+                return 0;
+            }
+            return m_EntityManager.GetEntityInstanceCount(entityAssetName);
+        }
+
         private void OnShowEntitySuccess(object sender, GameFramework.Entity.ShowEntitySuccessEventArgs e)
         {
             m_EventComponent.Fire(this, ShowEntitySuccessEventArgs.Create(e));
