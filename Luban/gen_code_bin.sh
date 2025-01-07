@@ -1,12 +1,15 @@
 #!/bin/zsh
 WORKSPACE=..
-GEN_CLIENT=${WORKSPACE}/Luban/Luban.ClientServer/Luban.ClientServer.dll
+LUBAN_DLL=${WORKSPACE}/Tools/Luban/Luban.dll
 CONF_ROOT=${WORKSPACE}/Luban/Config
 
-dotnet ${GEN_CLIENT} -j cfg --\
- -d ${CONF_ROOT}/Defines/__root__.xml \
- --input_data_dir ${CONF_ROOT}/Datas \
- --output_data_dir ${WORKSPACE}/Client/Assets/AssetRaw/Configs \
- --output_code_dir ${WORKSPACE}/Client/Assets/GameMain/Scripts/HotFix/GameProto/GameConfig \
- --gen_types code_cs_unity_bin,data_bin \
- -s all 
+dotnet $LUBAN_DLL \
+    --conf ${CONF_ROOT}/luban.conf \
+    -t all \
+    -c cs-bin \
+    -d bin \
+    -x outputDataDir=${WORKSPACE}/Client/Assets/AssetRaw/Configs \
+    -x outputCodeDir=${WORKSPACE}/Client/Assets/GameMain/Scripts/HotFix/GameProto/GameConfig \
+    -x l10n.provider=default \
+    -x l10n.textFile.path=${CONF_ROOT}/Datas/l10n/Localization.xlsx \
+    -x l10n.textFile.keyFieldName=key

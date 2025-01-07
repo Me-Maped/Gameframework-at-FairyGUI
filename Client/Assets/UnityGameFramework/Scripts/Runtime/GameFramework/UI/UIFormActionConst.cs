@@ -18,11 +18,6 @@
         public const string RETURN = "return";
         
         /// <summary>
-        /// 点击事件
-        /// </summary>
-        public const string CLICK = "click";
-        
-        /// <summary>
         /// 玩法规则
         /// </summary>
         public const string RULE = "rule";

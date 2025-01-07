@@ -2,9 +2,9 @@
     "name": "GameProto",
     "rootNamespace": "",
     "references": [
-        "GUID:b48be955427611241bcb6f2a07949c5b",
         "GUID:17a8c79675568a54b968a9c09a815fc2",
-        "GUID:363c5eb08ff8e6a439b85e37b8c20d96"
+        "GUID:363c5eb08ff8e6a439b85e37b8c20d96",
+        "GUID:2a81c6962524d424a8ef5072bd3b0fa0"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
