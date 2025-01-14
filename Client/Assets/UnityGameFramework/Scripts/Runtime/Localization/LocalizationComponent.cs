@@ -43,7 +43,9 @@ namespace UnityGameFramework.Runtime
             }
             set
             {
+                if(m_LocalizationManager.Language == value) return;
                 m_LocalizationManager.Language = value;
+                m_EventComponent.Fire(this, LanguageChangeEventArgs.Create(value));
             }
         }
 

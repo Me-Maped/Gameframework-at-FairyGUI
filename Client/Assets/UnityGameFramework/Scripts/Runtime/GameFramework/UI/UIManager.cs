@@ -31,6 +31,10 @@ namespace GameFramework.UI
             set => m_InstancePool.Priority = value;
         }
         public int UIGroupCount => m_UIGroups.Count;
+        public IUIFitHelper FitHelper => m_UIFitHelper;
+        public IUIJumpHelper JumpHelper => m_UIJumpHelper;
+        public IUICameraHelper CameraHelper => m_UICameraHelper;
+        public IUIL10NHelper L10NHelper => m_UIL10NHelper;
         public event EventHandler<LoadFormSuccessEventArgs> LoadFormSuccess;
         public event EventHandler<LoadFormFailureEventArgs> LoadFormFailure;
         public event EventHandler<LoadFormUpdateEventArgs> LoadFormUpdate;
@@ -53,6 +57,7 @@ namespace GameFramework.UI
         private IUIFitHelper m_UIFitHelper;
         private IUIJumpHelper m_UIJumpHelper;
         private IUICameraHelper m_UICameraHelper;
+        private IUIL10NHelper m_UIL10NHelper;
         private EventHandler<LoadFormSuccessEventArgs> m_LoadUIFormSuccessEventHandler;
         private EventHandler<LoadFormFailureEventArgs> m_LoadUIFormFailureEventHandler;
         private EventHandler<LoadFormUpdateEventArgs> m_LoadUIFormUpdateEventHandler;
@@ -69,6 +74,7 @@ namespace GameFramework.UI
             m_UIFitHelper = null;
             m_UIJumpHelper = null;
             m_UICameraHelper = null;
+            m_UIL10NHelper = null;
             m_UIGroups = new Dictionary<UIGroupEnum, IUIGroup>();
             m_UIGroupCached = new List<IUIGroup>();
             m_LoadedFormInst = new Dictionary<Type, UIFormBase>();
@@ -113,6 +119,12 @@ namespace GameFramework.UI
         {
             if (uiCameraHelper == null) throw new GameFrameworkException("UICameraHelper is invalid");
             m_UICameraHelper = uiCameraHelper;
+        }
+
+        public void SetUIL10NHelper(IUIL10NHelper uiL10NHelper)
+        {
+            if(uiL10NHelper == null) throw new GameFrameworkException("UIL10NHelper is invalid");
+            m_UIL10NHelper = uiL10NHelper;
         }
 
         public UIFormBase OpenForm(Type formType, bool closeOther, object userData)
@@ -337,22 +349,7 @@ namespace GameFramework.UI
             if (uiFormInstance == null) throw new GameFrameworkException("UIFormInstance is invalid");
             m_InstancePool.SetPriority(uiFormInstance, priority);
         }
-
-        public void Back()
-        {
-            m_UIJumpHelper.Back();
-        }
-
-        public void GoHome()
-        {
-            m_UIJumpHelper.GoHome();
-        }
-
-        public void UICameraAttach(Camera targetCamera)
-        {
-            m_UICameraHelper.UICameraAttach(targetCamera);
-        }
-
+        
         internal override void Update(float elapseSeconds, float realElapseSeconds)
         {
             m_UIGroupCached.Clear();

@@ -1,9 +1,9 @@
 #!/bin/zsh
 WORKSPACE=..
-LUBAN_DLL=${WORKSPACE}/Tools/Luban/Luban.dll
-CONF_ROOT=${WORKSPACE}/Luban/Config
+LUBAN_DLL=./Tools/Luban/Luban.dll
+CONF_ROOT=./Config
 
-dotnet $LUBAN_DLL \
+dotnet ${LUBAN_DLL} \
     --conf ${CONF_ROOT}/luban.conf \
     -t all \
     -c cs-bin \

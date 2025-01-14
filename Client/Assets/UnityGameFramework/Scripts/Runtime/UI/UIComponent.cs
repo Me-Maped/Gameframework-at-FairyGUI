@@ -5,6 +5,7 @@ using GameFramework.Resource;
 using GameFramework.UI;
 using FairyGUI;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace UnityGameFramework.Runtime
 {
@@ -51,6 +52,11 @@ namespace UnityGameFramework.Runtime
         private string m_UICameraHelperTypeName = "UnityGameFramework.Runtime.DefaultUICameraHelper";
         [SerializeField]
         private UICameraHelperBase m_CustomUICameraHelper = null;
+
+        [SerializeField]
+        private string m_UIL10NHelperTypeName = "UnityGameFramework.Runtime.DefaultUIL0NHelper";
+        [SerializeField]
+        private UIL10NHelperBase m_CustomUIL10NHelper = null;
         
         [SerializeField]
         private string m_LaunchTipsSettingName = "Settings/LaunchTipsSettings";
@@ -59,9 +65,10 @@ namespace UnityGameFramework.Runtime
         private string[] m_LaunchPkgNames = {"UI/Launch"};
         
         private Vector2 m_SafeNotch=Vector2.zero;
-        private UIFitHelperBase m_FitHelperBase;
-        private UIJumpHelperBase m_JumpHelperBase;
-        private UICameraHelperBase m_CameraHelperBase;
+        public UIFitHelperBase FitHelper { get; private set; }
+        public UIJumpHelperBase JumpHelper { get; private set; }
+        public UICameraHelperBase CameraHelper { get; private set; }
+        public UIL10NHelperBase L10NHelper { get; private set; }
 
         /// <summary>
         /// 异形屏顶部的安全区域
@@ -171,38 +178,49 @@ namespace UnityGameFramework.Runtime
         /// </summary>
         private void CreateHelper()
         {
-            m_FitHelperBase = Helper.CreateHelper(m_UIFitHelperTypeName, m_CustomUIFitHelper);
-            if (m_FitHelperBase != null)
+            FitHelper = Helper.CreateHelper(m_UIFitHelperTypeName, m_CustomUIFitHelper);
+            if (FitHelper != null)
             {
-                m_UIManager.SetUIFitHelper(m_FitHelperBase);
-                m_FitHelperBase.name = "UI Fit Helper";
-                Transform formHelperTrans = m_FitHelperBase.transform;
+                m_UIManager.SetUIFitHelper(FitHelper);
+                FitHelper.name = "UI Fit Helper";
+                Transform formHelperTrans = FitHelper.transform;
                 formHelperTrans.SetParent(this.transform);
                 formHelperTrans.localScale = Vector3.one;
             }
             else Log.Error("Can not create UI fit helper.");
             
-            m_JumpHelperBase = Helper.CreateHelper(m_UIJumpHelperTypeName, m_CustomUIJumpHelper, UIGroupCount);
-            if (m_JumpHelperBase != null)
+            JumpHelper = Helper.CreateHelper(m_UIJumpHelperTypeName, m_CustomUIJumpHelper, UIGroupCount);
+            if (JumpHelper != null)
             {
-                m_UIManager.SetUIJumpHelper(m_JumpHelperBase);
-                m_JumpHelperBase.name = "UI Jump Helper";
-                Transform groupHelperTrans = m_JumpHelperBase.transform;
+                m_UIManager.SetUIJumpHelper(JumpHelper);
+                JumpHelper.name = "UI Jump Helper";
+                Transform groupHelperTrans = JumpHelper.transform;
                 groupHelperTrans.SetParent(this.transform);
                 groupHelperTrans.localScale = Vector3.one;
             }
             else Log.Error("Can not create UI jump helper.");
             
-            m_CameraHelperBase = Helper.CreateHelper(m_UICameraHelperTypeName, m_CustomUICameraHelper, UIGroupCount);
-            if (m_CameraHelperBase != null)
+            CameraHelper = Helper.CreateHelper(m_UICameraHelperTypeName, m_CustomUICameraHelper, UIGroupCount);
+            if (CameraHelper != null)
             {
-                m_UIManager.SetUICameraHelper(m_CameraHelperBase);
-                m_CameraHelperBase.name = "UI Camera Helper";
-                Transform groupHelperTrans = m_CameraHelperBase.transform;
+                m_UIManager.SetUICameraHelper(CameraHelper);
+                CameraHelper.name = "UI Camera Helper";
+                Transform groupHelperTrans = CameraHelper.transform;
                 groupHelperTrans.SetParent(this.transform);
                 groupHelperTrans.localScale = Vector3.one;
             }
             else Log.Error("Can not create UI camera helper.");
+            
+            L10NHelper = Helper.CreateHelper(m_UIL10NHelperTypeName, m_CustomUIL10NHelper, UIGroupCount);
+            if (L10NHelper != null)
+            {
+                m_UIManager.SetUIL10NHelper(L10NHelper);
+                L10NHelper.name = "UI L10N Helper";
+                Transform groupHelperTrans = L10NHelper.transform;
+                groupHelperTrans.SetParent(this.transform);
+                groupHelperTrans.localScale = Vector3.one;
+            }
+            else Log.Error("Can not create UI l10N helper.");
         }
 
         /// <summary>
@@ -224,7 +242,7 @@ namespace UnityGameFramework.Runtime
             //字体包
             UIConfig.defaultFont = "FZJUZXFJW";
             //UI相机设置
-            m_CameraHelperBase.InitCamera();
+            CameraHelper.InitCamera();
         }
         #region 接口层
         /// <summary>
@@ -438,31 +456,6 @@ namespace UnityGameFramework.Runtime
         public void SetUIFormInstancePriority(object uiFormInstance, int priority)
         {
             m_UIManager.SetUIFormInstancePriority(uiFormInstance, priority);
-        }
-
-        /// <summary>
-        /// 返回
-        /// </summary>
-        public void Back()
-        {
-            m_UIManager.Back();
-        }
-
-        /// <summary>
-        /// 回到主页
-        /// </summary>
-        public void GoHome()
-        {
-            m_UIManager.GoHome();
-        }
-
-        /// <summary>
-        /// 将UI相机附加到某个摄像机
-        /// </summary>
-        /// <param name="targetCamera"></param>
-        public void UICameraAttach(Camera targetCamera)
-        {
-            m_UIManager.UICameraAttach(targetCamera);
         }
 
         #endregion

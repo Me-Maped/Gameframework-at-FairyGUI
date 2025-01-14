@@ -49,6 +49,26 @@ namespace GameFramework.UI
         int UIGroupCount { get; }
         
         /// <summary>
+        /// 适配辅助器
+        /// </summary>
+        IUIFitHelper FitHelper { get; }
+        
+        /// <summary>
+        /// 跳转辅助器
+        /// </summary>
+        IUIJumpHelper JumpHelper { get; }
+        
+        /// <summary>
+        /// 相机辅助器
+        /// </summary>
+        IUICameraHelper CameraHelper { get; }
+        
+        /// <summary>
+        /// 多语言辅助器
+        /// </summary>
+        IUIL10NHelper L10NHelper { get; }
+        
+        /// <summary>
         /// 加载Form资源成功事件
         /// </summary>
         event EventHandler<LoadFormSuccessEventArgs> LoadFormSuccess;
@@ -102,6 +122,12 @@ namespace GameFramework.UI
         /// </summary>
         /// <param name="uiCameraHelper"></param>
         void SetUICameraHelper(IUICameraHelper uiCameraHelper);
+
+        /// <summary>
+        /// 设置多语言辅助器
+        /// </summary>
+        /// <param name="uiL10NHelper"></param>
+        void SetUIL10NHelper(IUIL10NHelper uiL10NHelper);
         
         /// <summary>
         /// 打开界面
@@ -267,21 +293,5 @@ namespace GameFramework.UI
         /// <param name="uiFormInstance"></param>
         /// <param name="priority"></param>
         void SetUIFormInstancePriority(object uiFormInstance, int priority);
-
-        /// <summary>
-        /// 返回
-        /// </summary>
-        void Back();
-
-        /// <summary>
-        /// 回到主页
-        /// </summary>
-        void GoHome();
-
-        /// <summary>
-        /// 将UI相机附加到某个摄像机
-        /// </summary>
-        /// <param name="targetCamera"></param>
-        void UICameraAttach(Camera targetCamera);
     }
 }

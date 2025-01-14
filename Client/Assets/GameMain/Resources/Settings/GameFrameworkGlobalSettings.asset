@@ -25,8 +25,9 @@ MonoBehaviour:
       m_InnerResourceSourceUrl: http://127.0.0.1:8088
       m_ExtraResourceSourceUrl: http://192.168.3.165:8080
       m_FormalResourceSourceUrl: http://192.168.3.165:8080
+    m_DefaultPkgName: MEngine
     m_AtlasFolder: Assets/GameMain/AssetsHotfix/UI/UIArt/Atlas
-    m_ResourceVersionFileName: ResourceVersion.txt
+    m_VersionFilePath: Assets/AssetRaw/Version/Version.json
     CheckVersionUrl: http://127.0.0.1/Resources/{0}Version.txt
     WindowsAppUrl: http://127.0.0.1
     MacOSAppUrl: http://127.0.0.1
@@ -38,6 +39,7 @@ MonoBehaviour:
     m_ConfigFolderName: Assets/AssetRaw/Configs/
     m_NetPacketLength: 4
     m_NetCmdIdLength: 4
+    m_NetOrderLength: 4
     m_ReceiveBufferSize: 2097152
     m_SendBufferSize: 2097152
     m_UIResourceFolder: Assets/AssetRaw/UI/
@@ -50,7 +52,6 @@ MonoBehaviour:
     m_Gitee: 1
     HotUpdateAssemblies:
     - GameProto.dll
-    - BattleCore.Runtime.dll
     - GameLogic.dll
     AOTMetaAssemblies:
     - mscorlib.dll

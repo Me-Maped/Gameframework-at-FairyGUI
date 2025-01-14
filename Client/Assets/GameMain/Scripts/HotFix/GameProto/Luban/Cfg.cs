@@ -45,7 +45,6 @@ public static class Cfg
     /// <param name="language"></param>
     public static async Task SwitchLanguage(Language language)
     {
-        bool success = true;
         switch (language)
         {
             case Language.ChineseSimplified:
@@ -55,12 +54,10 @@ public static class Cfg
                 await m_tables.SwitchToLocalizeEN(LoadByteBuf, Translator_EN);
                 break;
             default:
-                success = false;
                 Log.Fatal($"Not registered language = {language}");
                 break;
         }
         GameModule.Localization.Language = language;
-        if(success) GameModule.Event.Fire(typeof(Cfg), GameMain.L10nGEA.Create(language));
     }
 
     /// <summary>

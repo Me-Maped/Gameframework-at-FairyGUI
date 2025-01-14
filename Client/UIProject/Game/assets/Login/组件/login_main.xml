@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <component size="1920,1080">
   <displayList>
-    <text id="n1_otfk" name="title" xy="878,488" size="164,104" fontSize="80" color="#cccccc" strokeColor="#000000" strokeSize="2" shadowColor="#000000" shadowOffset="7,1" text="登录"/>
+    <text id="n1_otfk" name="auto_l10n_txt" xy="868,264" size="472,104" customData="l10n" fontSize="80" color="#cccccc" strokeColor="#000000" strokeSize="2" shadowColor="#000000" shadowOffset="7,1" text="/music/10000"/>
     <component id="n2_g8qu" name="test_btn" src="g8qu1" fileName="组件/btn_base.xml" pkg="jb6oz06w" xy="806,734" size="308,98">
       <Button title="Play" titleFontSize="40"/>
     </component>
     <image id="n3_naes" name="n3" src="naes1" fileName="素材/play.png" xy="832,752" size="57,71" aspect="true"/>
+    <text id="n4_rqbr" name="handle_l10n_txt" xy="861,506" size="404,104" fontSize="80" color="#cccccc" strokeColor="#000000" strokeSize="2" shadowColor="#000000" shadowOffset="7,1" text="手动多语言"/>
   </displayList>
 </component>

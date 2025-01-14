@@ -1,4 +1,5 @@
-﻿using GameFramework.Localization;
+﻿using GameFramework.Event;
+using GameFramework.Localization;
 using GameFramework.UI;
 using UnityGameFramework.Runtime;
 
@@ -23,7 +24,7 @@ namespace GameLogic.Login
             // Timers.inst.Add(3f, 1, o => { View.m_title.visible = false; });
             
             // 多语言
-            View.m_title.text = Cfg.Tables.TbMusicItem.DataList[0].Desc.GetL10N();
+            RegisterL10NEvent(View.m_handle_l10n_txt,Cfg.Tables.TbMusicItem.DataList[1].Desc);
             
             // 测试包卸载
             // Timers.inst.Add(6f, 1, _ => { Close(); });
@@ -39,6 +40,7 @@ namespace GameLogic.Login
             // form.Wait(() => GameModule.UI.OpenForm<PromptTestForm>(userData: 1));
 
             AddClick(View.m_test_btn, OnTestBtnClick);
+            AddEvent(LanguageChangeEventArgs.EventId, OnLanguageChange);
         }
         
         private void OnTestNumChange(int num)
@@ -46,10 +48,14 @@ namespace GameLogic.Login
             Log.Info($"MVC Test : {num}");
         }
 
-        private async void OnTestBtnClick()
+        private void OnTestBtnClick()
         {
-            await Cfg.SwitchLanguage(Language.English);
-            View.m_title.text = Cfg.Tables.TbMusicItem.DataList[0].Desc.GetL10N();
+            Cfg.SwitchLanguage(Language.English);
+        }
+
+        private void OnLanguageChange(object sender,GameEventArgs gameEventArgs)
+        {
+            Log.Info("OnLanguageChange:",((LanguageChangeEventArgs)gameEventArgs).Lang);
         }
     }
 }
