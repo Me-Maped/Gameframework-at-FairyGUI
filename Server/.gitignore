@@ -351,5 +351,11 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+/UnityDemo/Library
+/UnityDemo/Temp
 /.idea
 /database
+
+
+# Mac store file
+*.DS_Store

@@ -25,33 +25,31 @@ namespace Server.Logic.Logic.Role.Bag
         {
             var res = new ResBagInfo();
             foreach (var kv in State.ItemMap)
-                res.ItemDic[kv.Key] = (int)kv.Value;
+                res.ItemDic[kv.Key] = kv.Value;
             return res;
         }
 
-        public async Task GetBagInfo(Message msg)
+        public async Task GetBagInfo(Message reqMsg)
         {
-            await this.NotifyClient(Message.Create(BuildInfoMsg()), msg.UniId);
+            await this.NotifyClient(Message.Create(BuildInfoMsg(),reqMsg.UniId));
         }
 
         /// <summary>
         /// 宠物合成
         /// </summary>
         /// <returns></returns>
-        public async Task ComposePet(Message msg)
+        public async Task ComposePet(Message reqMsg)
         {
             //宠物碎片合成相关逻辑
             //.....
             //.....
-            
+
             //合成成功后分发一个获得宠物的事件(在PetCompAgent中监听此事件)
             this.Dispatch(EventID.GotNewPet, new OneParam<int>(1000));
 
-            var res = new ResComposePet
-            {
-                PetId = 1000
-            };
-            await this.NotifyClient(Message.Create(res), msg.UniId);
+            var res = new ResComposePet();
+            res.PetId = 1000;
+            await this.NotifyClient(Message.Create(res,reqMsg.UniId));
         }
 
 

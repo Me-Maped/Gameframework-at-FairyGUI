@@ -1,5 +1,4 @@
 ﻿using Geek.Server.Core.Hotfix;
-using Geek.Server.Core.Net.BaseHandler;
 using MessagePack;
 using Microsoft.AspNetCore.Connections;
 
@@ -13,32 +12,28 @@ namespace Geek.Server.Core.Net.Tcp
 
         public override async Task OnConnectedAsync(ConnectionContext connection)
         {
-            OnConnection(connection);
-            INetChannel channel = null;
-            channel = new TcpChannel(connection, new DefaultMessageProtocol(), (msg) => _ = Dispatcher(channel, msg), () => OnDisconnection(channel));
+            LOGGER.Debug($"{connection.RemoteEndPoint} 链成功");
+            NetChannel channel = null;
+            channel = new TcpChannel(connection, async (msg) => await Dispatcher(channel, msg));
             await channel.StartAsync();
-        }
-
-        protected virtual void OnConnection(ConnectionContext connection)
-        {
-            LOGGER.Debug($"{connection.RemoteEndPoint?.ToString()} 链接成功");
-        }
-
-        protected virtual void OnDisconnection(INetChannel channel)
-        {
             LOGGER.Debug($"{channel.RemoteAddress} 断开链接");
+            OnDisconnection(channel);
+        } 
+
+        protected virtual void OnDisconnection(NetChannel channel)
+        {
         }
 
-        protected async Task Dispatcher(INetChannel channel, Message msg)
+        protected async Task Dispatcher(NetChannel channel, Message msg)
         {
             if (msg == null)
                 return;
-
-            //LOGGER.Debug($"-------------收到消息{msg.MsgId} {msg.GetType()}");
-            var handler = HotfixMgr.GetTcpHandler(msg.Cmd);
+            
+            LOGGER.Debug($"-------------收到消息{msg.MsgId},uniId:{msg.UniId}-----------");
+            var handler = HotfixMgr.GetTcpHandler(msg.MsgId);
             if (handler == null)
             {
-                LOGGER.Error($"找不到[{msg.Cmd}][{msg.GetType()}]对应的handler");
+                LOGGER.Error($"找不到[{msg.MsgId}]对应的handler");
                 return;
             }
             handler.Msg = msg;

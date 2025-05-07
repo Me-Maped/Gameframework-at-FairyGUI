@@ -1,7 +1,6 @@
 ﻿using System;
 using GameFramework.ObjectPool;
 using GameFramework.Resource;
-using UnityEngine;
 
 namespace GameFramework.UI
 {
@@ -293,5 +292,11 @@ namespace GameFramework.UI
         /// <param name="uiFormInstance"></param>
         /// <param name="priority"></param>
         void SetUIFormInstancePriority(object uiFormInstance, int priority);
+
+        /// <summary>
+        /// 切换Fairy中的UI分支
+        /// </summary>
+        /// <param name="branchName">分支名称</param>
+        void SwitchFairyBranch(string branchName);
     }
 }

@@ -238,12 +238,11 @@ namespace GameFramework.UI
         {
             foreach (var groupInfo in m_UIGroups)
             {
-                using var enumerator = groupInfo.Value.UIForms.GetEnumerator();
-                while (enumerator.MoveNext())
+                var uiForms = groupInfo.Value.UIForms;
+                for (int i = uiForms.Count - 1; i >= 0; i--)
                 {
-                    CloseForm(enumerator.Current);
+                    CloseForm(uiForms[i]);
                 }
-                enumerator.Dispose();
             }
         }
 
@@ -349,7 +348,47 @@ namespace GameFramework.UI
             if (uiFormInstance == null) throw new GameFrameworkException("UIFormInstance is invalid");
             m_InstancePool.SetPriority(uiFormInstance, priority);
         }
-        
+
+        public void SwitchFairyBranch(string branchName)
+        {
+            // 记录当前界面
+            var activeForms = new List<Type>();
+            var userData = new List<object>();
+            foreach (var groupInfo in m_UIGroups.Values)
+            {
+                foreach (var uiForm in groupInfo.UIForms)
+                {
+                    activeForms.Add(uiForm.GetType());
+                    userData.Add(uiForm.UserData);
+                }
+            }
+            
+            // 关闭所有界面，但保留引用
+            CloseAllForm();
+
+            // 卸载所有包
+            foreach (var pkg in m_PackageRefCount.Keys.ToList()) {
+                UIPackage.GetByName(pkg)?.UnloadAssets();
+                UIPackage.RemovePackage(pkg);
+            }
+            m_PackageRefCount.Clear();
+            
+            // 释放所有实例
+            m_InstancePool.ReleaseAllUnused();
+            m_LoadedFormInst.Clear();
+
+            // 切换分支
+            UIPackage.branch = branchName;
+            
+            // 打开所有界面
+            for (int i = 0; i < activeForms.Count; i++)
+            {
+                Type formType = activeForms[i];
+                ReferencePool.RemoveAll(formType);
+                OpenForm(formType, false, userData[i]);
+            }
+        }
+
         internal override void Update(float elapseSeconds, float realElapseSeconds)
         {
             m_UIGroupCached.Clear();
@@ -588,6 +627,7 @@ namespace GameFramework.UI
 
         private void OnPackageRefReduce(string pkgName)
         {
+            if (!m_PackageRefCount.ContainsKey(pkgName)) return;
             m_PackageRefCount[pkgName]--;
             if (m_PackageRefCount[pkgName] <= 0)
             {

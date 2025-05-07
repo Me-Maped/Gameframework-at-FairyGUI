@@ -1,0 +1,14 @@
+﻿{
+  "IsDebug": true,
+  "ServerId": 1001,
+  "ServerName": "geek_server",
+  "LocalIp": "192.168.0.99",
+  "TcpPort": 8899,
+  "HttpCode": "inner_httpcode",
+  "HttpPort": 20000,
+  "GrpcPort": 30000,
+  "WebSocketUrl": "http://*:10000", 
+  "SDKType": 0, 
+  "MongoUrl": "mongodb://127.0.0.1:27017/?authSource=admin",
+  "MongoDBName": "geek_server"
+}

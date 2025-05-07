@@ -52,7 +52,7 @@ namespace GameFramework.Network
                 m_SendState.Reset();
                 m_ReceiveState.PrepareForPacketHeader(m_NetworkChannelHelper.PacketHeaderLength);
                 m_UserData = userData;
-                m_Socket = new CustomWebSocket(Utility.Text.Format("{0}:{1}", url, port),OnWebSocketOpen,OnWebSocketMessage,OnWebSocketClose,OnWebSocketError);
+                m_Socket = new CustomWebSocket(url,OnWebSocketOpen,OnWebSocketMessage,OnWebSocketClose,OnWebSocketError);
                 if (m_Socket == null)
                 {
                     string errorMessage = "Initialize network channel failure.";

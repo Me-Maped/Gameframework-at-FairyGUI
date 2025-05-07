@@ -6,9 +6,7 @@ using Geek.Server.App.Logic.Role.Base;
 using Geek.Server.Core.Actors;
 using Geek.Server.Core.Events;
 using Geek.Server.Core.Hotfix.Agent;
-using Geek.Server.Core.Net.BaseHandler;
 using Geek.Server.Core.Timer;
-using Server.Logic.Common.Handler;
 using Server.Logic.Logic.Role.Bag;
 using Server.Logic.Logic.Server;
 
@@ -18,11 +16,11 @@ namespace Server.Logic.Logic.Role.Base
     public static class RoleCompAgentExt
     {
         private static readonly Logger LOGGER = LogManager.GetCurrentClassLogger();
-        public static async Task NotifyClient(this ICompAgent agent, Message msg, int uniId = 0, StateCode code = StateCode.Success)
+        public static async Task NotifyClient(this ICompAgent agent, Message msg)
         {
             var roleComp = await agent.GetCompAgent<RoleCompAgent>();
             if (roleComp != null)
-                roleComp.NotifyClient(msg, uniId, code);
+                roleComp.NotifyClient(msg);
             else
                 LOGGER.Warn($"{agent.OwnerType}未注册RoleComp组件");
         }
@@ -75,9 +73,9 @@ namespace Server.Logic.Logic.Role.Base
                 Code = 0,
                 UserInfo = new UserInfo()
                 {
-                    CreateTime =(int) State.CreateTime.Ticks,
+                    CreateTime = State.CreateTime.Ticks,
                     Level = State.Level,
-                    RoleId = (int) State.RoleId,
+                    RoleId = State.RoleId,
                     RoleName = State.RoleName,
                     VipLevel = State.VipLevel
                 }
@@ -90,14 +88,10 @@ namespace Server.Logic.Logic.Role.Base
             return Task.CompletedTask;
         }
 
-        public void NotifyClient(Message msg, int uniId = 0, StateCode code = StateCode.Success)
+        public void NotifyClient(Message msg)
         {
-            var channel = SessionManager.GetChannel(ActorId);
-            if (channel != null && !channel.IsClose())
-            {
-                channel.Write(msg, uniId, code);
-            }
+            var session = SessionManager.Get(ActorId);
+            session?.Channel?.Write(msg);
         }
-
     }
 }

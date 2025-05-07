@@ -21,7 +21,7 @@ namespace GameLogic.Login
 
             m_auto_l10n_txt = (GTextField)GetChildAt(0);
             m_test_btn = (GButton)GetChildAt(1);
-            m_handle_l10n_txt = (GTextField)GetChildAt(3);
+            m_handle_l10n_txt = (GTextField)GetChildAt(2);
         }
     }
 }

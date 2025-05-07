@@ -24,7 +24,7 @@ namespace Geek.Server.Core.Net.Http
                 foreach (var keyValuePair in context.Request.Query)
                     paramMap.Add(keyValuePair.Key, keyValuePair.Value[0]);
 
-                context.Response.Headers.Add("content-type", "text/html;charset=utf-8");
+                context.Response.Headers.Append("content-type", "text/html;charset=utf-8");
                 if (context.Request.Method.Equals("POST"))
                 {
                     var headCType = context.Request.ContentType;
@@ -103,7 +103,7 @@ namespace Geek.Server.Core.Net.Http
                     return;
                 }
 
-                var ret = await Task.Run(() => { return handler.Action(ip, url, paramMap); });
+                var ret = await Task.Run(() => handler.Action(ip, url, paramMap));
                 LOGGER.Warn("http result:" + ret);
                 await context.Response.WriteAsync(ret);
             }

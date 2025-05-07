@@ -112,14 +112,6 @@ namespace Geek.Server.Core.Hotfix
             }
         }
 
-        public void AddHandler(Func<Type, int> msgGetter)
-        {
-            foreach (var type in HotfixAssembly.GetTypes())
-            {
-                AddTcpHandler(type,msgGetter);
-            }
-        }
-
         private void LoadRefAssemblies()
         {
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
@@ -142,7 +134,7 @@ namespace Geek.Server.Core.Hotfix
             {
                 if (!AddAgent(type)
                     && !AddEvent(type)
-                    // && !AddTcpHandler(type)
+                    && !AddTcpHandler(type)
                     && !AddHttpHandler(type))
                 {
                     if ((HotfixBridge == null && type.GetInterface(typeof(IHotfixBridge).FullName) != null))
@@ -175,20 +167,14 @@ namespace Geek.Server.Core.Hotfix
             return true;
         }
 
-        public const string KEY = "MsgID";
-        private bool AddTcpHandler(Type type, Func<Type, int> msgGetter)
+        private bool AddTcpHandler(Type type)
         {
             var attribute = (MsgMapping)type.GetCustomAttribute(typeof(MsgMapping), true);
             if (attribute == null) return false;
-            // var msgIdField = attribute.Msg.GetField(KEY, BindingFlags.Static | BindingFlags.Public);
-            // if (msgIdField == null) return false;
-            // int msgId = (int)msgIdField.GetValue(null);
-            int msgId = msgGetter(attribute.Msg);
-            if (msgId <= 0) return false;
+            int msgId = attribute.MsgId;
             if (!tcpHandlerMap.ContainsKey(msgId))
             {
                 tcpHandlerMap.Add(msgId, type);
-                Log.Info($"注册消息tcp handler:[{msgId}] msg:[{type}]");
             }
             else
             {

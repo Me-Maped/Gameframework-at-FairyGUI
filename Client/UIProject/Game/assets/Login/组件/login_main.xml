@@ -5,7 +5,7 @@
     <component id="n2_g8qu" name="test_btn" src="g8qu1" fileName="组件/btn_base.xml" pkg="jb6oz06w" xy="806,734" size="308,98">
       <Button title="Play" titleFontSize="40"/>
     </component>
-    <image id="n3_naes" name="n3" src="naes1" fileName="素材/play.png" xy="832,752" size="57,71" aspect="true"/>
     <text id="n4_rqbr" name="handle_l10n_txt" xy="861,506" size="404,104" fontSize="80" color="#cccccc" strokeColor="#000000" strokeSize="2" shadowColor="#000000" shadowOffset="7,1" text="手动多语言"/>
+    <image id="n8_hi2x" name="n8" src="naes1" fileName="素材/play.png" xy="857,768"/>
   </displayList>
 </component>

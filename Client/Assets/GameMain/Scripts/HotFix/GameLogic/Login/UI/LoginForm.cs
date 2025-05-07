@@ -55,7 +55,9 @@ namespace GameLogic.Login
 
         private void OnLanguageChange(object sender,GameEventArgs gameEventArgs)
         {
-            Log.Info("OnLanguageChange:",((LanguageChangeEventArgs)gameEventArgs).Lang);
+            var lang = ((LanguageChangeEventArgs)gameEventArgs).Lang;
+            GameModule.UI.SwitchFairyBranch("en");
+            Log.Info("OnLanguageChange:",lang.ToString());
         }
     }
 }

@@ -363,8 +363,19 @@ namespace GameFramework.Network
             /// <param name="userData"></param>
             public virtual void Connect(string url, int port, object userData)
             {
-                IPAddress ipAddress = IPAddress.Parse(url);
-                Connect(ipAddress, port, userData);
+                Connect(IPAddress.Parse(url), port, userData);
+            }
+
+            /// <summary>
+            /// 连接到远程主机(WebSocket专用)
+            /// </summary>
+            /// <param name="url"></param>
+            /// <param name="port"></param>
+            /// <param name="subProtocol"></param>
+            /// <param name="userData"></param>
+            public virtual void Connect(string url, int port, string[] subProtocol, object userData)
+            {
+                Connect(IPAddress.Parse(url), port, userData);
             }
 
             /// <summary>

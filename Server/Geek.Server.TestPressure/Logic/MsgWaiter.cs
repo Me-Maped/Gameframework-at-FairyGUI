@@ -8,56 +8,60 @@ namespace Geek.Server.TestPressure.Logic
     {
         public class Awaiter : INotifyCompletion
         {
-            private static readonly Action _callbackCompleted = () => { };
-            private Action _callback;
+            private Action _callback = () => { };
             private bool result = false;
             private Timer timer;
-            private int _debugInfo;
-            public bool IsCompleted => ReferenceEquals(_callback, _callbackCompleted);
+            public bool IsCompleted => cmp;
             public bool GetResult() => result;
             public Awaiter GetAwaiter() => this;
-
-            public Awaiter()
+            int uid;
+            int msgId;
+            bool cmp = false;
+            public Awaiter(int uid,int msgId)
             {
+                this.uid = uid;
+                this.msgId = msgId;
                 timer = new Timer(TimeOut, null, 10000, -1);
-            }
-
-            public Awaiter(int debugInfo)
-            {
-                timer = new Timer(TimeOut, null, 10000, -1);
-                _debugInfo = debugInfo;
             }
 
             public void OnCompleted(Action continuation)
             {
-                if (ReferenceEquals(_callback, _callbackCompleted) || ReferenceEquals(Interlocked.CompareExchange(ref _callback, continuation, null), _callbackCompleted))
-                {
+                if (IsCompleted)
+                {  
                     continuation();
+                }else
+                {
+                    _callback += continuation;
                 }
             }
+ 
 
             public void Complete(bool result)
-            {
-                this.result = result;
-                var continuation = Interlocked.Exchange(ref _callback, _callbackCompleted);
-
-                if (continuation != null)
+            { 
+                if(!cmp)
                 {
-                    continuation();
+                    cmp = true;
+                    this.result = result;
                     timer.Dispose();
+                    _callback();
                 }
-                _debugInfo = -1;
             }
 
             void TimeOut(object state)
             {
-                Complete(false);
-                Log.Error($"等待消息超时: {_debugInfo}");
+                Log.Error($"等待消息超时:{uid} {msgId} {cmp}");
+                Complete(false); 
             }
         }
 
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
         private readonly Dictionary<int, Awaiter> waitDic = new();
+
+        //long id;
+        //public MsgWaiter(long id)
+        //{
+        //    this.id = id;
+        //}
 
         public void Clear()
         {
@@ -66,22 +70,22 @@ namespace Geek.Server.TestPressure.Logic
             waitDic.Clear();
         }
 
-        public Awaiter StartWait(int uniId)
+        public Awaiter StartWait(int uniId,int msgId)
         {
             Awaiter waiter = null;
             lock (waitDic)
             {
                 if (!waitDic.ContainsKey(uniId))
                 {
-                    waiter = new Awaiter(uniId);
+                    waiter = new Awaiter(uniId,msgId);
                     waitDic.Add(uniId, waiter);
                 }
                 else
                 {
                     Log.Error("发现重复消息id：" + uniId);
                 }
+                return waiter;
             }
-            return waiter;
         }
 
         public void EndWait(int uniId, bool result = true)
@@ -93,15 +97,15 @@ namespace Geek.Server.TestPressure.Logic
                 if (waitDic.ContainsKey(uniId))
                 {
                     waiter = waitDic[uniId];
-                    waitDic.Remove(uniId);
+                    waitDic.Remove(uniId); 
                 }
                 else
                 {
                     if (uniId > 0)
                         Log.Error("找不到EndWait：" + uniId + ">size：" + waitDic.Count);
                 }
+                waiter?.Complete(result); 
             }
-            waiter?.Complete(result);
         }
     }
 }

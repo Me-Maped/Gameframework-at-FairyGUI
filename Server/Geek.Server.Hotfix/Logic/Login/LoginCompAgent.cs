@@ -3,9 +3,8 @@ using Geek.Server.App.Common.Session;
 using Geek.Server.App.Logic.Login;
 using Geek.Server.Core.Actors;
 using Geek.Server.Core.Hotfix.Agent;
-using Geek.Server.Core.Net.BaseHandler;
+using Geek.Server.Core.Net;
 using Geek.Server.Core.Utils;
-using Server.Logic.Common.Handler;
 using Server.Logic.Logic.Role.Base;
 using Server.Logic.Logic.Server;
 
@@ -15,19 +14,31 @@ namespace Server.Logic.Logic.Login
     {
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-        public async Task OnLogin(INetChannel channel, Message msg)
+        public async Task OnLogin(NetChannel channel, Message msg)
         {
             var reqLogin = msg.Deserialize<ReqLogin>();
             if (string.IsNullOrEmpty(reqLogin.UserName))
             {
-                channel.Write(null, msg.UniId, StateCode.AccountCannotBeNull);
+                ResErrorCode res = new ResErrorCode
+                {
+                    UniId = msg.UniId,
+                    ErrCode = (int)StateCode.AccountCannotBeNull,
+                    Desc = "Account cannot be null"
+                };
+                channel.Write(Message.Create(res, msg.UniId));
                 return;
             }
 
-            if (reqLogin.Platform != "android" && reqLogin.Platform != "ios" && reqLogin.Platform != "unity" && reqLogin.Platform != "windows")
+            if (reqLogin.Platform != "android" && reqLogin.Platform != "ios" && reqLogin.Platform != "unity")
             {
                 //验证平台合法性
-                channel.Write(null, msg.UniId, StateCode.UnknownPlatform);
+                ResErrorCode res = new ResErrorCode
+                {
+                    UniId = msg.UniId,
+                    ErrCode = (int)StateCode.UnknownPlatform,
+                    Desc = "Unknown platform"
+                }; 
+                channel.Write(Message.Create(res, msg.UniId));
                 return;
             }
 
@@ -56,7 +67,7 @@ namespace Server.Logic.Logic.Login
             var roleComp = await ActorMgr.GetCompAgent<RoleCompAgent>(roleId);
             //从登录线程-->调用Role线程 所以需要入队
             var resLogin = await roleComp.OnLogin(reqLogin, isNewRole);
-            channel.Write(Message.Create(resLogin), msg.UniId);
+            channel.Write(Message.Create(resLogin,msg.UniId));
 
             //加入在线玩家
             var serverComp = await ActorMgr.GetCompAgent<ServerCompAgent>();
@@ -86,8 +97,7 @@ namespace Server.Logic.Logic.Login
                 info.SdkType = sdkType;
                 info.UserName = userName;
                 State.PlayerMap[playerId] = info;
-            }
-            info.IsChanged = true;
+            } 
             info.RoleMap[Settings.ServerId] = roleId;
         }
 

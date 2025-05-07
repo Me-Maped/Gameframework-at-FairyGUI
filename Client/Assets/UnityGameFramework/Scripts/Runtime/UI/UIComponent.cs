@@ -458,6 +458,14 @@ namespace UnityGameFramework.Runtime
             m_UIManager.SetUIFormInstancePriority(uiFormInstance, priority);
         }
 
+        /// <summary>
+        /// 强制关闭并重新打开所有界面
+        /// </summary>
+        /// <param name="branchName"></param>
+        public void SwitchFairyBranch(string branchName)
+        {
+            m_UIManager.SwitchFairyBranch(branchName);
+        }
         #endregion
         #region Event
         private void OnOpenUIFormSuccess(object sender, LoadFormSuccessEventArgs e)

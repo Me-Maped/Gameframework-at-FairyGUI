@@ -14,7 +14,8 @@ namespace Geek.Server.Core.Net.Http
         /// <summary>
         /// 启动
         /// </summary>
-        /// <param name="port"></param>
+        /// <param name="httpPort"></param>
+        /// <param name="httpsPort"></param>
         public static Task Start(int httpPort, int httpsPort = 0)
         {
             var builder = WebApplication.CreateBuilder();
@@ -29,9 +30,9 @@ namespace Geek.Server.Core.Net.Http
                 // HTTPS
                 if (httpsPort > 0)
                 {
-                    options.ListenAnyIP(httpsPort, builder =>
+                    options.ListenAnyIP(httpsPort, listenOptions =>
                     {
-                        builder.UseHttps();
+                        listenOptions.UseHttps();
                     });
                 }
             })
@@ -42,8 +43,8 @@ namespace Geek.Server.Core.Net.Http
             .UseNLog();
 
             app = builder.Build();
-            app.MapGet("/game/{text}", (HttpContext context) => HttpHandler.HandleRequest(context));
-            app.MapPost("/game/{text}", (HttpContext context) => HttpHandler.HandleRequest(context));
+            app.MapGet("/game/{text}", HttpHandler.HandleRequest);
+            app.MapPost("/game/{text}", HttpHandler.HandleRequest);
             return app.StartAsync();
         }
 

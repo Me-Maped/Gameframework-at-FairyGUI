@@ -1,34 +1,10 @@
-﻿using Geek.Server.Core.Serialize;
-using Geek.Server.Core.Utils;
-using MessagePack;
+﻿using MongoDB.Bson.Serialization.Attributes;
 using NLog;
 
 namespace Geek.Server.Core.Storage
 {
 
-    /// <summary>
-    /// 回存时间戳
-    /// </summary>
-    public class SaveTimestamp
-    {
-        /// <summary>
-        /// State.FullName_State.Id
-        /// </summary>
-        public string Key { get { return StateName + "_" + StateId; } }
-        public string StateName { set; get; }
-        public string StateId { set; get; }
-
-        /// <summary>
-        /// 回存时间戳
-        /// </summary>
-        public long Timestamp { get; set; }
-    }
-
-    public abstract class InnerState
-    {
-
-    }
-
+    [BsonIgnoreExtraElements(true,Inherited =true)]
     public abstract class CacheState
     {
         public const string UniqueId = nameof(Id);
@@ -40,40 +16,18 @@ namespace Geek.Server.Core.Storage
             return $"{base.ToString()}[Id={Id}]";
         }
 
-        #region hash
+        #region hash 
         private StateHash stateHash;
 
-        public void AfterLoadFromDB(bool isNew)
+        public void AfterLoadFromDB()
         {
-            stateHash = new StateHash(this, isNew);
+            stateHash ??= new StateHash(this, true);
         }
 
-        public (bool isChanged, byte[] data) IsChanged()
+        public bool IsChanged()
         {
+            stateHash ??= new StateHash(this, false);
             return stateHash.IsChanged();
-        }
-
-        public (bool isChanged, long stateId, byte[] data) IsChangedWithId()
-        {
-            var res = stateHash.IsChanged();
-            return (res.Item1, Id, res.Item2);
-        }
-
-        /// <summary>
-        /// 仅DBModel.Mongodb时调用
-        /// </summary>
-        public void BeforeSaveToDB()
-        {
-            var db = GameDB.As<RocksDBConnection>().CurDataBase;
-            var table = db.GetTable<SaveTimestamp>();
-            var saveState = new SaveTimestamp
-            {
-                //此处使用UTC时间
-                Timestamp = TimeUtils.CurrentTimeMillisUTC(),
-                StateName = GetType().FullName,
-                StateId = Id.ToString(),
-            };
-            table.Set(saveState.Key, saveState);
         }
 
         public void AfterSaveToDB()
@@ -84,100 +38,95 @@ namespace Geek.Server.Core.Storage
     }
 
 
-    #region xxhash
-    public static class xxHashExt
+    public class StateHash
     {
-        public static bool IsDefault(this Standart.Hash.xxHash.uint128 self)
-        {
-            return (self.high64 == 0) && (self.low64 == 0);
-        }
-    }
-    class StateHash
-    {
-
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
-
         private CacheState State { get; }
+        private UInt128 CurrentHash { get; set; }
+        private UInt128 DBHash { get; set; }
 
-        public StateHash(CacheState state, bool isNew)
+        public StateHash(CacheState state, bool loadFromDB = false)
         {
             State = state;
-            if (!isNew)
-                CacheHash = GetHashAndData(state).md5;
+            CurrentHash = GetHash();
+            if (loadFromDB)
+            {
+                DBHash = CurrentHash;
+            }
         }
 
-        private Standart.Hash.xxHash.uint128 CacheHash { get; set; }
-
-        private Standart.Hash.xxHash.uint128 ToSaveHash { get; set; }
-
-        public (bool, byte[]) IsChanged()
+        public bool IsChanged()
         {
-            var (toSaveHash, data) = GetHashAndData(State);
-            ToSaveHash = toSaveHash;
-            return (CacheHash.IsDefault() || !toSaveHash.Equals(CacheHash), data);
+            if (DBHash != CurrentHash)
+                return true;
+            CurrentHash = GetHash();
+            return DBHash != CurrentHash || CurrentHash == 0;
         }
 
         public void AfterSaveToDB()
         {
-            if (CacheHash.Equals(ToSaveHash))
-            {
-                Log.Error($"调用AfterSaveToDB前CacheHash已经等于ToSaveHash {State}");
-            }
-            CacheHash = ToSaveHash;
+            DBHash = CurrentHash;
         }
 
-        private static (Standart.Hash.xxHash.uint128 md5, byte[] data) GetHashAndData(CacheState state)
+        public class HashStream : Stream
         {
-            var data = Serializer.Serialize(state);
-            var md5str = Standart.Hash.xxHash.xxHash128.ComputeHash(data, data.Length);
-            return (md5str, data);
+            public ulong hash = 3074457345618258791ul;
+            public override bool CanRead => false;
+
+            public override bool CanSeek => false;
+
+            public override bool CanWrite => true;
+
+            public override long Length => 0;
+
+            public override long Position { set; get; }
+
+            public override void Flush()
+            {
+            }
+
+            public override int Read(byte[] buffer, int offset, int count)
+            {
+                return 0;
+            }
+
+            public override long Seek(long offset, SeekOrigin origin)
+            {
+                return 0;
+            }
+
+            public override void SetLength(long value)
+            {
+
+            }
+
+            public override void Write(byte[] buffer, int offset, int count)
+            {
+                Position += count;
+                for (int i = offset; i < count; i++)
+                {
+                    hash += buffer[i];
+                    hash *= 3074457345618258799ul;
+                }
+            }
+        }
+
+        unsafe private UInt128 GetHash()
+        {
+            if (State == null)
+                return 0;
+            try
+            {
+                var hashSteam = new HashStream();
+                // TODO 更换序列化
+                // Serializer.Serialize(hashSteam, State);
+                return new UInt128(hashSteam.hash, (ulong)hashSteam.Position);
+            }
+            catch (Exception e)
+            {
+                Log.Error($"GetHash异常,type:[{State.GetType().FullName}]:{e.Message}");
+            }
+            return 0;
         }
     }
-    #endregion
-
-
-    #region md5
-    class StateMd5
-    {
-
-        private static readonly Logger Log = LogManager.GetCurrentClassLogger();
-
-        private CacheState State { get; }
-
-        public StateMd5(CacheState state, bool isNew)
-        {
-            State = state;
-            if (!isNew)
-                CacheMD5 = GetMD5AndData(state).md5;
-        }
-
-        private string CacheMD5 { get; set; }
-
-        private string ToSaveMD5 { get; set; }
-
-        public (bool, byte[]) IsChanged()
-        {
-            var (toSaveMD5, data) = GetMD5AndData(State);
-            ToSaveMD5 = toSaveMD5;
-            return (CacheMD5 == default || toSaveMD5 != CacheMD5, data);
-        }
-
-        public void AfterSaveToDB()
-        {
-            if (CacheMD5 == ToSaveMD5)
-            {
-                Log.Error($"调用AfterSaveToDB前CacheMD5已经等于ToSaveMD5 {State}");
-            }
-            CacheMD5 = ToSaveMD5;
-        }
-
-        private static (string md5, byte[] data) GetMD5AndData(CacheState state)
-        {
-            var data = Serializer.Serialize(state);
-            var md5str = CryptographyUtils.Md5(data);
-            return (md5str, data);
-        }
-    }
-    #endregion
-
 }
