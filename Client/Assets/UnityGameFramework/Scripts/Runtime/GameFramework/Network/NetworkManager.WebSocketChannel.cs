@@ -113,6 +113,7 @@ namespace GameFramework.Network
                     throw;
                 }
 
+                m_ReceiveState.Stream.Position = m_NetworkChannelHelper.PacketHeaderLength;
                 return true;
             }
 

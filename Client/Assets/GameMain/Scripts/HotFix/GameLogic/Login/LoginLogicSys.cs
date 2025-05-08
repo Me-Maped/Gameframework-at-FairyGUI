@@ -33,8 +33,15 @@ namespace GameLogic.Login
         {
             await OnLoginCountReq();
             UILoadMgr.Instance.SetProgress("正在连接服务器...");
-            var channel = GameModule.Network.CreateNetworkChannel("WebSocket", ServiceType.WebSocket, new NetworkChannelHelper());
-            channel.Connect("ws://127.0.0.1:10000/ws",10000,null);
+            
+            // tcp测试
+            var channel = GameModule.Network.CreateNetworkChannel("TCP", ServiceType.Tcp, new NetworkChannelHelper());
+            channel.Connect("127.0.0.1", 8899, null);
+
+            // websocket测试
+            // var channel = GameModule.Network.CreateNetworkChannel("WebSocket", ServiceType.WebSocket, new NetworkChannelHelper());
+            // channel.Connect("ws://127.0.0.1:10000/ws",10000,null);
+            
             GameModule.Event.Subscribe(NetworkConnectedEventArgs.EventId, OnWebSocketConnected);
             GameModule.Event.Subscribe(NetworkErrorEventArgs.EventId, OnWebSocketError);
         }
