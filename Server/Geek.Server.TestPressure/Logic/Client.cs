@@ -1,11 +1,11 @@
-using Bedrock.Framework;
-using Newtonsoft.Json;
-using System.Net.Sockets;
-using Geek.Server.Core.Net.BaseHandler;
+using Geek.Server.Core.Net;
 using Geek.Server.Core.Net.Tcp;
 using Geek.Server.Core.Net.Websocket;
+using Microsoft.AspNetCore.DataProtection;
+using Newtonsoft.Json;
+using System.Net.Sockets;
 using System.Net.WebSockets;
-using Geek.Server.Core.Reference;
+using ReqBagInfo = Geek.Server.Proto.ReqBagInfo;
 
 namespace Geek.Server.TestPressure.Logic
 {
@@ -25,9 +25,9 @@ namespace Geek.Server.TestPressure.Logic
     {
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
         long id;
-        INetChannel netChannel;
+        NetChannel netChannel;
         MsgWaiter msgWaiter = new();
-        int msgUniId = 1;
+        int msgUniId = 200;
 
         public Client(long id)
         {
@@ -44,8 +44,7 @@ namespace Geek.Server.TestPressure.Logic
                 if (ws.State == WebSocketState.Open)
                 {
                     Log.Info($"Connected to {TestSettings.Ins.webSocketServerUrl}");
-                    netChannel = new WebSocketChannel(ws, TestSettings.Ins.webSocketServerUrl,
-                        new ClientLengthPrefixedProtocol(), OnReceive, OnDisConnected);
+                    netChannel = new ClientWebsocketChannel(ws, TestSettings.Ins.webSocketServerUrl, OnRevice);
                     _ = netChannel.StartAsync();
                 }
                 else
@@ -56,19 +55,20 @@ namespace Geek.Server.TestPressure.Logic
             }
             else
             {
-                var context = await new SocketConnection(AddressFamily.InterNetwork, TestSettings.Ins.serverIp,
-                    TestSettings.Ins.serverPort).StartAsync(5000);
-                if (context != null)
+                var socket = new TcpClient(AddressFamily.InterNetwork);
+                try
                 {
-                    Log.Info($"Connected to {context.LocalEndPoint}");
-                    netChannel = new TcpChannel(context, new ClientLengthPrefixedProtocol(), OnReceive, OnDisConnected);
-                    _ = netChannel.StartAsync();
+                    socket.NoDelay = true;
+                    await socket.ConnectAsync(TestSettings.Ins.serverIp, TestSettings.Ins.serverPort);
                 }
-                else
+                catch (Exception e)
                 {
-                    Log.Error($"连接服务器失败...");
+                    Log.Error(e);
                     return;
                 }
+
+                netChannel = new ClientTcpChannel(socket, OnRevice);
+                _ = netChannel.StartAsync();
             }
 
 
@@ -79,7 +79,6 @@ namespace Geek.Server.TestPressure.Logic
                 await ReqBagInfo();
                 await Task.Delay(1000);
             }
-
             await ReqComposePet();
         }
 
@@ -92,42 +91,33 @@ namespace Geek.Server.TestPressure.Logic
             req.UserName = "name" + id;
             req.Device = new Random().NextInt64().ToString();
             req.Platform = "android";
-            return SendMsgAndWaitBack(Message.Create(CMD.ReqLogin, req));
+            return SendMsgAndWaitBack(Message.Create(3012,req));
         }
 
         private Task ReqBagInfo()
         {
-            return SendMsgAndWaitBack(Message.Create(CMD.ReqBagInfo, new ReqBagInfo()));
+            return SendMsgAndWaitBack(Message.Create(3001,new ReqBagInfo()));
         }
 
         private Task ReqComposePet()
         {
-            return SendMsgAndWaitBack(Message.Create(CMD.ReqComposePet, new ReqComposePet { FragmentId = 1000 }));
+            return SendMsgAndWaitBack(Message.Create(3003,new ReqComposePet{ FragmentId = 1000 }));
         }
-
-        void SendMsg(Message msg)
-        {
-            msg.UniId = msgUniId++;
-            Log.Info($"{id} 发送消息:(UniId:{msg.UniId},Cmd:{msg.Cmd})");
-            netChannel.Write(msg);
-        }
-
+         
         async Task<bool> SendMsgAndWaitBack(Message msg)
         {
-            SendMsg(msg);
-            return await msgWaiter.StartWait(msg.UniId);
+            msg.UniId = (int)id*10000 +  msgUniId++;
+            Log.Info($"{id} 发送消息:{JsonConvert.SerializeObject(msg)}");
+            var awaiter = msgWaiter.StartWait(msg.UniId,msg.MsgId); 
+            netChannel.Write(msg);
+            return await awaiter;
         }
 
-        public void OnDisConnected()
+
+
+        public void OnRevice(Message msg)
         {
-        }
-
-
-        private void OnReceive(Message msg)
-        {
-            // Log.Error($"收到消息:{msg.Cmd} {MsgFactory.GetType(msg.Cmd)}");
-
-            if (msg.Cmd == CMD.ResErrorCode)
+            if (msg.MsgId == CMD.ResErrorCode)
             {
                 ResErrorCode errMsg = msg.Deserialize<ResErrorCode>();
                 switch (errMsg.ErrCode)
@@ -142,15 +132,15 @@ namespace Geek.Server.TestPressure.Logic
                     default:
                         break;
                 }
-
                 msgWaiter.EndWait(errMsg.UniId, errMsg.ErrCode == (int)ServerErrorCode.Success);
                 if (!string.IsNullOrEmpty(errMsg.Desc))
                     Log.Info("服务器提示:" + errMsg.Desc);
-                return;
             }
-
-            msgWaiter.EndWait(msg.UniId);
-            Log.Info($"{id} 收到消息:(UniId:{msg.UniId},Cmd:{msg.Cmd})");
+            else
+            {
+                msgWaiter.EndWait(msg.UniId);
+                Log.Info($"{id} 收到消息:{JsonConvert.SerializeObject(msg)}");
+            }
         }
     }
 }

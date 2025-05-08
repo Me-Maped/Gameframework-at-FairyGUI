@@ -1,17 +1,8 @@
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.Extensions.Logging;
 using NLog.Web;
-using System.Net.WebSockets;
 using System.Net;
-using System.Text;
 using Geek.Server.Core.Net.Websocket;
-using NLog.Fluent;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.Http;
 
 namespace Geek.Server.Core.Net.Tcp
 {
@@ -25,32 +16,20 @@ namespace Geek.Server.Core.Net.Tcp
 
         public static Task Start(string url, WebSocketConnectionHandler hander)
         {
-            var builder = WebApplication.CreateBuilder();
-
-            builder.Services.Configure<ForwardedHeadersOptions>(options =>
-            {
-                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-            });
+            var builder = WebApplication.CreateBuilder(); 
 
             builder.WebHost.UseUrls(url).UseNLog();
             app = builder.Build();
 
-            app.UseWebSockets(new WebSocketOptions()
-            {
-                KeepAliveInterval = TimeSpan.FromSeconds(120),
-            });
-
-            app.UseForwardedHeaders();
+            app.UseWebSockets(); 
 
             app.Map("/ws", async context =>
             {
                 if (context.WebSockets.IsWebSocketRequest)
                 {
-                    using (var webSocket = await context.WebSockets.AcceptWebSocketAsync())
-                    {
-                        var clientAddress = $"{context.Connection?.RemoteIpAddress}:{context.Connection?.RemotePort}";
-                        await hander.OnConnectedAsync(webSocket, clientAddress);
-                    }
+                    using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+                    var clientAddress = $"{context.Connection?.RemoteIpAddress}:{context.Connection?.RemotePort}";
+                    await hander.OnConnectedAsync(webSocket, clientAddress);
                 }
                 else
                 {

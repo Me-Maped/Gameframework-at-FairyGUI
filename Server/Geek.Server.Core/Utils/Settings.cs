@@ -18,6 +18,8 @@ public static class Settings
 {
     private static BaseSetting Ins;
 
+    static readonly NLog.Logger LOGGER = NLog.LogManager.GetCurrentClassLogger();
+
     public static void Load<T>(string path, ServerType serverType) where T : BaseSetting
     {
         var configJson = File.ReadAllText(path);
@@ -42,10 +44,34 @@ public static class Settings
         set => Ins.LauchTime = value;
     }
 
-    public static bool AppRunning
+    /// <summary>是否正常运行中(除开起服/关服准备)</summary>
+    static CancellationTokenSource AppExitSource = new CancellationTokenSource();
+    static public CancellationToken AppExitToken => AppExitSource.Token;
+    static bool _appRunning;
+    static public bool AppRunning
     {
-        get => Ins.AppRunning;
-        set => Ins.AppRunning = value;
+        get => _appRunning;
+        set
+        {
+            lock (AppExitSource)
+            {
+                if (AppExitSource.IsCancellationRequested)
+                {
+                    if (value)
+                    {
+                        LOGGER.Error("AppRunning已经被设置为退出，不能再次开启...");
+                    }
+                    _appRunning = false;
+                    return;
+                }
+                _appRunning = value;
+                if (!value && !AppExitSource.IsCancellationRequested)
+                {
+                    LOGGER.Info("Set AppRunning false...");
+                    AppExitSource.Cancel();
+                }
+            }
+        }
     }
 
     public static ServerType ServerType => Ins.ServerType;
@@ -72,11 +98,7 @@ public static class Settings
 
     public static string MongoUrl => Ins.MongoUrl;
 
-    public static string MongoDBName => Ins.MongoDBName;
-
-    public static string LocalDBPrefix => Ins.LocalDBPrefix;
-
-    public static string LocalDBPath => Ins.LocalDBPath;
+    public static string MongoDBName => Ins.MongoDBName; 
 
     public static string Language => Ins.Language;
 
@@ -84,9 +106,7 @@ public static class Settings
 
     public static string CenterUrl => Ins.CenterUrl;
 
-    public static int SDKType => Ins.SDKType;
-
-    public static int DBModel => Ins.DBModel;
+    public static int SDKType => Ins.SDKType; 
 }
 
 public class BaseSetting
@@ -125,20 +145,13 @@ public class BaseSetting
 
     public string MongoUrl { get; init; }
 
-    public string MongoDBName { get; init; }
-
-    public string LocalDBPrefix { get; init; }
-
-    public string LocalDBPath { get; init; }
-
+    public string MongoDBName { get; init; } 
     public string Language { get; init; }
 
     public string DataCenter { get; init; }
 
     public string CenterUrl { get; init; }
 
-    public int SDKType { get; set; }
-
-    public int DBModel { get; set; }
+    public int SDKType { get; set; } 
     #endregion
 }

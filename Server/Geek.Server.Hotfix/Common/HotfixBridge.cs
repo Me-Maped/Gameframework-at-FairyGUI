@@ -10,7 +10,6 @@ using Geek.Server.Core.Net.Websocket;
 using Geek.Server.Core.Timer;
 using Geek.Server.Core.Utils;
 using Microsoft.AspNetCore.Connections;
-using PolymorphicMessagePack; 
 
 namespace Server.Logic.Common
 {
@@ -27,18 +26,17 @@ namespace Server.Logic.Common
                 ActorMgr.ClearAgent();
                 return true;
             }
-            PolymorphicTypeMapper.Register(this.GetType().Assembly);
-            HotfixMgr.SetMsgContainer(PBHelper.Contain);
             HotfixMgr.SetMsgGetter(PBHelper.Get);
+            HotfixMgr.SetMsgContainer(PBHelper.Contain);
 
             await TcpServer.Start(Settings.TcpPort, builder => builder.UseConnectionHandler<AppTcpConnectionHandler>());
             await WebSocketServer.Start(Settings.WebSocketUrl, new AppWebSocketConnectionHandler());
             await HttpServer.Start(Settings.HttpPort);
 
             Log.Info("load config data");
-            (bool success, string msg) = GameDataManager.ReloadAll();
-            if (!success)
-                throw new Exception($"载入配置表失败... {msg}");
+            var result = await GameDataManager.ReloadAll();
+            if (!result.Item1)
+                throw new Exception($"载入配置表失败... {result.Item2}");
 
             GlobalTimer.Start();
             await CompRegister.ActiveGlobalComps();
@@ -47,19 +45,29 @@ namespace Server.Logic.Common
 
         public async Task Stop()
         {
-            // 断开所有连接
-            await SessionManager.RemoveAll();
-            // 取消所有未执行定时器
-            await QuartzTimer.Stop();
-            // 保证actor之前的任务都执行完毕
-            await ActorMgr.AllFinish();
-            // 关闭网络服务
-            await HttpServer.Stop();
-            await TcpServer.Stop();
-            await WebSocketServer.Stop();
-            // 存储所有数据
-            await GlobalTimer.Stop();
-            await ActorMgr.RemoveAll();
+            try
+            {
+                // 断开所有连接
+                await SessionManager.RemoveAll();
+                // 取消所有未执行定时器
+                await QuartzTimer.Stop();
+                // 保证actor之前的任务都执行完毕
+                await ActorMgr.AllFinish();
+                // 关闭网络服务
+                await HttpServer.Stop();
+                await TcpServer.Stop();
+                await WebSocketServer.Stop();
+            }
+            catch (Exception e)
+            {
+                Log.Error(e);
+            }
+            finally
+            {
+                // 存储所有数据
+                await GlobalTimer.Stop();
+                await ActorMgr.RemoveAll();
+            }
         }
     }
 }

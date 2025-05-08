@@ -1,7 +1,6 @@
-﻿using Geek.Server.Core.Serialize;
-using Geek.Server.Core.Utils;
-using MongoDB.Driver;
+﻿using MongoDB.Driver;
 using NLog;
+using BsonSerializer = MongoDB.Bson.Serialization.BsonSerializer;
 
 namespace Geek.Server.Core.Storage
 {
@@ -44,52 +43,27 @@ namespace Geek.Server.Core.Storage
 
         public async Task<TState> LoadState<TState>(long id, Func<TState> defaultGetter = null) where TState : CacheState, new()
         {
-            var filter = Builders<MongoState>.Filter.Eq(CacheState.UniqueId, id);
+            var filter = Builders<TState>.Filter.Eq(CacheState.UniqueId, id);
             var stateName = typeof(TState).FullName;
-            var col = CurDB.GetCollection<MongoState>(stateName);
+            var col = CurDB.GetCollection<TState>(stateName);
 
             using var cursor = await col.FindAsync(filter);
-            var mongoState = await cursor.FirstOrDefaultAsync();
-            bool isNew = mongoState == null;
-            TState state = default;
-            if (mongoState != null)
-            {
-                try
-                {
-                    state = Serializer.Deserialize<TState>(mongoState.Data);
-                }
-                catch (Exception e)
-                {
-                    Log.Error($"从mongodb的{stateName} {id}加载数据出错:{e.Message}");
-                }
-            }
-            if (mongoState == null && defaultGetter != null)
-                state = defaultGetter();
-            if (state == null)
-                state = new TState { Id = id };
-            state.AfterLoadFromDB(isNew);
+            var state = await cursor.FirstOrDefaultAsync();
+            state?.AfterLoadFromDB();
+            state ??= defaultGetter?.Invoke();
+            state ??= new TState { Id = id };
             return state;
         }
 
         public async Task SaveState<TState>(TState state) where TState : CacheState
         {
-            var (isChanged, data) = state.IsChanged();
-            if (isChanged)
+            var filter = Builders<TState>.Filter.Eq(CacheState.UniqueId, state.Id);
+            var stateName = typeof(TState).FullName;
+            var col = CurDB.GetCollection<TState>(stateName);
+            var result = await col.ReplaceOneAsync(filter, state, REPLACE_OPTIONS);
+            if (result.IsAcknowledged)
             {
-                var mongoState = new MongoState()
-                {
-                    Data = data,
-                    Id = state.Id.ToString(),
-                    Timestamp = TimeUtils.CurrentTimeMillisUTC()
-                };
-                var filter = Builders<MongoState>.Filter.Eq(CacheState.UniqueId, mongoState.Id);
-                var stateName = typeof(TState).FullName;
-                var col = CurDB.GetCollection<MongoState>(stateName);
-                var result = await col.ReplaceOneAsync(filter, mongoState, REPLACE_OPTIONS);
-                if (result.IsAcknowledged)
-                {
-                    state.AfterSaveToDB();
-                }
+                state.AfterSaveToDB();
             }
         }
 
@@ -99,9 +73,10 @@ namespace Geek.Server.Core.Storage
             Client.Cluster.Dispose();
         }
 
-        public void Flush(bool wait)
-        {
 
+        public Task Flush()
+        {
+            return Task.CompletedTask;
         }
     }
 }

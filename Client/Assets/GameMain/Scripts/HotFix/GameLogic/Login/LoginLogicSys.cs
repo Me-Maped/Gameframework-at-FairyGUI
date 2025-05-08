@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Threading.Tasks;
 using FairyGUI;
 using GameFramework.Event;
@@ -32,8 +33,15 @@ namespace GameLogic.Login
         {
             await OnLoginCountReq();
             UILoadMgr.Instance.SetProgress("正在连接服务器...");
+            
+            // tcp测试
             var channel = GameModule.Network.CreateNetworkChannel("TCP", ServiceType.Tcp, new NetworkChannelHelper());
             channel.Connect("127.0.0.1", 8899, null);
+
+            // websocket测试
+            // var channel = GameModule.Network.CreateNetworkChannel("WebSocket", ServiceType.WebSocket, new NetworkChannelHelper());
+            // channel.Connect("ws://127.0.0.1:10000/ws",10000,null);
+            
             GameModule.Event.Subscribe(NetworkConnectedEventArgs.EventId, OnWebSocketConnected);
             GameModule.Event.Subscribe(NetworkErrorEventArgs.EventId, OnWebSocketError);
         }
@@ -63,10 +71,19 @@ namespace GameLogic.Login
             req.SdkToken = "555";
             req.UserName = "maped";
             req.Device = "123123";
-            req.Platform = "windows";
+            req.Platform = "unity";
+            Log.Info(req);
             var ack = await GameModule.Network.SendAsync<ResLogin>(req);
-            Log.Info("Login res = " + ack);
-            await GameModule.Network.SendAsync<PingAck>(new PingReq { CmdCode = 1, ProtocolSwitch = 1 });
+            Log.Info(ack);
+            // await GameModule.Network.SendAsync<PingAck>(new PingReq { CmdCode = 1, ProtocolSwitch = 1 });
+            
+            // test pressure
+            for (int i = 0; i < 5; i++)
+            {
+                var reqBag = new ReqBagInfo();
+                var resBag = await GameModule.Network.SendAsync<ResBagInfo>(reqBag);
+                Log.Info(resBag);
+            }
         }
 
         /// <summary>

@@ -134,10 +134,10 @@ namespace GameFramework.Network
         void Connect(IPAddress ipAddress, int port);
 
         /// <summary>
-        /// 连接到远程主机。
+        /// 连接到远程主机。（如果使用WebSocket，url需填入完整内容，例：ws://127.0.0.1:443/ws）
         /// </summary>
-        /// <param name="url"></param>
-        /// <param name="port"></param>
+        /// <param name="url">url</param>
+        /// <param name="port">端口</param>
         /// <param name="userData"></param>
         void Connect(string url, int port, object userData);
 

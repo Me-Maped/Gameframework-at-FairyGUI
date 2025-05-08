@@ -1,3 +1,9 @@
 {
-  "langFiles": []
+  "langFiles": [
+    {
+      "name": "lang_en",
+      "path": "/Users/maped/Documents/Workspace/Unity/Gameframework-at-FairyGUI/Client/UIProject/Game/assets_en/lang_en",
+      "fontName": "Apple Color Emoji"
+    }
+  ]
 }

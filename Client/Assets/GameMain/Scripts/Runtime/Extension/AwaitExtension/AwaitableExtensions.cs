@@ -216,7 +216,7 @@ namespace UGFExtensions.Await
                 tcs.SetResult(true);
                 s_SceneTcs.Remove(ne.SceneAssetName);
             }
-            GameModule.UI.UICameraAttach(Camera.main);
+            GameModule.UI.CameraHelper.UICameraAttach(Camera.main);
         }
 
         private static void OnLoadSceneFailure(object sender, GameEventArgs e)

@@ -214,6 +214,8 @@ public class FrameworkGlobalSettings
     public int NetCmdIdLength => m_NetCmdIdLength;
     [SerializeField] private int m_NetOrderLength = 4;
     public int NetOrderLength => m_NetOrderLength;
+    [SerializeField] private int m_NetTimestampLength = 8;
+    public int NetTimestampLength => m_NetTimestampLength;
     [SerializeField] private int m_ReceiveBufferSize = 1024 * 1024 * 5;
     public int ReceiveBufferSize => m_ReceiveBufferSize;
     [SerializeField] private int m_SendBufferSize = 1024 * 1024 * 5;

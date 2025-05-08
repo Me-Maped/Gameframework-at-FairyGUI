@@ -24,7 +24,7 @@ public class GameApp : Singleton<GameApp>
     {
         Log.Warning("======= StartGameLogic GameApp =======");
         // 加载配置
-        await ConfigLoader.Instance.Load();
+        await Cfg.Load();
 
         // 打开默认场景
         await ScenesLogicSys.Instance.EnterDefaultScene();

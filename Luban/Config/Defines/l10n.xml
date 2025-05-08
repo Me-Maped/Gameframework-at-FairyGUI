@@ -1,0 +1,14 @@
+<module name="L10N">
+    <bean name="LocalizeConfig">
+        <var name="key" type="string"/>
+        <bean name="LocalizeConfig_CN">
+            <var name="text_cn" type="string"/>
+        </bean>
+        <bean name="LocalizeConfig_EN">
+            <var name="text_en" type="string"/>
+        </bean>
+        <bean name="LocalizeConfig_TW">
+            <var name="text_tw" type="string"/>
+        </bean>
+    </bean>
+</module>

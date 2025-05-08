@@ -18,11 +18,6 @@
         public const string RETURN = "return";
         
         /// <summary>
-        /// 点击事件
-        /// </summary>
-        public const string CLICK = "click";
-        
-        /// <summary>
         /// 玩法规则
         /// </summary>
         public const string RULE = "rule";
@@ -36,5 +31,10 @@
         /// 背景组件（会拉伸至屏幕大小）
         /// </summary>
         public const string BACKGROUND = "bg";
+
+        /// <summary>
+        /// 多语言
+        /// </summary>
+        public const string L10N = "l10n";
     }
 }

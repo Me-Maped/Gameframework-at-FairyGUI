@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- Login/组件/login_main.xml -->
+  <string name="rr499cgxotfk0-n1_otfk" mz="auto_l10n_txt">/music/10000</string>
+  <string name="rr499cgxotfk0-n2_g8qu" mz="test_btn">Play</string>
+  <string name="rr499cgxotfk0-n4_rqbr" mz="handle_l10n_txt">手动多语言</string>
+  <!-- Login/组件/prompt_text.xml -->
+  <string name="rr499cgxsdhg2-n0_sdhg" mz="title">测试文本测试文本测试</string>
+</resources>

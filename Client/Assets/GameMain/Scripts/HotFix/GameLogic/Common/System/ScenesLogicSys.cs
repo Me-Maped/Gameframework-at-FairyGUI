@@ -27,7 +27,7 @@ namespace GameLogic.Common
                     loadSceneMode = UnityEngine.SceneManagement.LoadSceneMode.Single,
                     localPhysicsMode = UnityEngine.SceneManagement.LocalPhysicsMode.None,
                 });
-                GameModule.UI.UICameraAttach(null);
+                GameModule.UI.CameraHelper.UICameraAttach(null);
                 return;
 #endif
                 Log.Error("Entry scene not in bundle: {0}. enter default scene", GameModule.Base.EntrySceneName);

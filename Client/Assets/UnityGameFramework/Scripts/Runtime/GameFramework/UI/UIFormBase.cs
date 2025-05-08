@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using FairyGUI;
+using GameFramework.Event;
+using GameFramework.Localization;
 
 namespace GameFramework.UI
 {
@@ -25,9 +27,11 @@ namespace GameFramework.UI
         private Action m_CloseCompleteCallback;
         private Action m_FormFinishCallback;
 
+        private Dictionary<GTextField,UIL10NEventArgs> m_L10NEventArgs;
+
         public override UIFormConfig Config => m_Config ??= CreateConfig();
 
-        public UIFormBase()
+        protected UIFormBase()
         {
             m_Config = null;
             m_FormParts = null;
@@ -38,6 +42,7 @@ namespace GameFramework.UI
             m_OpenCompleteCallback = null;
             m_CloseCompleteCallback = null;
             m_FormFinishCallback = null;
+            m_L10NEventArgs = new Dictionary<GTextField, UIL10NEventArgs>();
         }
 
         protected abstract UIFormConfig CreateConfig();
@@ -213,7 +218,7 @@ namespace GameFramework.UI
             Instance.fairyBatching = true;
             Instance.name = Config.InstName;
             Instance.displayObject.name = Config.InstName;
-            RegisterCompEvents(Instance);
+            InternalRegisterCompEvents(Instance);
             if (Define.PkgArg.Debug)
             {
                 OnMVCInit();
@@ -238,7 +243,7 @@ namespace GameFramework.UI
         /// 注册组件事件
         /// </summary>
         /// <param name="comp"></param>
-        private void RegisterCompEvents(GComponent comp)
+        private void InternalRegisterCompEvents(GComponent comp)
         {
             GObject[] children = comp.GetChildren();
             foreach (var child in children)
@@ -247,30 +252,61 @@ namespace GameFramework.UI
                 {
                     if (child is GComponent childComp)
                     {
-                        RegisterCompEvents(childComp);
+                        InternalRegisterCompEvents(childComp);
                     }
                     continue;
                 }
 
-                var infos = child.data.ToString().Split('|');
-                var action = infos[0];
-                switch (action)
+                RegisterComponentEvent(child, child.data.ToString().Replace(" ", "").Split('|'));
+            }
+        }
+
+        /// <summary>
+        /// 注册组件事件（根据fairy中自定义数据进行绑定，自定义数据用‘|’分割，暂时没有做冲突处理）
+        /// </summary>
+        /// <param name="target"></param>
+        /// <param name="actions"></param>
+        protected virtual void RegisterComponentEvent(GObject target, string[] actions)
+        {
+            foreach (string action in actions)
+            {
+                if (action.Equals(UIFormActionConst.RETURN))
                 {
-                    case UIFormActionConst.RETURN:
-                        child.onClick.Add(SelfGoReturn);
-                        break;
-                    case UIFormActionConst.HOME:
-                        child.onClick.Add(SelfGoHome);
-                        break;
-                    case UIFormActionConst.CLOSE:
-                        child.onClick.Add(SelfClose);
-                        break;
-                    case UIFormActionConst.BACKGROUND:
-                        child.MakeFullScreen();
-                        child.Center();
-                        break;
+                    AddClick(target, SelfGoReturn);
+                }
+                if (action.Equals(UIFormActionConst.HOME))
+                {
+                    AddClick(target, SelfGoHome);
+                }
+                if (action.Equals(UIFormActionConst.CLOSE))
+                {
+                    AddClick(target, SelfClose);
+                }
+                if (action.Equals(UIFormActionConst.BACKGROUND))
+                {
+                    target.MakeFullScreen();
+                    target.Center();
+                }
+                if (action.Equals(UIFormActionConst.L10N) && target is GTextField textField)
+                {
+                    RegisterL10NEvent(textField,textField.text);
                 }
             }
+        }
+
+        /// <summary>
+        /// 注册多语言
+        /// </summary>
+        /// <param name="target">文本组件</param>
+        /// <param name="l10NKey">多语言ID</param>
+        protected virtual void RegisterL10NEvent(GTextField target, string l10NKey)
+        {
+            if (m_L10NEventArgs.ContainsKey(target))
+            {
+                ReferencePool.Release(m_L10NEventArgs[target]);
+                m_L10NEventArgs.Remove(target);
+            }
+            m_L10NEventArgs.Add(target, UIL10NEventArgs.Create(target, l10NKey));
         }
 
         /// <summary>
@@ -278,7 +314,7 @@ namespace GameFramework.UI
         /// </summary>
         protected virtual void SelfGoReturn()
         {
-            GameFrameworkEntry.GetModule<IUIManager>().Back();
+            GameFrameworkEntry.GetModule<IUIManager>().JumpHelper.Back();
         }
 
         /// <summary>
@@ -286,7 +322,7 @@ namespace GameFramework.UI
         /// </summary>
         protected virtual void SelfGoHome()
         {
-            GameFrameworkEntry.GetModule<IUIManager>().GoHome();
+            GameFrameworkEntry.GetModule<IUIManager>().JumpHelper.GoHome();
         }
 
         /// <summary>
@@ -426,6 +462,19 @@ namespace GameFramework.UI
         }
 
         /// <summary>
+        /// 移除多语言更新事件
+        /// </summary>
+        private void RemoveL10NEvent()
+        {
+            foreach (KeyValuePair<GTextField,UIL10NEventArgs> kv in m_L10NEventArgs)
+            {
+                ReferencePool.Release(kv.Value);
+            }
+            m_L10NEventArgs.Clear();
+            m_L10NEventArgs = null;
+        }
+        
+        /// <summary>
         /// In动效播放完成,开始执行打开逻辑
         /// </summary>
         protected void OpenComplete()
@@ -524,6 +573,7 @@ namespace GameFramework.UI
 
         private void Destroy()
         {
+            RemoveL10NEvent();
             Dispose();
             DestroyParts();
             m_FormBg?.Dispose();
