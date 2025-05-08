@@ -430,7 +430,7 @@ namespace Pb {
       if (other.UniId != 0) {
         UniId = other.UniId;
       }
-      // itemDic_.MergeFrom(other.itemDic_);
+      itemDic_.MergeFrom(other.itemDic_);
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
 
