@@ -1,6 +1,6 @@
 # GameFramework-at-FairyGUI
 
-GameFramework + FairyGUI +Luban + HybridCLR + YooAsset + UniTask
+GameFramework + FairyGUI +Luban + HybridCLR + YooAsset + UniTask + GeekServer
 
 实现初衷：在工作中接触到了FairyGUI与HybridCLR，真的十分好用，但git上很难找到使用FairyGUI设计的纯C#UI管理模块。在看到ALEXTANGXIAO开发的Gameframework-at-YooAsset后，决定在此基础上进行扩展（说白了就是缝合怪），以满足个人开发需求。经验有限，望指正。
 
@@ -79,20 +79,22 @@ UI使用FairyGUI编辑器制作，项目分为Game(主游戏工程)和Launch(启
 4. 重写`CreateConfig`方法，为其返回一个界面参数。参数详情见其对应的返回类型中的描述。
 5. 调用`GameModule.UI.OpenForm<T>()`即可打开对应界面
 6. 使用MVC时其生命周期见基类`UIFormBase`，Model>Controller>View。
-#### 其他功能
 
 
 ### 代码热更新
-
+~~TODO~~
 
 ### 资源打包
 ~~TODO~~
+
+
 ### 其他功能
-~~TODO~~
+GeekServer服务启动测试：见Server下README启动流程。已支持Protobuf下TCP和Websocket协议连接。
 
 
 ## <strong>特别鸣谢
 #### <a href="https://github.com/tuyoogame/YooAsset"><strong>YooAsset</strong></a> - YooAsset是一套商业级经历百万DAU游戏验证的资源管理系统。
 #### <a href="https://fairygui.com"><strong>FairyGUI</strong></a> - FairyGUI是一个重视设计，摈弃脚本与配置的专业游戏UI解决方案。
-#### <a href=""><strong>HybridCLR</strong></a> - HybridCLR是一个特性完整、零成本、高性能、低内存的近乎完美的Unity全平台原生c#热更方案。
-#### <a href=""><strong>GameFramework-at-YooAsset</strong></a> - GameFramework-at-YooAsset 是ALEXTANGXIAO大佬针对GameFramework资源系统二次开发的Unity游戏框架
+#### <a href="https://hybridclr.doc.code-philosophy.com/"><strong>HybridCLR</strong></a> - HybridCLR是一个特性完整、零成本、高性能、低内存的近乎完美的Unity全平台原生c#热更方案。
+#### <a href="https://github.com/Alex-Rachel/GameFramework-Next"><strong>GameFramework-at-YooAsset</strong></a> - GameFramework-at-YooAsset 是ALEXTANGXIAO大佬针对GameFramework资源系统二次开发的Unity游戏框架
+#### <a href="https://github.com/leeveel/GeekServer"><strong>GeekServer</strong></a> - GeekServer GeekServer 是一个开源的分区分服的游戏服务器框架，采用 C# .Netcore 开发，开发效率高，性能强，跨平台，并内置不停服热更新机制。可以满足绝大部分游戏类型的需求，特别是和 Unity3D 协同开发更佳。
