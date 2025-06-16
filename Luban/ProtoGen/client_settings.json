@@ -1,0 +1,10 @@
+{
+  "ProtoGeneratorOptions": {
+    "ProtoDir": "./Proto",
+    "PbNamespace": "Pb",
+    "TypeFileName": "ProtoType",
+    "EnumFileName": "ProtoEnum",
+    "MsgTmp": "./Template/CSharp.cs",
+    "EnumTmp": ""
+  }
+}

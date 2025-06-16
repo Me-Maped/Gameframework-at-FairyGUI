@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+<<<<<<<< HEAD:Client/Assets/GameMain/Libraries/HDRPCameraStacking/Runtime/HDCameraUI.cs.meta
+guid: 1738a980672f03e4eaff53843fd96b40
+========
+guid: c6d32a6050d4bf9418f0d87cdbd0763e
+>>>>>>>> refs/heads/main:Client/Assets/GameMain/Scripts/HotFix/GameProto/GameConfig/EntityConfig/EntityActorInfo.cs.meta
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

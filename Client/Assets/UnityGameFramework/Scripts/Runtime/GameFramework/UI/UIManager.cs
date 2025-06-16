@@ -31,6 +31,10 @@ namespace GameFramework.UI
             set => m_InstancePool.Priority = value;
         }
         public int UIGroupCount => m_UIGroups.Count;
+        public IUIFitHelper FitHelper => m_UIFitHelper;
+        public IUIJumpHelper JumpHelper => m_UIJumpHelper;
+        public IUICameraHelper CameraHelper => m_UICameraHelper;
+        public IUIL10NHelper L10NHelper => m_UIL10NHelper;
         public event EventHandler<LoadFormSuccessEventArgs> LoadFormSuccess;
         public event EventHandler<LoadFormFailureEventArgs> LoadFormFailure;
         public event EventHandler<LoadFormUpdateEventArgs> LoadFormUpdate;
@@ -53,6 +57,7 @@ namespace GameFramework.UI
         private IUIFitHelper m_UIFitHelper;
         private IUIJumpHelper m_UIJumpHelper;
         private IUICameraHelper m_UICameraHelper;
+        private IUIL10NHelper m_UIL10NHelper;
         private EventHandler<LoadFormSuccessEventArgs> m_LoadUIFormSuccessEventHandler;
         private EventHandler<LoadFormFailureEventArgs> m_LoadUIFormFailureEventHandler;
         private EventHandler<LoadFormUpdateEventArgs> m_LoadUIFormUpdateEventHandler;
@@ -69,6 +74,7 @@ namespace GameFramework.UI
             m_UIFitHelper = null;
             m_UIJumpHelper = null;
             m_UICameraHelper = null;
+            m_UIL10NHelper = null;
             m_UIGroups = new Dictionary<UIGroupEnum, IUIGroup>();
             m_UIGroupCached = new List<IUIGroup>();
             m_LoadedFormInst = new Dictionary<Type, UIFormBase>();
@@ -113,6 +119,12 @@ namespace GameFramework.UI
         {
             if (uiCameraHelper == null) throw new GameFrameworkException("UICameraHelper is invalid");
             m_UICameraHelper = uiCameraHelper;
+        }
+
+        public void SetUIL10NHelper(IUIL10NHelper uiL10NHelper)
+        {
+            if(uiL10NHelper == null) throw new GameFrameworkException("UIL10NHelper is invalid");
+            m_UIL10NHelper = uiL10NHelper;
         }
 
         public UIFormBase OpenForm(Type formType, bool closeOther, object userData)
@@ -226,12 +238,11 @@ namespace GameFramework.UI
         {
             foreach (var groupInfo in m_UIGroups)
             {
-                using var enumerator = groupInfo.Value.UIForms.GetEnumerator();
-                while (enumerator.MoveNext())
+                var uiForms = groupInfo.Value.UIForms;
+                for (int i = uiForms.Count - 1; i >= 0; i--)
                 {
-                    CloseForm(enumerator.Current);
+                    CloseForm(uiForms[i]);
                 }
-                enumerator.Dispose();
             }
         }
 
@@ -338,19 +349,44 @@ namespace GameFramework.UI
             m_InstancePool.SetPriority(uiFormInstance, priority);
         }
 
-        public void Back()
+        public void SwitchFairyBranch(string branchName)
         {
-            m_UIJumpHelper.Back();
-        }
+            // 记录当前界面
+            var activeForms = new List<Type>();
+            var userData = new List<object>();
+            foreach (var groupInfo in m_UIGroups.Values)
+            {
+                foreach (var uiForm in groupInfo.UIForms)
+                {
+                    activeForms.Add(uiForm.GetType());
+                    userData.Add(uiForm.UserData);
+                }
+            }
+            
+            // 关闭所有界面，但保留引用
+            CloseAllForm();
 
-        public void GoHome()
-        {
-            m_UIJumpHelper.GoHome();
-        }
+            // 卸载所有包
+            foreach (var pkg in m_PackageRefCount.Keys.ToList()) {
+                UIPackage.GetByName(pkg)?.UnloadAssets();
+                UIPackage.RemovePackage(pkg);
+            }
+            m_PackageRefCount.Clear();
+            
+            // 释放所有实例
+            m_InstancePool.ReleaseAllUnused();
+            m_LoadedFormInst.Clear();
 
-        public void UICameraAttach(Camera targetCamera)
-        {
-            m_UICameraHelper.UICameraAttach(targetCamera);
+            // 切换分支
+            UIPackage.branch = branchName;
+            
+            // 打开所有界面
+            for (int i = 0; i < activeForms.Count; i++)
+            {
+                Type formType = activeForms[i];
+                ReferencePool.RemoveAll(formType);
+                OpenForm(formType, false, userData[i]);
+            }
         }
 
         internal override void Update(float elapseSeconds, float realElapseSeconds)
@@ -591,6 +627,7 @@ namespace GameFramework.UI
 
         private void OnPackageRefReduce(string pkgName)
         {
+            if (!m_PackageRefCount.ContainsKey(pkgName)) return;
             m_PackageRefCount[pkgName]--;
             if (m_PackageRefCount[pkgName] <= 0)
             {

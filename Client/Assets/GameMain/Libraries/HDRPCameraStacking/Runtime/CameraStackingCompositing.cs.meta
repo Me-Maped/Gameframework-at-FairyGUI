@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Client/Assets/GameMain/Libraries/HDRPCameraStacking/Runtime/CameraStackingCompositing.cs.meta
 guid: 844759583f5a69c4198b1e818adf61d8
+========
+guid: 1be878f50fdbbe141b825353719e4c6b
+>>>>>>>> refs/heads/main:Client/Assets/GameMain/Scripts/HotFix/GameProto/GameConfig/Common/GameConfig.cs.meta
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2

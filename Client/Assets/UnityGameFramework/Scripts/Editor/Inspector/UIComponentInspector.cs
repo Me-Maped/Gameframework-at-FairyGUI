@@ -22,7 +22,8 @@ namespace UnityGameFramework.Editor
         private HelperInfo<UIFitHelperBase> m_FitHelperInfo = new HelperInfo<UIFitHelperBase>("UIFit");
         private HelperInfo<UIJumpHelperBase> m_JumpHelperInfo = new HelperInfo<UIJumpHelperBase>("UIJump");
         private HelperInfo<UICameraHelperBase> m_CameraHelperInfo = new HelperInfo<UICameraHelperBase>("UICamera");
-
+        private HelperInfo<UIL10NHelperBase> m_L10NHelperInfo = new HelperInfo<UIL10NHelperBase>("UIL10N");
+        
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
@@ -43,6 +44,7 @@ namespace UnityGameFramework.Editor
                 m_FitHelperInfo.Draw();
                 m_JumpHelperInfo.Draw();
                 m_CameraHelperInfo.Draw();
+                m_L10NHelperInfo.Draw();
             }
             EditorGUI.EndDisabledGroup();
 
@@ -138,6 +140,7 @@ namespace UnityGameFramework.Editor
             m_FitHelperInfo.Init(serializedObject);
             m_JumpHelperInfo.Init(serializedObject);
             m_CameraHelperInfo.Init(serializedObject);
+            m_L10NHelperInfo.Init(serializedObject);
             RefreshTypeNames();
         }
 
@@ -146,6 +149,7 @@ namespace UnityGameFramework.Editor
             m_FitHelperInfo.Refresh();
             m_JumpHelperInfo.Refresh();
             m_CameraHelperInfo.Refresh();
+            m_L10NHelperInfo.Refresh();
             serializedObject.ApplyModifiedProperties();
         }
     }

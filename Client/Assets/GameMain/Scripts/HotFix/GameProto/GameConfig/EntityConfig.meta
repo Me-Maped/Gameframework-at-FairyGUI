@@ -1,0 +1,12 @@
+fileFormatVersion: 2
+<<<<<<<< HEAD:Client/Assets/TextMesh Pro/Fonts.meta
+guid: 6ab70aee4d56447429c680537fbf93ed
+========
+guid: 59f8649da2f0fdd4aa6ad6e62180615f
+>>>>>>>> refs/heads/main:Client/Assets/GameMain/Scripts/HotFix/GameProto/GameConfig/EntityConfig.meta
+folderAsset: yes
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -1,0 +1,12 @@
+fileFormatVersion: 2
+<<<<<<<< HEAD:Client/Assets/TextMesh Pro.meta
+guid: f54d1bd14bd3ca042bd867b519fee8cc
+========
+guid: ca3042840dd55b948af903fc30d5dc79
+>>>>>>>> refs/heads/main:Client/Assets/GameMain/Scripts/HotFix/GameProto/GameConfig/Common.meta
+folderAsset: yes
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

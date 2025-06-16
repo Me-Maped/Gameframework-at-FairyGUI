@@ -863,6 +863,8 @@ MonoBehaviour:
   m_CustomUIJumpHelper: {fileID: 0}
   m_UICameraHelperTypeName: GameMain.HDRPUICameraHelper
   m_CustomUICameraHelper: {fileID: 0}
+  m_UIL10NHelperTypeName: GameLogic.Common.LubanUIL10NHelper
+  m_CustomUIL10NHelper: {fileID: 0}
   m_LaunchTipsSettingName: Settings/LaunchTipsSettings
   m_LaunchPkgNames:
   - UI/Launch

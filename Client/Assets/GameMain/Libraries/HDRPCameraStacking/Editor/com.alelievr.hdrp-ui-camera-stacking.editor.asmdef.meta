@@ -1,6 +1,11 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Client/Assets/GameMain/Libraries/HDRPCameraStacking/Editor/com.alelievr.hdrp-ui-camera-stacking.editor.asmdef.meta
 guid: 069fe5b323725954d9a5851ef060f859
 AssemblyDefinitionImporter:
+========
+guid: fe1472ca5c675954c85c5b71fe15e793
+TextScriptImporter:
+>>>>>>>> refs/heads/main:Client/Assets/AssetRaw/Configs/common_config.bytes.meta
   externalObjects: {}
   userData: 
   assetBundleName: 

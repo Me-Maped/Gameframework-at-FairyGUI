@@ -1,0 +1,12 @@
+fileFormatVersion: 2
+<<<<<<<< HEAD:Client/Assets/TextMesh Pro/Shaders.meta
+guid: e9f693669af91aa45ad615fc681ed29f
+========
+guid: abc4ace704dafe54c84a33f27de64d5c
+>>>>>>>> refs/heads/main:Client/Assets/GameMain/Scripts/HotFix/GameProto/GameConfig/Music.meta
+folderAsset: yes
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

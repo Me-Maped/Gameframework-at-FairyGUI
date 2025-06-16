@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Client/Assets/GameMain/Libraries/HDRPCameraStacking/Editor/HDCameraUIEditor.cs.meta
 guid: f39d73ca250f39e46a0974020e7d4670
+========
+guid: b5e7c44f8c0e4194f8b039a6f05425bc
+>>>>>>>> refs/heads/main:Client/Assets/GameMain/Scripts/HotFix/GameProto/GameConfig/Common/Config.cs.meta
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2

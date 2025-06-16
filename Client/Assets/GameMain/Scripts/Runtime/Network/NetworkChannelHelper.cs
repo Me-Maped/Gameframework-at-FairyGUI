@@ -23,8 +23,9 @@ namespace GameMain
         private int _netPacketLength;
         private int _netCmdIdLength;
         private int _netOrderLength;
+        private int _timestampLength;
 
-        public int PacketHeaderLength => _netPacketLength + _netOrderLength + _netCmdIdLength;
+        public int PacketHeaderLength => _netPacketLength + _timestampLength + _netOrderLength + _netCmdIdLength;
 
         public NetworkChannelHelper()
         {
@@ -39,6 +40,7 @@ namespace GameMain
             _netPacketLength = SettingsUtils.FrameworkGlobalSettings.NetPacketLength;
             _netCmdIdLength = SettingsUtils.FrameworkGlobalSettings.NetCmdIdLength;
             _netOrderLength = SettingsUtils.FrameworkGlobalSettings.NetOrderLength;
+            _timestampLength = SettingsUtils.FrameworkGlobalSettings.NetTimestampLength;
             _cachedByte = new byte[PacketHeaderLength];
             _netChannel = netChannel;
             // 反射注册包和包处理函数。
@@ -114,9 +116,10 @@ namespace GameMain
             _cachedStream.Seek(0, SeekOrigin.Begin);
             _cachedStream.SetLength(0);
             Array.Clear(_cachedByte,0,_cachedByte.Length);
-            _cachedByte.WriteToReverse(0, packetImpl.ProtoBody.Length);
-            _cachedByte.WriteToReverse(_netPacketLength, packetImpl.UniId);
-            _cachedByte.WriteToReverse( _netPacketLength+_netOrderLength, packetImpl.Id);
+            _cachedByte.WriteToReverse(0, packetImpl.ProtoBody.Length + PacketHeaderLength);
+            _cachedByte.WriteToReverse(_netPacketLength, DateTime.Now.Ticks);
+            _cachedByte.WriteToReverse(_netPacketLength+_timestampLength, packetImpl.UniId);
+            _cachedByte.WriteToReverse( _netPacketLength+_timestampLength+_netOrderLength, packetImpl.Id);
             _cachedStream.Write(_cachedByte, 0, PacketHeaderLength);
             _cachedStream.Write(packetImpl.ProtoBody, 0, packetImpl.ProtoBody.Length);
             _cachedStream.WriteTo(destination);
@@ -132,9 +135,9 @@ namespace GameMain
             {
                 var bytes = memoryStream.ToArray();
                 var packetSize = bytes.ReadToReverse(0);
-                var packetUniId = bytes.ReadToReverse(_netPacketLength);
-                var packetCmdId = bytes.ReadToReverse(_netPacketLength+_netOrderLength);
-                packetHeader.PacketLength = packetSize;
+                var packetUniId = bytes.ReadToReverse(_timestampLength+_netPacketLength);
+                var packetCmdId = bytes.ReadToReverse(_netPacketLength+_timestampLength+_netOrderLength);
+                packetHeader.PacketLength = packetSize - PacketHeaderLength;
                 packetHeader.CmdId = packetCmdId;
                 packetHeader.UniId = packetUniId;
                 Log.Info(Utility.Text.Format("PacketHeader size={0},UniId={1},cmdId={2}", packetSize,
