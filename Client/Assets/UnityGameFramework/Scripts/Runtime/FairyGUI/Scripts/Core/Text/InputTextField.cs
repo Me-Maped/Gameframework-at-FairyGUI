@@ -952,7 +952,12 @@ namespace FairyGUI
 #else
             textEditor.content = new GUIContent(string.Empty);
 #endif
+
+#if UNITY_6000
+            textEditor.isMultiline = !textField.singleLine;
+#else
             textEditor.multiline = !textField.singleLine;
+#endif
             textEditor.Paste();
 #if UNITY_5_3_OR_NEWER
             string value = textEditor.text;
