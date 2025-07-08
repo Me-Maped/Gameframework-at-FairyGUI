@@ -4,6 +4,16 @@ GameFramework + FairyGUI +Luban + HybridCLR + YooAsset + UniTask + GeekServer
 
 实现初衷：在工作中接触到了FairyGUI与HybridCLR，真的十分好用，但git上很难找到使用FairyGUI设计的纯C#UI管理模块。在看到ALEXTANGXIAO开发的Gameframework-at-YooAsset后，决定在此基础上进行扩展（说白了就是缝合怪），以满足个人开发需求。经验有限，望指正。
 
+## 环境要求
+* [.NET 8.x SDK](https://dotnet.microsoft.com/zh-cn/download/dotnet/8.0)
+* [Unity 2022.3.8f1c1](unityhub://2022.3.8f1c1/4ec8ee1b2212)(可升级，注意可能须同时升级HybridCLR)
+* [FairyGUI](https://fairygui.com/)
+* [Rider](https://www.jetbrains.com/zh-cn/rider/) (可使用VSCode或VisualStudio，自行配置)
+* 另外：Windows需要安装VisualStudio，且所需模块如下。Mac则需要安装XCode以及XCode Command Line Tools。
+![alt text](doc/img/vsmodule.png)
+<br>
+
+## 技术与架构
 ```
 // 项目结构设计
 BuildCLI                // 构建工具
@@ -80,17 +90,27 @@ UI使用FairyGUI编辑器制作，项目分为Game(主游戏工程)和Launch(启
 5. 调用`GameModule.UI.OpenForm<T>()`即可打开对应界面
 6. 使用MVC时其生命周期见基类`UIFormBase`，Model>Controller>View。
 
-
-### 代码热更新
-~~TODO~~
-
 ### 资源打包
-~~TODO~~
+使用了YooAsset替代了GF原生资源管理，可查看其[快速入门手册](https://www.yooasset.com/docs/guide-editor/QuickStart)了解整个资源管理与构建过程。构建结果默认放在`Assets/StreamingAssets`下。
 
+### 项目打包
+1. 打包前须进行一定的设置，如下图打开GF全局设置面板，整体分为两大模块：框架设置，Hybrid设置。<br>
+![alt text](doc/img/gf_setting.png)
+![alt text](doc/img/setting_info.png)
+2. 切换到目标环境：由不同的宏控制，可分别处理内部测试整包、内部测试分包、正式整包、正式分包等。具体划分可在代码[Define.cs](Client/Assets/UnityGameFramework/Scripts/Runtime/GameSettings/Enum/Define.cs)中查看。<br>
+![alt text](doc/img/define.png)
+3. 手动构建出包。如图打开菜单，选择对应平台进行构建。构建流程：切换至目标平台->切换至目标渠道环境->Hybrid AOT代码裁剪->代码DLL构建->资源收集与构建->APP构建<br>
+![alt text](doc/img/build.png)
+4. 除手动构建之外，也可以通过外部管线处理，批处理脚本见根目录下`BuildCLI`文件夹。
+5. 若按照默认设置打的分包，资源会放在`Assets/StreamingAssets`下，将其中的内容拷贝到CDN或桶中即可。
+
+### 代码与资源热更新
+1. 如已进行过项目打包，目标环境正确，即已经生成了AOT代码与相应裁剪，则只需找到菜单中对应热更按钮点击即可。默认设置情况下，资源会放在`Assets/StreamingAssets`下，将其中的内容拷贝到CDN或桶中并替换掉原资源即可。
+![alt text](doc/img/hotfix.png)
+2. 如中途进行了开发，在未重新构建AOT的情况下，只需要切换至目标热更平台再执行第一步即可。如有AOT部分的修改，则需要重新构建包。
 
 ### 其他功能
 GeekServer服务启动测试：见Server下README启动流程。已支持Protobuf下TCP和Websocket协议连接。
-
 
 ## <strong>特别鸣谢
 #### <a href="https://github.com/tuyoogame/YooAsset"><strong>YooAsset</strong></a> - YooAsset是一套商业级经历百万DAU游戏验证的资源管理系统。
