@@ -54,11 +54,6 @@ namespace UnityGameFramework.Runtime
         private UICameraHelperBase m_CustomUICameraHelper = null;
 
         [SerializeField]
-        private string m_UIL10NHelperTypeName = "UnityGameFramework.Runtime.DefaultUIL0NHelper";
-        [SerializeField]
-        private UIL10NHelperBase m_CustomUIL10NHelper = null;
-        
-        [SerializeField]
         private string m_LaunchTipsSettingName = "Settings/LaunchTipsSettings";
         
         [SerializeField]
@@ -211,16 +206,35 @@ namespace UnityGameFramework.Runtime
             }
             else Log.Error("Can not create UI camera helper.");
             
-            L10NHelper = Helper.CreateHelper(m_UIL10NHelperTypeName, m_CustomUIL10NHelper, UIGroupCount);
-            if (L10NHelper != null)
+            L10NHelper = new GameObject().AddComponent<DefaultUIL10NHelper>();
+            m_UIManager.SetUIL10NHelper(L10NHelper);
+            L10NHelper.name = "UI L10N Helper (Default)";
+            Transform l10NHelperTrans = L10NHelper.transform;
+            l10NHelperTrans.SetParent(this.transform);
+            l10NHelperTrans.localScale = Vector3.one;
+        }
+
+        /// <summary>
+        /// 替换L10N辅助器。热更程序集加载并Cfg就绪后调用。
+        /// </summary>
+        /// <param name="helper">新的L10N辅助器实例。</param>
+        public void SetL10NHelper(UIL10NHelperBase helper)
+        {
+            if (helper == null)
             {
-                m_UIManager.SetUIL10NHelper(L10NHelper);
-                L10NHelper.name = "UI L10N Helper";
-                Transform groupHelperTrans = L10NHelper.transform;
-                groupHelperTrans.SetParent(this.transform);
-                groupHelperTrans.localScale = Vector3.one;
+                Log.Error("L10N helper is null.");
+                return;
             }
-            else Log.Error("Can not create UI l10N helper.");
+            if (L10NHelper != null && L10NHelper != helper)
+            {
+                Destroy(L10NHelper.gameObject);
+            }
+            L10NHelper = helper;
+            m_UIManager.SetUIL10NHelper(helper);
+            helper.name = "UI L10N Helper";
+            Transform t = helper.transform;
+            t.SetParent(this.transform);
+            t.localScale = Vector3.one;
         }
 
         /// <summary>
